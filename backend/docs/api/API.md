@@ -350,6 +350,189 @@ Content-Type: application/json
 }
 ```
 
+## 🏢 Tenant Management
+
+### Tenant Endpoints
+
+#### Create Tenant
+
+```http
+POST /api/tenant/create
+Authorization: Bearer <token>
+Content-Type: application/json
+
+{
+  "name": "acme-corp",
+  "label": "ACME Corporation",
+  "description": "Leading technology company",
+  "adminUser": {
+    "email": "admin@acme-corp.com",
+    "firstName": "John",
+    "lastName": "Admin",
+    "phone": "+1234567890",
+    "password": "securePassword123"
+  }
+}
+```
+
+**Response:**
+
+```json
+{
+  "message": "Tenant created successfully",
+  "tenant": {
+    "id": 1,
+    "name": "acme-corp",
+    "label": "ACME Corporation",
+    "description": "Leading technology company",
+    "isArchived": false,
+    "createdAt": "2024-01-01T00:00:00.000Z",
+    "updatedAt": "2024-01-01T00:00:00.000Z",
+    "archivedAt": null
+  },
+  "adminUser": {
+    "id": 2,
+    "email": "admin@acme-corp.com",
+    "firstName": "John",
+    "lastName": "Admin",
+    "phone": "+1234567890",
+    "tenantId": 1,
+    "userRoles": [
+      {
+        "id": 5,
+        "label": "Tenant Admin",
+        "lookupTypeId": 1
+      }
+    ]
+  }
+}
+```
+
+#### Get All Tenants
+
+```http
+GET /api/tenant/list
+Authorization: Bearer <token>
+```
+
+**Query Parameters:**
+- `includeArchived` (boolean, optional) - Include archived tenants
+
+**Response:**
+
+```json
+{
+  "tenants": [
+    {
+      "id": 1,
+      "name": "acme-corp",
+      "label": "ACME Corporation",
+      "description": "Leading technology company",
+      "isArchived": false,
+      "createdAt": "2024-01-01T00:00:00.000Z",
+      "updatedAt": "2024-01-01T00:00:00.000Z",
+      "archivedAt": null
+    }
+  ]
+}
+```
+
+#### Get Tenant by ID
+
+```http
+GET /api/tenant/:id
+Authorization: Bearer <token>
+```
+
+**Response:**
+
+```json
+{
+  "tenant": {
+    "id": 1,
+    "name": "acme-corp",
+    "label": "ACME Corporation",
+    "description": "Leading technology company",
+    "isArchived": false,
+    "createdAt": "2024-01-01T00:00:00.000Z",
+    "updatedAt": "2024-01-01T00:00:00.000Z",
+    "archivedAt": null
+  }
+}
+```
+
+#### Update Tenant
+
+```http
+PUT /api/tenant/:id
+Authorization: Bearer <token>
+Content-Type: application/json
+
+{
+  "label": "ACME Corporation Ltd",
+  "description": "Updated description",
+  "isArchived": false
+}
+```
+
+**Response:**
+
+```json
+{
+  "message": "Tenant updated successfully",
+  "tenant": {
+    "id": 1,
+    "name": "acme-corp",
+    "label": "ACME Corporation Ltd",
+    "description": "Updated description",
+    "isArchived": false,
+    "createdAt": "2024-01-01T00:00:00.000Z",
+    "updatedAt": "2024-01-01T12:00:00.000Z",
+    "archivedAt": null
+  }
+}
+```
+
+#### Get Tenant Users
+
+```http
+GET /api/tenant/:id/users
+Authorization: Bearer <token>
+```
+
+**Response:**
+
+```json
+{
+  "users": [
+    {
+      "id": 2,
+      "email": "admin@acme-corp.com",
+      "firstName": "John",
+      "lastName": "Admin",
+      "phone": "+1234567890",
+      "tenantId": 1,
+      "userRoles": [
+        {
+          "id": 5,
+          "label": "Tenant Admin",
+          "lookupTypeId": 1
+        }
+      ],
+      "createdAt": "2024-01-01T00:00:00.000Z",
+      "updatedAt": "2024-01-01T00:00:00.000Z"
+    }
+  ]
+}
+```
+
+### Access Control
+
+All tenant management endpoints require Platform-level permissions:
+- **Platform Super Admin** - Full access to all tenant operations
+- **Platform Admin** - Full access to tenant management
+- **Platform Manager** - Access to tenant management features
+
 ## 📋 Lookup Endpoints
 
 ### Lookup Data Management

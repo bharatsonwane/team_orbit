@@ -75,10 +75,16 @@ import { ComingSoon } from '@/components/ComingSoon';
 
 **File:** `src/components/AppRouter.tsx`
 
-Main application router that handles route protection, authentication, and layout rendering.
+Main application router that handles route protection, authentication, navigation structure, and route generation.
 
 ```tsx
-import { RouteGuardRenderer, mainRouteList } from '@/components/AppRouter';
+import { 
+  RouteGuardRenderer, 
+  mainRouteList, 
+  sidebarNavigationItems,
+  type AuthRoute,
+  type SidebarRouteWithChildren 
+} from '@/components/AppRouter';
 
 // Used in App.tsx
 <RouteGuardRenderer authRoles={route.authRoles}>
@@ -88,16 +94,94 @@ import { RouteGuardRenderer, mainRouteList } from '@/components/AppRouter';
 
 **Features:**
 - **Route Protection** - Validates user authentication and permissions
-- **Layout Management** - Applies appropriate layout based on route configuration
+- **Navigation Structure** - Hierarchical sidebar navigation with role-based filtering
+- **Automatic Route Generation** - Routes generated from navigation structure
 - **Access Control** - Shows "Access Denied" for insufficient permissions
 - **Smart Redirects** - Automatic redirect to dashboard for undefined routes
-- **Nested Routing** - Handles complex routing scenarios with sub-routes
+- **Type Safety** - Separate interfaces for routes and navigation items
 
-**Core Functions:**
-- **`RouteGuardRenderer`** - Main component for route protection
-- **`publicRouteList`** - List of public routes (login, signup)
-- **`protectedRouteList`** - List of authenticated routes
+**Core Interfaces:**
+
+#### `AuthRoute`
+```tsx
+interface AuthRoute {
+  title: string;
+  authRoles: string[];
+  path: string;        // Required for routes
+  description?: string;
+  element: ReactNode;  // Required for routes
+}
+```
+
+#### `SidebarRouteWithChildren`
+```tsx
+interface SidebarRouteWithChildren {
+  title: string;
+  authRoles: string[];
+  path?: string;         // Optional - parent items may not have paths
+  description?: string;
+  href?: string;         // For navigation links
+  element?: ReactNode;   // Optional - parent items may not have elements
+  childItems?: SidebarRouteWithChildren[]; // Recursive hierarchy
+  icon?: LucideIcon;     // For UI display
+}
+```
+
+**Core Exports:**
+- **`RouteGuardRenderer`** - Component for route protection
+- **`publicRouteList`** - Array of public routes (login, signup)
+- **`protectedRouteList`** - Array of authenticated routes (auto-generated)
 - **`mainRouteList`** - Combined route list for App.tsx
+- **`sidebarNavigationItems`** - Hierarchical navigation structure
+- **`otherProtectedRouteList`** - Additional protected routes not in sidebar
+
+**Route Generation Process:**
+1. **Navigation Definition** - Routes defined in `sidebarNavigationItems`
+2. **Flattening** - `flattenNavigationItems()` extracts routes from hierarchy
+3. **Type Conversion** - `SidebarRouteWithChildren` → `AuthRoute`
+4. **Route Assembly** - Combined into `protectedRouteList` for routing
+
+### AppSidebar
+
+**File:** `src/components/AppSidebar.tsx`
+
+A comprehensive sidebar navigation component with role-based access control and hierarchical menu structure.
+
+**Usage:**
+```tsx
+import { AppSidebar } from '@/components/AppSidebar';
+
+// Used in AppLayout
+<AppSidebar />
+```
+
+**Features:**
+- **Role-Based Filtering** - Navigation items filtered by user permissions
+- **Hierarchical Structure** - Collapsible menu sections with child items
+- **Active State Management** - Highlights current page and section
+- **Company Branding** - Logo and company name display
+- **User Profile** - Shows logged-in user info and role
+- **Theme Toggle** - Dark/light mode switcher in header
+- **Icon Support** - Lucide React icons for all menu items
+
+**Data Source:**
+Uses `sidebarNavigationItems` from AppRouter with `SidebarRouteWithChildren` interface:
+
+```tsx
+import { sidebarNavigationItems, type SidebarRouteWithChildren } from './AppRouter';
+```
+
+**Access Control:**
+- **`hasAccess()`** - Checks user role against required permissions
+- **`filterNavigationItems()`** - Recursively filters menu based on access
+- **Dynamic Menu** - Only shows accessible items and sections
+- **Parent Filtering** - Hides parent sections if no children are accessible
+
+**Navigation Structure:**
+- **Top-level Items** - Direct navigation links (Dashboard, Notifications, Settings)
+- **Collapsible Sections** - Groups with child items (Platform Management, Employee Management)
+- **Child Items** - Nested navigation within sections
+- **Mixed Structure** - Supports both direct links and hierarchical grouping
 
 ## 📦 shadcn/ui Components
 

@@ -1,21 +1,60 @@
-import React from 'react';
+import React, { type ReactNode } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { useAuthService } from '@/contexts/AuthContextProvider';
-import type { AuthRoute } from '../schemas/authRoute';
 import { hasRoleAccess } from '../utils/authHelper';
 import type { UserRole } from '../schemas/user';
 import { roleKeys } from '../utils/constants';
 
+import {
+  Building2,
+  Users,
+  Clock,
+  GraduationCap,
+  MessageSquare,
+  Bell,
+  Settings,
+  Home,
+  UserCheck,
+  Calendar,
+  BookOpen,
+  Award,
+  Hash,
+  FileText,
+  BarChart3,
+  Shield,
+  type LucideIcon,
+} from 'lucide-react';
+
 // Import pages
-import Home from '../pages/Home';
+import HomeScreen from '../pages/Home';
 import Login from '../pages/Login';
 import Signup from '../pages/Signup';
 import Dashboard from '../pages/Dashboard';
 import Profile from '../pages/Profile';
 import Admin from '../pages/Admin';
 import SuperAdmin from '../pages/SuperAdmin';
+import TenantManagement from '../pages/TenantManagement';
 import { ComingSoon } from './ComingSoon';
 import { AppLayout } from '@/components/AppLayout';
+
+export interface AuthRoute {
+  title: string;
+  authRoles: string[]; // adjust to (keyof typeof roleKeys)[] if roleKeys is an enum/object
+  path: string; // Made optional for parent navigation items
+  description?: string;
+  element: ReactNode;
+}
+
+export interface SidebarRouteWithChildren {
+  title: string;
+  authRoles: string[]; // adjust to (keyof typeof roleKeys)[] if roleKeys is an enum/object
+  path?: string; // Made optional for parent navigation items
+  description?: string;
+  href?: string;
+  element?: ReactNode;
+  childItems?: SidebarRouteWithChildren[]; // recursive
+  icon?: LucideIcon; // or React.ComponentType<any> if not fixed to Lucide
+}
 
 interface RouteGuardRendererProps {
   children?: React.ReactNode;
@@ -101,7 +140,7 @@ export const RouteGuardRenderer: React.FC<RouteGuardRendererProps> = ({
           />
         ))}
         {/* Catch-all for undefined routes - redirect to dashboard */}
-        <Route path="*" element={<Navigate to="/dashboard" replace />} />
+        <Route path='*' element={<Navigate to='/dashboard' replace />} />
       </Routes>
     );
   }
@@ -109,6 +148,34 @@ export const RouteGuardRenderer: React.FC<RouteGuardRendererProps> = ({
   return <>{children}</>;
 };
 
+// Helper function to flatten navigation items and extract routes
+const flattenNavigationItems = (
+  items: SidebarRouteWithChildren[]
+): AuthRoute[] => {
+  const routes: AuthRoute[] = [];
+
+  items.forEach(item => {
+    // If item has path and element, it's a route
+    if (item.path && item.element) {
+      // Convert SidebarRouteWithChildren to AuthRoute
+      const route: AuthRoute = {
+        title: item.title,
+        authRoles: item.authRoles,
+        path: item.path,
+        description: item.description,
+        element: item.element,
+      };
+      routes.push(route);
+    }
+
+    // If item has childItems, recursively flatten them
+    if (item.childItems) {
+      routes.push(...flattenNavigationItems(item.childItems));
+    }
+  });
+
+  return routes;
+};
 /**@description Public routes (no authentication required) */
 export const publicRouteList: AuthRoute[] = [
   {
@@ -127,117 +194,476 @@ export const publicRouteList: AuthRoute[] = [
   },
 ];
 
-export const protectedRouteList: AuthRoute[] = [
+export const sidebarNavigationItems: SidebarRouteWithChildren[] = [
   {
-    path: '/super-admin',
-    element: <SuperAdmin />,
-    authRoles: [roleKeys.platformSuperAdmin],
-    title: 'Super Admin',
-    description: 'Super admin control panel',
-  },
-
-  // Multi-Tenant Management - Super Admin Only
-  {
-    path: '/workspace/domain',
-    element: <ComingSoon title="Domain Configuration" description="Configure domain settings and DNS configuration." />,
-    authRoles: [roleKeys.platformSuperAdmin],
-    title: 'Domain Configuration',
-    description: 'Configure domain settings and DNS',
-  },
-  {
-    path: '/admin',
-    element: <Admin />,
-    authRoles: [roleKeys.tenantAdmin, roleKeys.tenantManager, roleKeys.platformAdmin, roleKeys.platformSuperAdmin],
-    title: 'Admin Dashboard',
-    description: 'Admin management panel',
-  },
-
-  // Multi-Tenant Management - Admin & Super Admin
-  {
-    path: '/workspace/settings',
-    element: <ComingSoon title="Workspace Settings" description="Configure your workspace settings and preferences." />,
-    authRoles: [roleKeys.tenantAdmin, roleKeys.tenantManager, roleKeys.platformAdmin, roleKeys.platformSuperAdmin],
-    title: 'Workspace Settings',
-    description: 'Configure workspace settings',
-  },
-  {
-    path: '/workspace/branding',
-    element: <ComingSoon title="Branding" description="Customize your workspace branding and appearance." />,
-    authRoles: [roleKeys.tenantAdmin, roleKeys.tenantManager, roleKeys.platformAdmin, roleKeys.platformSuperAdmin],
-    title: 'Branding',
-    description: 'Customize workspace branding',
-  },
-
-  // Employee Management - Admin Level
-  {
-    path: '/employees/onboarding',
-    element: <ComingSoon title="Employee Onboarding" description="Manage the employee onboarding process and documentation." />,
-    authRoles: [roleKeys.tenantAdmin, roleKeys.tenantManager, roleKeys.platformAdmin, roleKeys.platformSuperAdmin],
-    title: 'Employee Onboarding',
-    description: 'Manage employee onboarding process',
-  },
-  {
-    path: '/departments',
-    element: <ComingSoon title="Departments" description="Manage organizational departments and structure." />,
-    authRoles: [roleKeys.tenantAdmin, roleKeys.tenantManager, roleKeys.platformAdmin, roleKeys.platformSuperAdmin],
-    title: 'Departments',
-    description: 'Manage organizational departments',
-  },
-
-  // Attendance & Leave - Admin Level
-  {
-    path: '/leave/approvals',
-    element: <ComingSoon title="Leave Approvals" description="Review and approve employee leave requests." />,
-    authRoles: [roleKeys.tenantAdmin, roleKeys.tenantManager, roleKeys.platformAdmin, roleKeys.platformSuperAdmin],
-    title: 'Leave Approvals',
-    description: 'Review and approve leave requests',
-  },
-  {
-    path: '/attendance/analytics',
-    element: <ComingSoon title="Attendance Analytics" description="View detailed attendance analytics and reports." />,
-    authRoles: [roleKeys.tenantAdmin, roleKeys.tenantManager, roleKeys.platformAdmin, roleKeys.platformSuperAdmin],
-    title: 'Attendance Analytics',
-    description: 'View attendance analytics and reports',
-  },
-
-  // Training & Learning - Admin Level
-  {
-    path: '/training/programs',
-    element: <ComingSoon title="Training Programs" description="Create and manage training programs for employees." />,
-    authRoles: [roleKeys.tenantAdmin, roleKeys.tenantManager, roleKeys.platformAdmin, roleKeys.platformSuperAdmin],
-    title: 'Training Programs',
-    description: 'Create and manage training programs',
-  },
-  {
-    path: '/training/progress',
-    element: <ComingSoon title="Progress Tracking" description="Track employee training progress and completion." />,
-    authRoles: [roleKeys.tenantAdmin, roleKeys.tenantManager, roleKeys.platformAdmin, roleKeys.platformSuperAdmin],
-    title: 'Progress Tracking',
-    description: 'Track employee training progress',
-  },
-
-  // Social Network - Admin Level
-  {
-    path: '/social/announcements',
-    element: <ComingSoon title="Announcements" description="Create and manage company announcements." />,
-    authRoles: [roleKeys.tenantAdmin, roleKeys.tenantManager, roleKeys.platformAdmin, roleKeys.platformSuperAdmin],
-    title: 'Announcements',
-    description: 'Create and manage company announcements',
-  },
-  {
-    path: '/social/updates',
-    element: <ComingSoon title="Company Updates" description="Manage company updates and communications." />,
-    authRoles: [roleKeys.tenantAdmin, roleKeys.tenantManager, roleKeys.platformAdmin, roleKeys.platformSuperAdmin],
-    title: 'Company Updates',
-    description: 'Manage company updates and communications',
-  },
-  {
-    path: '/dashboard',
-    element: <Dashboard />,
-    authRoles: [roleKeys.any],
     title: 'Dashboard',
-    description: 'User dashboard',
+    icon: Home,
+    href: '/dashboard',
+    path: '/dashboard',
+    authRoles: [roleKeys.any],
+    element: <Dashboard />,
   },
+  {
+    title: 'Platform Management',
+    icon: Building2,
+    authRoles: [
+      roleKeys.platformSuperAdmin,
+      roleKeys.platformAdmin,
+      roleKeys.platformManager,
+    ],
+    childItems: [
+      {
+        title: 'Tenant Management',
+        href: '/tenant-management',
+        path: '/tenant-management',
+        icon: Building2,
+        authRoles: [
+          roleKeys.platformSuperAdmin,
+          roleKeys.platformAdmin,
+          roleKeys.platformManager,
+        ],
+        element: <TenantManagement />,
+      },
+    ],
+  },
+  {
+    title: 'Multi-Tenant',
+    icon: Building2,
+    authRoles: [
+      roleKeys.tenantAdmin,
+      roleKeys.tenantManager,
+      roleKeys.platformAdmin,
+      roleKeys.platformSuperAdmin,
+    ],
+    childItems: [
+      {
+        title: 'Workspace Settings',
+        href: '/workspace/settings',
+        path: '/workspace/settings',
+        icon: Settings,
+        authRoles: [
+          roleKeys.tenantAdmin,
+          roleKeys.tenantManager,
+          roleKeys.platformAdmin,
+          roleKeys.platformSuperAdmin,
+        ],
+        element: (
+          <ComingSoon
+            title='Workspace Settings'
+            description='Configure your workspace settings and preferences.'
+          />
+        ),
+      },
+      {
+        title: 'Branding',
+        href: '/workspace/branding',
+        path: '/workspace/branding',
+        icon: FileText,
+        authRoles: [
+          roleKeys.tenantAdmin,
+          roleKeys.tenantManager,
+          roleKeys.platformAdmin,
+          roleKeys.platformSuperAdmin,
+        ],
+        element: (
+          <ComingSoon
+            title='Branding'
+            description='Customize your workspace branding and appearance.'
+          />
+        ),
+      },
+      {
+        title: 'Domain Config',
+        href: '/workspace/domain',
+        path: '/workspace/domain',
+        icon: Shield,
+        authRoles: [roleKeys.platformSuperAdmin],
+        element: (
+          <ComingSoon
+            title='Domain Configuration'
+            description='Configure domain settings and DNS configuration.'
+          />
+        ),
+      },
+    ],
+  },
+  {
+    title: 'Employee Management',
+    icon: Users,
+    authRoles: [roleKeys.any],
+    childItems: [
+      {
+        title: 'Employee Directory',
+        href: '/employees',
+        path: '/employees',
+        icon: Users,
+        authRoles: [roleKeys.any],
+        element: (
+          <ComingSoon
+            title='Employee Directory'
+            description='Browse and search through all employees in your organization.'
+          />
+        ),
+      },
+      {
+        title: 'Onboarding',
+        href: '/employees/onboarding',
+        path: '/employees/onboarding',
+        icon: UserCheck,
+        authRoles: [
+          roleKeys.tenantAdmin,
+          roleKeys.tenantManager,
+          roleKeys.platformAdmin,
+          roleKeys.platformSuperAdmin,
+        ],
+        element: (
+          <ComingSoon
+            title='Employee Onboarding'
+            description='Manage the employee onboarding process and documentation.'
+          />
+        ),
+      },
+      {
+        title: 'Departments',
+        href: '/departments',
+        path: '/departments',
+        icon: Building2,
+        authRoles: [
+          roleKeys.tenantAdmin,
+          roleKeys.tenantManager,
+          roleKeys.platformAdmin,
+          roleKeys.platformSuperAdmin,
+        ],
+        element: (
+          <ComingSoon
+            title='Departments'
+            description='Manage organizational departments and structure.'
+          />
+        ),
+      },
+      {
+        title: 'Teams',
+        href: '/teams',
+        path: '/teams',
+        icon: Users,
+        authRoles: [roleKeys.any],
+        element: (
+          <ComingSoon
+            title='Teams'
+            description='View and manage team structures and memberships.'
+          />
+        ),
+      },
+    ],
+  },
+  {
+    title: 'Attendance & Leave',
+    icon: Clock,
+    authRoles: [roleKeys.any],
+    childItems: [
+      {
+        title: 'Check In/Out',
+        href: '/attendance/checkin',
+        path: '/attendance/checkin',
+        icon: Clock,
+        authRoles: [roleKeys.any],
+        element: (
+          <ComingSoon
+            title='Check In/Out'
+            description='Clock in and out for your work shifts with automated attendance tracking.'
+          />
+        ),
+      },
+      {
+        title: 'Attendance Logs',
+        href: '/attendance/logs',
+        path: '/attendance/logs',
+        icon: BarChart3,
+        authRoles: [roleKeys.any],
+        element: (
+          <ComingSoon
+            title='Attendance Logs'
+            description='View your attendance history and records.'
+          />
+        ),
+      },
+      {
+        title: 'Leave Requests',
+        href: '/leave/requests',
+        path: '/leave/requests',
+        icon: Calendar,
+        authRoles: [roleKeys.any],
+        element: (
+          <ComingSoon
+            title='Leave Requests'
+            description='Submit and manage your leave requests.'
+          />
+        ),
+      },
+      {
+        title: 'Leave Approvals',
+        href: '/leave/approvals',
+        path: '/leave/approvals',
+        icon: UserCheck,
+        authRoles: [
+          roleKeys.tenantAdmin,
+          roleKeys.tenantManager,
+          roleKeys.platformAdmin,
+          roleKeys.platformSuperAdmin,
+        ],
+        element: (
+          <ComingSoon
+            title='Leave Approvals'
+            description='Review and approve employee leave requests.'
+          />
+        ),
+      },
+      {
+        title: 'Analytics',
+        href: '/attendance/analytics',
+        path: '/attendance/analytics',
+        icon: BarChart3,
+        authRoles: [
+          roleKeys.tenantAdmin,
+          roleKeys.tenantManager,
+          roleKeys.platformAdmin,
+          roleKeys.platformSuperAdmin,
+        ],
+        element: (
+          <ComingSoon
+            title='Attendance Analytics'
+            description='View detailed attendance analytics and reports.'
+          />
+        ),
+      },
+    ],
+  },
+  {
+    title: 'Training & Learning',
+    icon: GraduationCap,
+    authRoles: [roleKeys.any],
+    childItems: [
+      {
+        title: 'Training Programs',
+        href: '/training/programs',
+        path: '/training/programs',
+        icon: BookOpen,
+        authRoles: [
+          roleKeys.tenantAdmin,
+          roleKeys.tenantManager,
+          roleKeys.platformAdmin,
+          roleKeys.platformSuperAdmin,
+        ],
+        element: (
+          <ComingSoon
+            title='Training Programs'
+            description='Create and manage training programs for employees.'
+          />
+        ),
+      },
+      {
+        title: 'My Learning',
+        href: '/training/my-learning',
+        path: '/training/my-learning',
+        icon: GraduationCap,
+        authRoles: [roleKeys.any],
+        element: (
+          <ComingSoon
+            title='My Learning'
+            description='Track your personal learning progress and courses.'
+          />
+        ),
+      },
+      {
+        title: 'Assessments',
+        href: '/training/assessments',
+        path: '/training/assessments',
+        icon: FileText,
+        authRoles: [roleKeys.any],
+        element: (
+          <ComingSoon
+            title='Assessments'
+            description='Take quizzes and assessments for your training.'
+          />
+        ),
+      },
+      {
+        title: 'Certificates',
+        href: '/training/certificates',
+        path: '/training/certificates',
+        icon: Award,
+        authRoles: [roleKeys.any],
+        element: (
+          <ComingSoon
+            title='Certificates'
+            description='View and download your earned certificates.'
+          />
+        ),
+      },
+      {
+        title: 'Progress Tracking',
+        href: '/training/progress',
+        path: '/training/progress',
+        icon: BarChart3,
+        authRoles: [
+          roleKeys.tenantAdmin,
+          roleKeys.tenantManager,
+          roleKeys.platformAdmin,
+          roleKeys.platformSuperAdmin,
+        ],
+        element: (
+          <ComingSoon
+            title='Progress Tracking'
+            description='Track employee training progress and completion.'
+          />
+        ),
+      },
+    ],
+  },
+  {
+    title: 'Social Network',
+    icon: Hash,
+    authRoles: [roleKeys.any],
+    childItems: [
+      {
+        title: 'Newsfeed',
+        href: '/social/feed',
+        path: '/social/feed',
+        icon: Hash,
+        authRoles: [roleKeys.any],
+        element: (
+          <ComingSoon
+            title='Newsfeed'
+            description='Stay updated with company news and colleague posts.'
+          />
+        ),
+      },
+      {
+        title: 'Announcements',
+        href: '/social/announcements',
+        path: '/social/announcements',
+        icon: Bell,
+        authRoles: [
+          roleKeys.tenantAdmin,
+          roleKeys.tenantManager,
+          roleKeys.platformAdmin,
+          roleKeys.platformSuperAdmin,
+        ],
+        element: (
+          <ComingSoon
+            title='Announcements'
+            description='Create and manage company announcements.'
+          />
+        ),
+      },
+      {
+        title: 'Polls & Surveys',
+        href: '/social/polls',
+        path: '/social/polls',
+        icon: BarChart3,
+        authRoles: [roleKeys.any],
+        element: (
+          <ComingSoon
+            title='Polls & Surveys'
+            description='Participate in company polls and surveys.'
+          />
+        ),
+      },
+      {
+        title: 'Company Updates',
+        href: '/social/updates',
+        path: '/social/updates',
+        icon: FileText,
+        authRoles: [
+          roleKeys.tenantAdmin,
+          roleKeys.tenantManager,
+          roleKeys.platformAdmin,
+          roleKeys.platformSuperAdmin,
+        ],
+        element: (
+          <ComingSoon
+            title='Company Updates'
+            description='Manage company updates and communications.'
+          />
+        ),
+      },
+    ],
+  },
+  {
+    title: 'Team Chat',
+    icon: MessageSquare,
+    authRoles: [roleKeys.any],
+    childItems: [
+      {
+        title: 'Messages',
+        href: '/chat/messages',
+        path: '/chat/messages',
+        icon: MessageSquare,
+        authRoles: [roleKeys.any],
+        element: (
+          <ComingSoon
+            title='Messages'
+            description='Send and receive private messages with colleagues.'
+          />
+        ),
+      },
+      {
+        title: 'Team Channels',
+        href: '/chat/channels',
+        path: '/chat/channels',
+        icon: Hash,
+        authRoles: [roleKeys.any],
+        element: (
+          <ComingSoon
+            title='Team Channels'
+            description='Join team channels and group conversations.'
+          />
+        ),
+      },
+      {
+        title: 'File Sharing',
+        href: '/chat/files',
+        path: '/chat/files',
+        icon: FileText,
+        authRoles: [roleKeys.any],
+        element: (
+          <ComingSoon
+            title='File Sharing'
+            description='Share and access files with your team.'
+          />
+        ),
+      },
+    ],
+  },
+  {
+    title: 'Notifications',
+    icon: Bell,
+    href: '/notifications',
+    path: '/notifications',
+    authRoles: [roleKeys.any],
+    element: (
+      <ComingSoon
+        title='Notifications'
+        description='View and manage your notifications.'
+      />
+    ),
+  },
+  {
+    title: 'Settings',
+    icon: Settings,
+    href: '/settings',
+    path: '/settings',
+    authRoles: [roleKeys.any],
+    element: (
+      <ComingSoon
+        title='Settings'
+        description='Manage your account and application settings.'
+      />
+    ),
+  },
+];
+
+export const otherProtectedRouteList: AuthRoute[] = [
   {
     path: '/profile',
     element: <Profile />,
@@ -245,141 +671,33 @@ export const protectedRouteList: AuthRoute[] = [
     title: 'Profile',
     description: 'User profile management',
   },
+  {
+    path: '/admin',
+    element: <Admin />,
+    authRoles: [roleKeys.platformAdmin, roleKeys.platformSuperAdmin],
+    title: 'Admin',
+    description: 'Admin dashboard',
+  },
+  {
+    path: '/super-admin',
+    element: <SuperAdmin />,
+    authRoles: [roleKeys.platformSuperAdmin],
+    title: 'Super Admin',
+    description: 'Super admin dashboard',
+  },
+];
 
-  // Employee Management - User Level
-  {
-    path: '/employees',
-    element: (
-      <ComingSoon
-        title='Employee Directory'
-        description='Browse and search through all employees in your organization.'
-      />
-    ),
-    authRoles: [roleKeys.any],
-    title: 'Employee Directory',
-    description: 'Browse and search employees',
-  },
-  {
-    path: '/teams',
-    element: (
-      <ComingSoon
-        title='Teams'
-        description='View and manage team structures and memberships.'
-      />
-    ),
-    authRoles: [roleKeys.any],
-    title: 'Teams',
-    description: 'View team structures',
-  },
+// Extract routes from navigation items
+const navigationRoutes: AuthRoute[] = flattenNavigationItems(
+  sidebarNavigationItems
+);
 
-  // Attendance & Leave - User Level
-  {
-    path: '/attendance/checkin',
-    element: (
-      <ComingSoon
-        title='Check In/Out'
-        description='Clock in and out for your work shifts with automated attendance tracking.'
-      />
-    ),
-    authRoles: [roleKeys.any],
-    title: 'Check In/Out',
-    description: 'Daily attendance check-in/out',
-  },
-  {
-    path: '/attendance/logs',
-    element: <ComingSoon title="Attendance Logs" description="View your attendance history and records." />,
-    authRoles: [roleKeys.any],
-    title: 'Attendance Logs',
-    description: 'View attendance history',
-  },
-  {
-    path: '/leave/requests',
-    element: <ComingSoon title="Leave Requests" description="Submit and manage your leave requests." />,
-    authRoles: [roleKeys.any],
-    title: 'Leave Requests',
-    description: 'Submit and manage leave requests',
-  },
-
-  // Training & Learning - User Level
-  {
-    path: '/training/my-learning',
-    element: <ComingSoon title="My Learning" description="Track your personal learning progress and courses." />,
-    authRoles: [roleKeys.any],
-    title: 'My Learning',
-    description: 'Personal learning progress',
-  },
-  {
-    path: '/training/assessments',
-    element: <ComingSoon title="Assessments" description="Take quizzes and assessments for your training." />,
-    authRoles: [roleKeys.any],
-    title: 'Assessments',
-    description: 'Take quizzes and assessments',
-  },
-  {
-    path: '/training/certificates',
-    element: <ComingSoon title="Certificates" description="View and download your earned certificates." />,
-    authRoles: [roleKeys.any],
-    title: 'Certificates',
-    description: 'View earned certificates',
-  },
-
-  // Social Network - User Level
-  {
-    path: '/social/feed',
-    element: <ComingSoon title="Newsfeed" description="Stay updated with company news and colleague posts." />,
-    authRoles: [roleKeys.any],
-    title: 'Newsfeed',
-    description: 'Company newsfeed and updates',
-  },
-  {
-    path: '/social/polls',
-    element: <ComingSoon title="Polls & Surveys" description="Participate in company polls and surveys." />,
-    authRoles: [roleKeys.any],
-    title: 'Polls & Surveys',
-    description: 'Participate in polls and surveys',
-  },
-
-  // Team Chat - User Level
-  {
-    path: '/chat/messages',
-    element: <ComingSoon title="Messages" description="Send and receive private messages with colleagues." />,
-    authRoles: [roleKeys.any],
-    title: 'Messages',
-    description: 'Private messaging',
-  },
-  {
-    path: '/chat/channels',
-    element: <ComingSoon title="Team Channels" description="Join team channels and group conversations." />,
-    authRoles: [roleKeys.any],
-    title: 'Team Channels',
-    description: 'Team group conversations',
-  },
-  {
-    path: '/chat/files',
-    element: <ComingSoon title="File Sharing" description="Share and access files with your team." />,
-    authRoles: [roleKeys.any],
-    title: 'File Sharing',
-    description: 'Share files with team',
-  },
-
-  // General - User Level
-  {
-    path: '/notifications',
-    element: <ComingSoon title="Notifications" description="View and manage your notifications." />,
-    authRoles: [roleKeys.any],
-    title: 'Notifications',
-    description: 'View notifications',
-  },
-  {
-    path: '/settings',
-    element: <ComingSoon title="Settings" description="Manage your account and application settings." />,
-    authRoles: [roleKeys.any],
-    title: 'Settings',
-    description: 'Account and app settings',
-  },
+export const protectedRouteList: AuthRoute[] = [
+  ...navigationRoutes,
+  ...otherProtectedRouteList,
   {
     path: '/',
-    element: <Home />,
+    element: <HomeScreen />,
     authRoles: [roleKeys.any],
     title: 'Home',
     description: 'Application home page',

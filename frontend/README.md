@@ -73,6 +73,8 @@ frontend/
 TeamOrbit is designed as a comprehensive HR and team management platform:
 
 #### 🏢 **Multi-Tenant Support**
+- **Tenant Management** - Platform admins can create and manage tenant organizations
+- **Automatic Admin Creation** - Each tenant gets a Tenant Admin user automatically
 - **Separate workspaces** for each organization
 - **Custom branding** (logo, theme, domain)
 - **Comprehensive role system:** Platform and tenant-specific roles

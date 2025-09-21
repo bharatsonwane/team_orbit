@@ -6,27 +6,37 @@ This document describes the advanced routing setup and navigation patterns used 
 
 ### Overview
 
-TeamOrbit uses a **unified navigation configuration** that serves as a single source of truth for both routing and sidebar navigation. This eliminates duplication and ensures consistency between routes and navigation items.
+TeamOrbit uses a **unified navigation configuration** within AppRouter that serves as a single source of truth for both routing and sidebar navigation. This eliminates duplication and ensures consistency between routes and navigation items.
 
 ### Configuration
 
-**File:** `src/config/navigation.tsx`
+**File:** `src/components/AppRouter.tsx`
 
-The navigation system is built around a centralized configuration:
+The navigation system is built around centralized interfaces and configuration:
 
 ```tsx
-export interface NavigationItem {
+// Interface for actual routes
+export interface AuthRoute {
   title: string;
-  icon?: React.ComponentType<{ className?: string }>;
-  href?: string;
-  authRoles: UserRole[];
-  element?: React.ReactElement;
+  authRoles: string[];
+  path: string;        // Required for routes
   description?: string;
-  layout?: 'app' | 'auth' | 'none' | React.ComponentType<{ children: React.ReactNode }>;
-  items?: NavigationItem[]; // For nested navigation
+  element: ReactNode;  // Required for routes
 }
 
-export const navigationConfig: NavigationItem[] = [
+// Interface for navigation hierarchy
+export interface SidebarRouteWithChildren {
+  title: string;
+  authRoles: string[];
+  path?: string;         // Optional - parent items may not have paths
+  description?: string;
+  href?: string;         // For navigation links
+  element?: ReactNode;   // Optional - parent items may not have elements
+  childItems?: SidebarRouteWithChildren[]; // Recursive hierarchy
+  icon?: LucideIcon;     // For UI display
+}
+
+export const sidebarNavigationItems: SidebarRouteWithChildren[] = [
   {
     title: 'Dashboard',
     icon: Home,
@@ -52,7 +62,7 @@ import { RouteGuardRenderer, mainRouteList } from './components/AppRouter';
 
 function App() {
   return (
-    <Routes>
+      <Routes>
       {mainRouteList.map(route => (
         <Route
           key={route.path}
@@ -74,7 +84,7 @@ function App() {
           </RouteGuardRenderer>
         }
       />
-    </Routes>
+      </Routes>
   );
 }
 ```
@@ -94,6 +104,9 @@ All protected routes automatically include the AppLayout with sidebar navigation
 - **`/dashboard`** - Main dashboard (all users)
 - **`/profile`** - User profile management (all users)
 - **`/`** - Home page (all users)
+
+#### Platform Management (Platform Admin/Super Admin/Manager)
+- **`/tenant-management`** - Create and manage tenant organizations
 
 #### Multi-Tenant Management (Admin/Super Admin)
 - **`/workspace/settings`** - Workspace configuration
@@ -174,6 +187,7 @@ The application supports a comprehensive multi-tenant role system:
 | Training (Personal) | ✅ | ✅ | ✅ | ✅ | ✅ |
 | Social Network (View) | ✅ | ✅ | ✅ | ✅ | ✅ |
 | Chat & Messaging | ✅ | ✅ | ✅ | ✅ | ✅ |
+| **Tenant Management** | ❌ | ❌ | ❌ | ❌ | **Platform Admin/Super Admin/Manager Only** |
 | Employee Onboarding | ❌ | ❌ | ✅ | ✅ | ✅ |
 | Department Management | ❌ | ❌ | ✅ | ✅ | ✅ |
 | Leave Approvals | ❌ | ❌ | ✅ | ✅ | ✅ |

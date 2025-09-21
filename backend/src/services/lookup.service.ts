@@ -1,5 +1,6 @@
 import { HttpError } from '../utils/httpError';
 import { dbClientPool } from '../middleware/dbClientMiddleware';
+import { PoolClient } from 'pg';
 
 interface LookupType {
   id: number;
@@ -143,6 +144,38 @@ export default class Lookup {
 
     if (response.length === 0) {
       throw new HttpError('Lookup User user_role not found.', 404);
+    }
+
+    return response[0].id;
+  }
+
+  static async getTenantAdminRoleId(dbClient: PoolClient): Promise<number> {
+    const queryString = `
+      SELECT l.id
+      FROM lookup l
+      INNER JOIN lookup_type lt ON l."lookupTypeId" = lt.id
+      WHERE l.label = 'Tenant Admin' AND lt.name = 'userRole';`;
+    const results = await dbClient.query(queryString);
+    const response = results.rows;
+
+    if (response.length === 0) {
+      throw new HttpError('Tenant Admin role not found.', 404);
+    }
+
+    return response[0].id;
+  }
+
+  static async getUserStatusActiveId(dbClient: PoolClient): Promise<number> {
+    const queryString = `
+      SELECT l.id
+      FROM lookup l
+      INNER JOIN lookup_type lt ON l."lookupTypeId" = lt.id
+      WHERE l.label = 'Active' AND lt.name = 'userStatus';`;
+    const results = await dbClient.query(queryString);
+    const response = results.rows;
+
+    if (response.length === 0) {
+      throw new HttpError('Active user status not found.', 404);
     }
 
     return response[0].id;
