@@ -1,34 +1,50 @@
 -- lookup_type Table
 CREATE TABLE IF NOT EXISTS lookup_type (
     id SERIAL PRIMARY KEY,
-    name VARCHAR(255) UNIQUE NOT NULL,
+    name VARCHAR(255) UNIQUE NOT NULL,  -- Internal name (e.g., 'USER_ROLE', 'USER_STATUS', 'TENANT_STATUS')
+    label VARCHAR(255) NOT NULL,        -- Display label (e.g., 'User Role', 'User Status', 'Tenant Status')
+    "isSystem" BOOLEAN NOT NULL,        -- System values that cannot be deleted
     "createdAt" TIMESTAMP DEFAULT NOW() NOT NULL,
-    "updatedAt" TIMESTAMP DEFAULT NOW() NOT NULL
+    "updatedAt" TIMESTAMP DEFAULT NOW() NOT NULL,
+    "archivedAt" TIMESTAMP DEFAULT NULL,
+    "createdBy" INT DEFAULT NULL,
+    "updatedBy" INT DEFAULT NULL,
+    "archivedBy" INT DEFAULT NULL
 );
 
 -- lookup Table
 CREATE TABLE IF NOT EXISTS lookup (
     id SERIAL PRIMARY KEY,
-    label VARCHAR(255) NOT NULL,
-    "lookupTypeId" INT NOT NULL,
+    name VARCHAR(100) UNIQUE NOT NULL,              -- Internal name (e.g., 'ROLE_PLATFORM_ADMIN', 'STATUS_ACTIVE', 'ROLE_TENANT_ADMIN')
+    label VARCHAR(255) NOT NULL,                    -- Display label (e.g., 'Platform Admin', 'Active', 'Tenant Admin')
+    "isSystem" BOOLEAN,                             -- System values that cannot be deleted
+    "sortOrder" INT DEFAULT 0,                      -- For ordering items within a type
+    "isArchived" BOOLEAN DEFAULT FALSE,             -- Soft delete instead of hard delete
     "createdAt" TIMESTAMP DEFAULT NOW() NOT NULL,
     "updatedAt" TIMESTAMP DEFAULT NOW() NOT NULL,
-    CONSTRAINT fk_lookup_lookup_type FOREIGN KEY ("lookupTypeId") REFERENCES lookup_type (id),
-    CONSTRAINT unique_lookup_type_id_label UNIQUE ("lookupTypeId", label)
+    "archivedAt" TIMESTAMP DEFAULT NULL,
+    "createdBy" INT DEFAULT NULL,
+    "updatedBy" INT DEFAULT NULL,
+    "archivedBy" INT DEFAULT NULL,
+    "lookupTypeId" INT NOT NULL,
+    CONSTRAINT fk_lookup_lookup_type FOREIGN KEY ("lookupTypeId") REFERENCES lookup_type (id),  -- Foreign key constraint
+    CONSTRAINT unique_lookup_type_id_label UNIQUE ("lookupTypeId", label)                       -- Unique constraint for lookup type and label
 );
 
 -- tenant Table
 CREATE TABLE IF NOT EXISTS tenant (
     id SERIAL PRIMARY KEY,
-    name VARCHAR(255) NOT NULL,
-    label VARCHAR(255) NOT NULL,
-    description TEXT DEFAULT NULL,
+    name VARCHAR(255) NOT NULL UNIQUE,
+    label VARCHAR(255) NOT NULL UNIQUE,
+    "statusId" INT NOT NULL,
     "isArchived" BOOLEAN DEFAULT FALSE NOT NULL,
     "createdAt" TIMESTAMP DEFAULT NOW() NOT NULL,
     "updatedAt" TIMESTAMP DEFAULT NOW() NOT NULL,
     "archivedAt" TIMESTAMP DEFAULT NULL,
-    CONSTRAINT unique_tenant_name UNIQUE (name),
-    CONSTRAINT unique_tenant_label UNIQUE (label)
+    "createdBy" INT DEFAULT NULL,
+    "updatedBy" INT DEFAULT NULL,
+    "archivedBy" INT DEFAULT NULL,
+    CONSTRAINT fk_tenant_status FOREIGN KEY ("statusId") REFERENCES lookup (id)
 );
 
 -- title_enum Type
@@ -63,14 +79,6 @@ BEGIN
     END IF;
 END $$;
 
--- user_status_enum Type
-DO $$
-BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'user_status_enum') THEN
-        CREATE TYPE user_status_enum AS ENUM ('Pending', 'Active', 'Archived', 'Suspended');
-    END IF;
-END $$;
-
 -- user Table
 CREATE TABLE IF NOT EXISTS app_user (
     id SERIAL PRIMARY KEY,
@@ -86,12 +94,15 @@ CREATE TABLE IF NOT EXISTS app_user (
     email VARCHAR(255) UNIQUE NOT NULL,
     phone VARCHAR(255) UNIQUE NOT NULL,
     password VARCHAR(255),  -- Store hashed password
+    "isTemporaryPassword" BOOLEAN DEFAULT TRUE NOT NULL,
+    "lastPasswordChangedAt" TIMESTAMP DEFAULT NULL,
     bio TEXT, -- User biography
-    "userStatus" user_status_enum, -- Use ENUM type
+    "statusId" INT NOT NULL, -- Use "lookupId"
     "tenantId" INT,
     "createdAt" TIMESTAMP DEFAULT NOW() NOT NULL,
     "updatedAt" TIMESTAMP DEFAULT NOW() NOT NULL,
-    CONSTRAINT fk_user_tenant FOREIGN KEY ("tenantId") REFERENCES tenant (id)
+    CONSTRAINT fk_user_tenant FOREIGN KEY ("tenantId") REFERENCES tenant (id),
+    CONSTRAINT fk_user_user_status FOREIGN KEY ("statusId") REFERENCES lookup (id)
 );
 
 -- user_role_xref table

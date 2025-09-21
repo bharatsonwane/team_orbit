@@ -1,48 +1,20 @@
 import { PoolClient } from 'pg';
 import bcrypt from 'bcryptjs';
 
-const lookupTypeKeys = {
-  userRole: 'userRole',
-  userStatus: 'userStatus',
-  chatType: 'chatType',
-};
-
-const roleKeys = {
-  platformSuperAdmin: 'Platform Super Admin',
-  platformAdmin: 'Platform Admin',
-  platformUser: 'Platform User',
-  platformAgent: 'Platform Agent',
-  platformManager: 'Platform Manager',
-  platformAuditor: 'Platform Auditor',
-  tenantAdmin: 'Tenant Admin',
-  tenantManager: 'Tenant Manager',
-  tenantAgent: 'Tenant Agent',
-  tenantUser: 'Tenant User',
-  tenantEmployee: 'Tenant Employee',
-};
-
-const userStatusKeys = {
-  pending: 'Pending',
-  active: 'Active',
-  archived: 'Archived',
-  suspended: 'Suspended',
-};
-
-const chatTypeKeys = {
-  oneToOne: '1:1 Chat',
-  group: 'Group Chat',
-};
-
-interface LookupType {
-  lookupType: string;
-  lookups: { label: string }[];
+interface Lookup {
+  id?: number;
+  name: string;
+  label: string;
+  isSystem: boolean;
+  lookupTypeId?: number;
 }
 
-interface Lookup {
-  id: number;
+interface LookupType {
+  id?: number;
+  name: string;
   label: string;
-  lookupTypeId: number;
-  lookupTypeName: string;
+  isSystem: boolean;
+  lookups: Lookup[];
 }
 
 interface AppUser {
@@ -60,48 +32,137 @@ interface AppUser {
   phone: string;
   password: string;
   bio: string;
-  userStatus: string;
+  isTemporaryPassword: boolean;
+  lastPasswordChangedAt: Date;
+  statusId: number;
   userRoles: number[];
+  tenantId?: number;
 }
+
+const lookupData: LookupType[] = [
+  {
+    name: 'USER_ROLE',
+    label: 'User Role',
+    isSystem: true,
+    lookups: [
+      {
+        name: 'USER_ROLE_PLATFORM_SUPER_ADMIN',
+        label: 'Platform Super Admin',
+        isSystem: true,
+      },
+      {
+        name: 'USER_ROLE_PLATFORM_ADMIN',
+        label: 'Platform Admin',
+        isSystem: true,
+      },
+      {
+        name: 'USER_ROLE_PLATFORM_USER',
+        label: 'Platform User',
+        isSystem: true,
+      },
+      {
+        name: 'USER_ROLE_TENANT_ADMIN',
+        label: 'Tenant Admin',
+        isSystem: true,
+      },
+      {
+        name: 'USER_ROLE_TENANT_MANAGER',
+        label: 'Tenant Manager',
+        isSystem: true,
+      },
+      {
+        name: 'USER_ROLE_TENANT_USER',
+        label: 'Tenant User',
+        isSystem: true,
+      },
+    ],
+  },
+  {
+    name: 'USER_STATUS',
+    label: 'User Status',
+    isSystem: true,
+    lookups: [
+      {
+        name: 'USER_STATUS_PENDING',
+        label: 'Pending',
+        isSystem: true,
+      },
+      {
+        name: 'USER_STATUS_ACTIVE',
+        label: 'Active',
+        isSystem: true,
+      },
+      {
+        name: 'USER_STATUS_DEACTIVATED',
+        label: 'Deactivated',
+        isSystem: true,
+      },
+      {
+        name: 'USER_STATUS_ARCHIVED',
+        label: 'Archived',
+        isSystem: true,
+      },
+    ],
+  },
+  {
+    name: 'TENANT_STATUS',
+    label: 'Tenant Status',
+    isSystem: true,
+    lookups: [
+      {
+        name: 'TENANT_STATUS_PENDING',
+        label: 'Pending',
+        isSystem: true,
+      },
+      {
+        name: 'TENANT_STATUS_ACTIVE',
+        label: 'Active',
+        isSystem: true,
+      },
+      {
+        name: 'TENANT_STATUS_DEACTIVATED',
+        label: 'Deactivated',
+        isSystem: true,
+      },
+      {
+        name: 'TENANT_STATUS_ARCHIVED',
+        label: 'Archived',
+        isSystem: true,
+      },
+    ],
+  },
+  {
+    name: 'CHAT_TYPE',
+    label: 'Chat Type',
+    isSystem: true,
+    lookups: [
+      {
+        name: 'CHAT_TYPE_ONE_TO_ONE',
+        label: '1:1 Chat',
+        isSystem: true,
+      },
+      {
+        name: 'CHAT_TYPE_GROUP',
+        label: 'Group Chat',
+        isSystem: true,
+      },
+    ],
+  },
+];
 
 export async function up(client: PoolClient): Promise<void> {
   const upsertAndFetchLookupData = async () => {
-    const lookupData: LookupType[] = [
-      {
-        lookupType: lookupTypeKeys.userRole,
-        lookups: [
-          { label: roleKeys.platformSuperAdmin },
-          { label: roleKeys.platformAdmin },
-          { label: roleKeys.platformUser },
-          { label: roleKeys.platformAgent },
-          { label: roleKeys.platformManager },
-          { label: roleKeys.platformAuditor },
-          { label: roleKeys.tenantAdmin },
-          { label: roleKeys.tenantManager },
-          { label: roleKeys.tenantAgent },
-          { label: roleKeys.tenantUser },
-          { label: roleKeys.tenantEmployee },
-        ],
-      },
-      {
-        lookupType: lookupTypeKeys.chatType,
-        lookups: [
-          { label: chatTypeKeys.oneToOne },
-          { label: chatTypeKeys.group },
-        ],
-      },
-    ];
     /* Process each lookup type and its lookups */
     for (const data of lookupData) {
       /** Insert lookup type and get the ID */
       const lookupTypeResult = await client.query(
         `
-            INSERT INTO lookup_type (name, "createdAt", "updatedAt")
-            VALUES ($1, NOW(), NOW())
+            INSERT INTO lookup_type (name, label, "isSystem", "createdAt", "updatedAt")
+            VALUES ($1, $2, $3, NOW(), NOW())
             ON CONFLICT (name) DO NOTHING
             RETURNING id;
         `,
-        [data.lookupType]
+        [data.name, data.label, data.isSystem]
       );
 
       /** If lookup type was inserted (not already existed), get the ID */
@@ -112,7 +173,7 @@ export async function up(client: PoolClient): Promise<void> {
         /** If it already existed, fetch the existing ID */
         const existingResult = await client.query(
           'SELECT id FROM lookup_type WHERE name = $1',
-          [data.lookupType]
+          [data.name]
         );
         lookupTypeId = existingResult.rows[0].id;
       }
@@ -121,53 +182,52 @@ export async function up(client: PoolClient): Promise<void> {
       for (const lookup of data.lookups) {
         await client.query(
           `
-                INSERT INTO lookup (label, "lookupTypeId", "createdAt", "updatedAt")
-                VALUES ($1, $2, NOW(), NOW())
+                INSERT INTO lookup (name, label, "isSystem", "lookupTypeId", "createdAt", "updatedAt")
+                VALUES ($1, $2, $3, $4, NOW(), NOW())
                 ON CONFLICT ("lookupTypeId", label) DO NOTHING;
             `,
-          [lookup.label, lookupTypeId]
+          [lookup.name, lookup.label, lookup.isSystem, lookupTypeId]
         );
       }
     }
 
-    /** Get lookup data by type label */
-    const getLookupDataByTypeLabel = async (
-      lookupTypeName: string,
-      lookupLabel: string
+    /** Get lookup data by lookup name */
+    const getLookupDataByName = async (
+      lookupName: string
     ): Promise<Lookup> => {
       /** Get lookup data query */
       const getLookupDataQuery = `
-        SELECT l.id, l.label, l."lookupTypeId", lt.name
+        SELECT l.id, l.name, l.label, l."lookupTypeId", lt.name as typeName
         FROM lookup_type lt
         INNER JOIN lookup l ON lt.id = l."lookupTypeId"
-        WHERE lt.name = $1 AND l.label = $2;
+        WHERE l.name = $1;
       `;
 
       /** Get lookup data result */
       const lookupDataResult = (
-        await client.query(getLookupDataQuery, [lookupTypeName, lookupLabel])
+        await client.query(getLookupDataQuery, [lookupName])
       ).rows;
 
       /** If lookup data result is empty, throw an error */
       if (lookupDataResult.length === 0) {
-        throw new Error(
-          `Lookup data not found for type: ${lookupTypeName}, label: ${lookupLabel}`
-        );
+        throw new Error(`Lookup data not found for name: ${lookupName}`);
       }
 
       /** Return lookup data result */
       return lookupDataResult[0];
     };
 
-    return { getLookupDataByTypeLabel };
+    return { getLookupDataByName };
   };
 
-  const { getLookupDataByTypeLabel } = await upsertAndFetchLookupData();
+  const { getLookupDataByName } = await upsertAndFetchLookupData();
 
-  const superAdminRoleData = await getLookupDataByTypeLabel(
-    lookupTypeKeys.userRole,
-    roleKeys.platformSuperAdmin
+  const superAdminRoleData = await getLookupDataByName(
+    'USER_ROLE_PLATFORM_SUPER_ADMIN'
   );
+
+  const activeUserStatusData =
+    await getLookupDataByName('USER_STATUS_ACTIVE');
 
   const upsertAndFetchUserData = async () => {
     const userDataList: AppUser[] = [
@@ -184,9 +244,11 @@ export async function up(client: PoolClient): Promise<void> {
         email: 'superadmin@gmail.com',
         phone: '1234567890',
         password: 'Super@123',
+        isTemporaryPassword: false,
+        lastPasswordChangedAt: new Date(),
         bio: 'This is Super Admin',
-        userStatus: userStatusKeys.active,
-        userRoles: [superAdminRoleData.id],
+        statusId: activeUserStatusData.id as number,
+        userRoles: [superAdminRoleData.id as number],
       },
     ];
 
@@ -225,13 +287,14 @@ export async function up(client: PoolClient): Promise<void> {
             phone,
             password,
             bio,
-            "userStatus",
+            "statusId",
             "createdAt",
-            "updatedAt")
+            "updatedAt"
+            )
           VALUES (
               $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, NOW(), NOW()
           )
-          RETURNING id, email, "firstName", "lastName";
+          RETURNING *;
         `;
 
       const userResult = (
@@ -249,7 +312,7 @@ export async function up(client: PoolClient): Promise<void> {
           userData.phone,
           hashedPassword,
           userData.bio,
-          userData.userStatus,
+          userData.statusId,
         ])
       ).rows;
 
