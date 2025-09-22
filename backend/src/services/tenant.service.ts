@@ -72,7 +72,7 @@ export default class Tenant {
       );
 
       // 6. Get the admin user with roles for response
-      const adminUserWithRoles = await User.getUserById(dbClient, { 
+      const adminUserWithRoles = await User.getUserByIdOrEmailOrPhone(dbClient, { 
         userId: adminUser.id 
       });
 

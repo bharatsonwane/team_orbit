@@ -30,7 +30,6 @@ export const authRoleMiddleware = (...allowedRoles: string[]) => {
     }
 
     try {
-      debugger
       // if the token is in the format "Bearer <token>", extract the token if not user the token as is
       const token = bearerToken.split(' ')?.[1] || bearerToken;
 

@@ -18,7 +18,7 @@ export const postUserLogin = async (
   try {
     const { email, password } = req.body as UserLoginSchema;
 
-    const userData = await User.getUserByEmailOrPhone(req.db, {
+    const userData = await User.getUserByIdOrEmailOrPhone(req.db, {
       email,
       includePassword: true,
     });
@@ -74,7 +74,7 @@ export const postUserSignup = async (
     }: UserSignupSchema = req.body;
 
     // Check if user already exists
-    const userExists = await User.getUserByEmailOrPhone(req.db, {
+    const userExists = await User.getUserByIdOrEmailOrPhone(req.db, {
       email,
       phone,
     });
@@ -161,7 +161,7 @@ export const getUserById = async (
 ): Promise<void> => {
   try {
     const { id } = req.params;
-    const userData = await User.getUserById(req.db, { userId: parseInt(id) });
+    const userData = await User.getUserByIdOrEmailOrPhone(req.db, { userId: parseInt(id) });
 
     if (!userData) {
       throw { statusCode: 404, message: 'User not found' };
@@ -185,7 +185,7 @@ export const getUserProfile = async (
       throw { statusCode: 401, message: 'User not authenticated' };
     }
 
-    const userData = await User.getUserById(req.db, { userId });
+    const userData = await User.getUserByIdOrEmailOrPhone(req.db, { userId });
 
     if (!userData) {
       throw { statusCode: 404, message: 'User profile not found' };

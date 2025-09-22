@@ -116,6 +116,72 @@ export const userUpdateSchema = baseUserSchema.partial().merge(
 );
 export type UserUpdateSchema = z.infer<typeof userUpdateSchema>;
 
+/**@description User data schema for internal operations */
+export const userDataSchema = baseUserSchema
+  .extend({
+    id: z.number().int().optional(),
+    password: z.string().optional(),
+    hashPassword: z.string().optional(),
+    profilePicture: z.string().optional(),
+    statusId: z.number().int().optional(),
+    tenantId: z.number().int().optional(),
+    createdAt: z.string().optional(),
+    updatedAt: z.string().optional(),
+  })
+  .merge(
+    z.object({
+      // Make all fields optional for UserData
+      firstName: z.string().min(1).optional(),
+      lastName: z.string().min(1).optional(),
+      email: z.string().email('Invalid email').optional(),
+      phone: z.string().min(10).optional(),
+      dob: z.string().optional(),
+    })
+  );
+export type UserDataSchema = z.infer<typeof userDataSchema>;
+
+/**@description User profile schema for API responses */
+export const userProfileSchema = baseUserSchema
+  .extend({
+    id: z.number().int(),
+    profilePicture: z.string().nullable(),
+    statusId: z.number().int(),
+    statusName: z.string().nullable(),
+    statusLabel: z.string().nullable(),
+    tenantId: z.number().int().nullable(),
+    createdAt: z.string(),
+    updatedAt: z.string(),
+    password: z.string().optional(), // Optional for when includePassword is false
+    userRoles: z
+      .array(
+        z.object({
+          id: z.number().int(),
+          name: z.string(),
+          label: z.string(),
+          lookupTypeId: z.number().int(),
+        })
+      )
+      .optional(),
+  })
+  .merge(
+    z.object({
+      // Override baseUserSchema fields to match database nullability
+      title: z.enum(['Mr', 'Mrs', 'Ms']).nullable(),
+      middleName: z.string().nullable(),
+      maidenName: z.string().nullable(),
+      gender: z.enum(['Male', 'Female', 'Other']).nullable(),
+      dob: z.string(), // Required in profile
+      bloodGroup: z
+        .enum(['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'])
+        .nullable(),
+      marriedStatus: z
+        .enum(['Single', 'Married', 'Divorced', 'Widowed'])
+        .nullable(),
+      bio: z.string().nullable(),
+    })
+  );
+export type UserProfileSchema = z.infer<typeof userProfileSchema>;
+
 /**@description Application user interface */
 export interface AppUser {
   id?: number | null;
@@ -145,4 +211,6 @@ oasRegisterSchemas([
   { schemaName: 'UserSchema', schema: userSchema },
   { schemaName: 'UserSignupServiceSchema', schema: userSignupServiceSchema },
   { schemaName: 'UserUpdateSchema', schema: userUpdateSchema },
+  { schemaName: 'UserDataSchema', schema: userDataSchema },
+  { schemaName: 'UserProfileSchema', schema: userProfileSchema },
 ]);
