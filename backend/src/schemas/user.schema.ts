@@ -120,7 +120,6 @@ export type UserUpdateSchema = z.infer<typeof userUpdateSchema>;
 export const userDataSchema = baseUserSchema
   .extend({
     id: z.number().int().optional(),
-    password: z.string().optional(),
     hashPassword: z.string().optional(),
     profilePicture: z.string().optional(),
     statusId: z.number().int().optional(),
@@ -151,7 +150,7 @@ export const userProfileSchema = baseUserSchema
     tenantId: z.number().int().nullable(),
     createdAt: z.string(),
     updatedAt: z.string(),
-    password: z.string().optional(), // Optional for when includePassword is false
+    hashedPassword: z.string().optional(), // Optional for when includePassword is false
     userRoles: z
       .array(
         z.object({

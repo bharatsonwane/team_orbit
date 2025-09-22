@@ -93,7 +93,7 @@ CREATE TABLE IF NOT EXISTS app_user (
     "marriedStatus" married_status_enum,
     email VARCHAR(255) UNIQUE NOT NULL,
     phone VARCHAR(255) UNIQUE NOT NULL,
-    password VARCHAR(255),  -- Store hashed password
+    "hashedPassword" VARCHAR(255),  -- Store hashed password
     "isTemporaryPassword" BOOLEAN DEFAULT TRUE NOT NULL,
     "lastPasswordChangedAt" TIMESTAMP DEFAULT NULL,
     bio TEXT, -- User biography

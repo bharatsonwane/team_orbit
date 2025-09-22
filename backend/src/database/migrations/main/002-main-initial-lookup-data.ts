@@ -285,7 +285,7 @@ export async function up(client: PoolClient): Promise<void> {
             "marriedStatus",
             email,
             phone,
-            password,
+            "hashedPassword",
             bio,
             "statusId",
             "createdAt",

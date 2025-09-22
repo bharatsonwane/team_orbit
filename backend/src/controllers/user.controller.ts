@@ -29,12 +29,12 @@ export const postUserLogin = async (
 
     const isValidPassword = await validatePassword(
       password,
-      userData.password || ''
+      userData.hashedPassword || ''
     );
     if (!isValidPassword) {
       throw { statusCode: 401, message: 'Invalid email or password' };
     }
-    delete userData.password;
+    delete userData.hashedPassword;
 
     const token = createJwtToken({
       userId: userData.id,

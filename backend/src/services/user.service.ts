@@ -16,6 +16,7 @@ export default class User {
       bloodGroup: '"bloodGroup"',
       marriedStatus: '"marriedStatus"',
       profilePicture: '"profilePicture"',
+      hashPassword: '"hashedPassword"',
       statusId: '"statusId"',
       tenantId: '"tenantId"',
       createdAt: '"createdAt"',
@@ -31,7 +32,7 @@ export default class User {
     const userSignupQuery = `
         INSERT INTO app_user (
                 email,
-                password,
+                "hashedPassword",
                 phone,
                 "firstName",
                 "lastName",
@@ -129,7 +130,7 @@ export default class User {
 
     const results = await dbClient.mainPool.query(queryString);
     const response = results.rows[0] as UserProfileSchema;
-    delete (response as any).password;
+    delete (response as any).hashedPassword;
 
     return response;
   }
@@ -204,7 +205,7 @@ export default class User {
   ): Promise<UserProfileSchema> {
     const queryString = `
       UPDATE app_user
-      SET password = '${hashPassword}', "updatedAt" = NOW()
+      SET "hashedPassword" = '${hashPassword}', "updatedAt" = NOW()
       WHERE id = ${userId} RETURNING *;`;
     const results = await dbClient.mainPool.query(queryString);
 
@@ -264,7 +265,7 @@ export default class User {
         up."marriedStatus",
         up.email,
         up.phone,
-        ${includePassword ? 'up.password,' : ''}
+        ${includePassword ? 'up."hashedPassword",' : ''}
         up.bio,
         up."statusId",
         ls.name as "statusName",

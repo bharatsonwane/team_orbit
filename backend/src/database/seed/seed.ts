@@ -120,21 +120,21 @@ async function main(): Promise<void> {
 
       /** Insert new app_user */
       const upsertUserQuery = `
-          INSERT INTO app_user (
-            title,
-            "firstName",
-            "lastName",
-            "middleName",
-            "maidenName",
-            gender,
-            dob,
-            "bloodGroup",
-            "marriedStatus",
-            email,
-            phone,
-            password,
-            bio,
-            "statusId",
+        INSERT INTO app_user (
+          title,
+          "firstName",
+          "lastName",
+          "middleName",
+          "maidenName",
+          gender,
+          dob,
+          "bloodGroup",
+          "marriedStatus",
+          email,
+          phone,
+          "hashedPassword",
+          bio,
+          "statusId",
             "createdAt",
             "updatedAt")
           VALUES (
