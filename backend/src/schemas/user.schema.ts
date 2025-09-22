@@ -84,7 +84,6 @@ export const userSchema = baseUserSchema
       .string()
       .min(6, 'Password should be at least 6 characters long')
       .optional(),
-    profilePicture: z.string().optional(),
     statusId: z.number().int().optional(),
   })
   .merge(
@@ -121,7 +120,6 @@ export const userDataSchema = baseUserSchema
   .extend({
     id: z.number().int().optional(),
     hashedPassword: z.string().optional(),
-    profilePicture: z.string().optional(),
     statusId: z.number().int().optional(),
     tenantId: z.number().int().optional(),
     createdAt: z.string().optional(),
@@ -143,7 +141,6 @@ export type UserDataSchema = z.infer<typeof userDataSchema>;
 export const userProfileSchema = baseUserSchema
   .extend({
     id: z.number().int(),
-    profilePicture: z.string().nullable(),
     statusId: z.number().int(),
     statusName: z.string().nullable(),
     statusLabel: z.string().nullable(),

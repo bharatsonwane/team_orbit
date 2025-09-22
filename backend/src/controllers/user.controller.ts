@@ -129,11 +129,17 @@ export const createUserProfile = async (
 ): Promise<void> => {
   try {
     const userData = req.body;
-    const createdUser = await User.createUserInfo(req.db, { userData });
+    const userStatusId = await Lookup.getLookupIdByName(
+      req.db,
+      userStatusKeys.USER_STATUS_PENDING
+    );
 
-    res.status(201).json({
-      user: createdUser,
+    const createdUser = await User.createUserInfo(req.db, {
+      ...userData,
+      statusId: userStatusId,
     });
+
+    res.status(201).json(createdUser);
   } catch (error) {
     next(error);
   }
@@ -146,9 +152,7 @@ export const getUsers = async (
 ): Promise<void> => {
   try {
     const users = await User.getUsers(req.db);
-    res.status(200).json({
-      users,
-    });
+    res.status(200).json(users);
   } catch (error) {
     next(error);
   }
@@ -161,7 +165,9 @@ export const getUserById = async (
 ): Promise<void> => {
   try {
     const { id } = req.params;
-    const userData = await User.getUserByIdOrEmailOrPhone(req.db, { userId: parseInt(id) });
+    const userData = await User.getUserByIdOrEmailOrPhone(req.db, {
+      userId: parseInt(id),
+    });
 
     if (!userData) {
       throw { statusCode: 404, message: 'User not found' };

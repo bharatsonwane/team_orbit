@@ -1,8 +1,8 @@
 import { dbClientPool } from '../middleware/dbClientMiddleware';
-import { 
-  UserSignupServiceSchema, 
-  UserDataSchema, 
-  UserProfileSchema 
+import {
+  UserSignupServiceSchema,
+  UserDataSchema,
+  UserProfileSchema,
 } from '../schemas/user.schema';
 
 export default class User {
@@ -15,7 +15,6 @@ export default class User {
       maidenName: '"maidenName"',
       bloodGroup: '"bloodGroup"',
       marriedStatus: '"marriedStatus"',
-      profilePicture: '"profilePicture"',
       hashedPassword: '"hashedPassword"',
       statusId: '"statusId"',
       tenantId: '"tenantId"',
@@ -77,7 +76,7 @@ export default class User {
 
   static async createUserInfo(
     dbClient: dbClientPool,
-    { userData }: { userData: Partial<UserDataSchema> }
+    userData: Partial<UserDataSchema>
   ): Promise<UserProfileSchema> {
     const acceptedKeys = [
       'title',
@@ -92,7 +91,6 @@ export default class User {
       'email',
       'phone',
       'hashedPassword',
-      'profilePicture',
       'bio',
       'statusId',
       'tenantId',
@@ -313,7 +311,6 @@ export default class User {
           up."marriedStatus",
           up.email,
           up.phone,
-          up."profilePicture",
           up.bio,
           up."statusId",
           ls.name as "statusName",
