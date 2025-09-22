@@ -94,12 +94,12 @@ export const postUserSignup = async (
     // const userRoleId = await Lookup.getLookupIdByName(req.db, userRoleKeys.USER_ROLE_TENANT_USER);
 
     // Hash password
-    const hashPassword = await getHashPassword(password);
+    const hashedPassword = await getHashPassword(password);
 
     // Create user
     const createdUser = await User.signupUser(req.db, {
       email,
-      hashPassword,
+      hashedPassword,
       phone,
       firstName,
       lastName,
@@ -227,10 +227,10 @@ export const updateUserPassword = async (
     const { id } = req.params;
     const { password } = req.body;
 
-    const hashPassword = await getHashPassword(password);
+    const hashedPassword = await getHashPassword(password);
     const updatedUser = await User.updateUserPassword(req.db, {
       userId: parseInt(id),
-      hashPassword,
+      hashedPassword,
     });
 
     res.status(200).json({

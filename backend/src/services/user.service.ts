@@ -16,7 +16,7 @@ export default class User {
       bloodGroup: '"bloodGroup"',
       marriedStatus: '"marriedStatus"',
       profilePicture: '"profilePicture"',
-      hashPassword: '"hashedPassword"',
+      hashedPassword: '"hashedPassword"',
       statusId: '"statusId"',
       tenantId: '"tenantId"',
       createdAt: '"createdAt"',
@@ -51,7 +51,7 @@ export default class User {
                 "updatedAt"
             ) VALUES (
                 '${userData.email}',
-                '${userData.hashPassword}',
+                '${userData.hashedPassword}',
                 '${userData.phone}',
                 '${userData.firstName}',
                 '${userData.lastName}',
@@ -91,7 +91,7 @@ export default class User {
       'marriedStatus',
       'email',
       'phone',
-      'hashPassword',
+      'hashedPassword',
       'profilePicture',
       'bio',
       'statusId',
@@ -197,15 +197,15 @@ export default class User {
     dbClient: dbClientPool,
     {
       userId,
-      hashPassword,
+      hashedPassword,
     }: {
       userId: number;
-      hashPassword: string;
+      hashedPassword: string;
     }
   ): Promise<UserProfileSchema> {
     const queryString = `
       UPDATE app_user
-      SET "hashedPassword" = '${hashPassword}', "updatedAt" = NOW()
+      SET "hashedPassword" = '${hashedPassword}', "updatedAt" = NOW()
       WHERE id = ${userId} RETURNING *;`;
     const results = await dbClient.mainPool.query(queryString);
 

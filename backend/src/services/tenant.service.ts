@@ -52,12 +52,12 @@ export default class Tenant {
       const userStatusId = await Lookup.getUserStatusActiveId(client);
 
       // 3. Hash the admin user password
-      const hashPassword = await getHashPassword(tenantData.adminUser.password);
+      const hashedPassword = await getHashPassword(tenantData.adminUser.password);
 
       // 4. Create the Tenant Admin user
       const adminUser = await User.signupUser(dbClient, {
         email: tenantData.adminUser.email,
-        hashPassword,
+        hashedPassword,
         phone: tenantData.adminUser.phone || '',
         firstName: tenantData.adminUser.firstName,
         lastName: tenantData.adminUser.lastName,

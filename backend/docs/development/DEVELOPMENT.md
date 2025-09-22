@@ -579,7 +579,7 @@ const validatedData = userSchema.parse(req.body);
 // Hash passwords with bcrypt
 import bcrypt from 'bcryptjs';
 
-const hashPassword = async (password: string): Promise<string> => {
+const hashedPassword = async (password: string): Promise<string> => {
   const saltRounds = 12;
   return await bcrypt.hash(password, saltRounds);
 };

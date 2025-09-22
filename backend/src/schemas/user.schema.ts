@@ -59,12 +59,12 @@ export type UserSignupSchema = z.infer<typeof userSignupSchema>;
 
 export const userSignupServiceSchema = userSignupSchema
   .extend({
-    hashPassword: z.string(),
+    hashedPassword: z.string(),
     statusId: z.number().int().optional(),
     tenantId: z.number().int().optional(),
   })
   .omit({
-    password: true, // Remove password field since we use hashPassword instead
+    password: true, // Remove password field since we use hashedPassword instead
   });
 export type UserSignupServiceSchema = z.infer<typeof userSignupServiceSchema>;
 
@@ -120,7 +120,7 @@ export type UserUpdateSchema = z.infer<typeof userUpdateSchema>;
 export const userDataSchema = baseUserSchema
   .extend({
     id: z.number().int().optional(),
-    hashPassword: z.string().optional(),
+    hashedPassword: z.string().optional(),
     profilePicture: z.string().optional(),
     statusId: z.number().int().optional(),
     tenantId: z.number().int().optional(),
