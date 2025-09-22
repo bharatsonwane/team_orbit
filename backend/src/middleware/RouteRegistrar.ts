@@ -2,7 +2,7 @@ import express, { Router, RequestHandler } from 'express';
 import { validateRequest } from './validationMiddleware';
 import {
   bearerAuth,
-  docRegistry,
+  oasRegistry,
 } from '../openApiSpecification/openAPIDocumentGenerator';
 import { commonDocCreator } from '../openApiSpecification/openAPIDocumentGenerator';
 

@@ -4,7 +4,7 @@ import {
   getLookupTypeById,
 } from '../controllers/lookup.controller';
 import RouteRegistrar from '../middleware/RouteRegistrar';
-import { lookupListSchema, lookupTypeSchema } from '../schemas/lookup.schema';
+import { lookupListSchema, lookupTypeWithLookupsSchema } from '../schemas/lookup.schema';
 import { idValidation } from '../schemas/common.schema';
 
 const registrar = new RouteRegistrar({
@@ -21,7 +21,7 @@ registrar.get('/type/:id', {
   requestSchema: {
     paramsSchema: { id: idValidation },
   },
-  responseSchemas: [{ statusCode: 200, schema: lookupTypeSchema }],
+  responseSchemas: [{ statusCode: 200, schema: lookupTypeWithLookupsSchema }],
   controller: getLookupTypeById,
 });
 

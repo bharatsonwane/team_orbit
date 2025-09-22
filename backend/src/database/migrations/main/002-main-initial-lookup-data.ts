@@ -9,7 +9,7 @@ interface Lookup {
   lookupTypeId?: number;
 }
 
-interface LookupType {
+interface LookupTypeWithLookupsSchema {
   id?: number;
   name: string;
   label: string;
@@ -39,7 +39,7 @@ interface AppUser {
   tenantId?: number;
 }
 
-const lookupData: LookupType[] = [
+const lookupData: LookupTypeWithLookupsSchema[] = [
   {
     name: 'USER_ROLE',
     label: 'User Role',

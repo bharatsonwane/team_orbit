@@ -1,20 +1,15 @@
 import { z } from 'zod';
-import { roleKeys } from '@/utils/constants';
+import { userRoleKeys } from '@/utils/constants';
 
 // User role enum
 export const userRoleSchema = z.enum([
-  roleKeys.platformSuperAdmin,
-  roleKeys.platformAdmin,
-  roleKeys.platformUser,
-  roleKeys.platformAgent,
-  roleKeys.platformManager,
-  roleKeys.platformAuditor,
-  roleKeys.tenantAdmin,
-  roleKeys.tenantManager,
-  roleKeys.tenantAgent,
-  roleKeys.tenantUser,
-  roleKeys.tenantEmployee,
-  roleKeys.any,
+  userRoleKeys.ANY,
+  userRoleKeys.USER_ROLE_PLATFORM_SUPER_ADMIN,
+  userRoleKeys.USER_ROLE_PLATFORM_ADMIN,
+  userRoleKeys.USER_ROLE_PLATFORM_USER,
+  userRoleKeys.USER_ROLE_TENANT_ADMIN,
+  userRoleKeys.USER_ROLE_TENANT_MANAGER,
+  userRoleKeys.USER_ROLE_TENANT_USER,
 ]);
 export type UserRole = z.infer<typeof userRoleSchema>;
 

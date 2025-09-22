@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { oasRegisterSchemas } from '../openApiSpecification/openAPIDocumentGenerator';
 
 export const idValidation = z
   .string()
@@ -6,14 +7,9 @@ export const idValidation = z
   .transform(Number)
   .refine(num => num > 0, 'ID must be a positive number');
 
-
 export const idSchema = z.object({
   params: z.object({ id: idValidation }),
 });
 export type IdSchema = z.infer<typeof idSchema>;
 
-const idSchema1 = z
-  .string()
-  .refine(data => !Number.isNaN(Number(data)), 'ID must be a numeric value')
-  .transform(Number)
-  .refine(num => num > 0, 'ID must be a positive number');
+oasRegisterSchemas([{ schemaName: 'IdSchema', schema: idSchema }]);

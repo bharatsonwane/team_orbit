@@ -1,10 +1,13 @@
 import { z } from 'zod';
+import { oasRegisterSchemas } from '../openApiSpecification/openAPIDocumentGenerator';
 
 // Tenant creation schema
 export const createTenantSchema = z.object({
   name: z.string().min(2, 'Tenant name must be at least 2 characters').max(255),
-  label: z.string().min(2, 'Tenant label must be at least 2 characters').max(255),
-  description: z.string().optional(),
+  label: z
+    .string()
+    .min(2, 'Tenant label must be at least 2 characters')
+    .max(255),
   // Tenant Admin user details
   adminUser: z.object({
     email: z.string().email('Invalid email format'),
@@ -21,7 +24,6 @@ export type CreateTenantSchema = z.infer<typeof createTenantSchema>;
 export const updateTenantSchema = z.object({
   name: z.string().min(2).max(255).optional(),
   label: z.string().min(2).max(255).optional(),
-  description: z.string().optional(),
   isArchived: z.boolean().optional(),
 });
 
@@ -32,7 +34,7 @@ export const tenantSchema = z.object({
   id: z.number(),
   name: z.string(),
   label: z.string(),
-  description: z.string().nullable(),
+  description: z.string().nullable(), // Keep for backward compatibility
   isArchived: z.boolean(),
   createdAt: z.string(),
   updatedAt: z.string(),
@@ -51,12 +53,21 @@ export const tenantWithAdminSchema = z.object({
     lastName: z.string(),
     phone: z.string().nullable(),
     tenantId: z.number(),
-    userRoles: z.array(z.object({
-      id: z.number(),
-      label: z.string(),
-      lookupTypeId: z.number(),
-    })),
+    userRoles: z.array(
+      z.object({
+        id: z.number(),
+        label: z.string(),
+        lookupTypeId: z.number(),
+      })
+    ),
   }),
 });
 
 export type TenantWithAdminSchema = z.infer<typeof tenantWithAdminSchema>;
+
+oasRegisterSchemas([
+  { schemaName: 'CreateTenantSchema', schema: createTenantSchema },
+  { schemaName: 'UpdateTenantSchema', schema: updateTenantSchema },
+  { schemaName: 'TenantSchema', schema: tenantSchema },
+  { schemaName: 'TenantWithAdminSchema', schema: tenantWithAdminSchema },
+]);

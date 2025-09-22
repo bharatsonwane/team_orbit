@@ -1,7 +1,7 @@
 import { z } from 'zod';
 import {
   createApiResponse,
-  docRegistry,
+  oasRegistry,
 } from '../../openApiSpecification/openAPIDocumentGenerator';
 import { chatMessageSchema } from '../../schemas/chat.schema';
 
@@ -19,7 +19,7 @@ interface SendMessageDocConfig {
     tags,
     security,
   }: SendMessageDocConfig): void => {
-    docRegistry.registerPath({
+    oasRegistry.registerPath({
       method,
       path: routePath,
       tags,

@@ -23,7 +23,7 @@ import {
 import { ThemeToggle } from '@/components/theme-toggle';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useAuthService } from '@/contexts/AuthContextProvider';
-import { roleKeys } from '@/utils/constants';
+import { userRoleKeys } from '@/utils/constants';
 import type { UserRole } from '@/schemas/user';
 
 // Default company info - can be made configurable later
@@ -49,7 +49,7 @@ export function AppSidebar() {
     if (!loggedInUser) return false;
 
     // Handle the ANY role - if ANY is in allowed roles, grant access
-    if (authRoles.includes(roleKeys.any as UserRole)) return true;
+    if (authRoles.includes(userRoleKeys.ANY as UserRole)) return true;
 
     // Check if user's role is in the allowed roles
     return authRoles.includes(loggedInUser.role as UserRole);

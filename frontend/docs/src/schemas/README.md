@@ -16,7 +16,12 @@ src/schemas/
 
 ### `user.ts`
 
-User and authentication-related Zod schemas and TypeScript types. Includes user schemas, login/register validation, and complex types like AuthState.
+User and authentication-related Zod schemas and TypeScript types. Includes user schemas, login/register validation, and user role definitions.
+
+**Updated Schema Structure:**
+- User roles now use `userRoleKeys` constants (e.g., `USER_ROLE_PLATFORM_ADMIN`)
+- User schema includes `statusId` for user status references
+- Role-based access control with new role hierarchy
 
 ### `route.ts`
 
@@ -71,7 +76,7 @@ const user: User = {
   email: 'user@example.com',
   first_name: 'John',
   last_name: 'Doe',
-  role: 'USER',
+  role: userRoleKeys.USER_ROLE_TENANT_USER, // Updated to use new role constants
   created_at: '2023-01-01T00:00:00Z',
   updated_at: '2023-01-01T00:00:00Z',
 };

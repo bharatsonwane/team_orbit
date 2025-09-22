@@ -1,5 +1,13 @@
 # TeamOrbit Backend Documentation
 
+## 📋 Recent Updates
+
+- **Schema Migration**: Implemented lookup-based role and status system ([Migration Guide](./SCHEMA_MIGRATION.md))
+- **Database Updates**: New lookup tables for centralized role/status management
+- **Service Layer**: Updated all services to use new schema with parameterized queries
+- **Documentation Organization**: All docs moved to `/docs` folder structure
+- **Security**: Enhanced SQL injection prevention with parameterized queries
+
 Welcome to the comprehensive documentation for the TeamOrbit backend API.
 
 ## 🚀 Quick Start
@@ -22,6 +30,16 @@ Welcome to the comprehensive documentation for the TeamOrbit backend API.
 - **[API Documentation](./api/API.md)** - Complete API reference and endpoints
 - **[Architecture Guide](./architecture/ARCHITECTURE.md)** - System architecture and design patterns
 - **[Database Schema](./api/DATABASE.md)** - Database design and relationships
+
+### Migration & Updates
+
+- **[Schema Migration Guide](./SCHEMA_MIGRATION.md)** - Database schema updates and service changes
+- **[Documentation Strategy](./DOCUMENTATION_STRATEGY.md)** - Documentation organization and standards
+
+### Source Code Documentation
+
+- **[Controllers](./src/controllers/)** - API controller documentation
+- **[Services](./src/services/)** - Business logic service documentation
 
 ### Deployment & Operations
 

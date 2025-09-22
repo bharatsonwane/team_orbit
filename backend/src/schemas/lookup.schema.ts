@@ -1,30 +1,42 @@
 import { z } from 'zod';
+import { oasRegisterSchemas } from '../openApiSpecification/openAPIDocumentGenerator';
 
-const lookupSchema = z.object({
-  id: z.number(),
-  label: z.string(),
-});
-
-export type LookupSchema = z.infer<typeof lookupSchema>;
-
-export const lookupTypeSchema = z.object({
+const baseLookupTypeSchema = z.object({
   id: z.number(),
   name: z.string(),
-  lookups: z.array(lookupSchema),
+  label: z.string(),
+  isSystem: z.boolean(),
 });
-export type LookupTypeSchema = z.infer<typeof lookupTypeSchema>;
+export type BaseLookupTypeSchema = z.infer<typeof baseLookupTypeSchema>;
 
-export const lookupListSchema = z.array(lookupTypeSchema);
+const baseLookupSchema = z.object({
+  id: z.number(),
+  name: z.string(),
+  label: z.string(),
+  isSystem: z.boolean(),
+  sortOrder: z.number(),
+  lookupTypeId: z.number(),
+});
+export type LookupSchema = z.infer<typeof baseLookupSchema>;
+
+export const lookupTypeWithLookupsSchema = z.object({
+  id: z.number(),
+  name: z.string(),
+  lookups: z.array(baseLookupSchema),
+});
+export type LookupTypeWithLookupsSchema = z.infer<
+  typeof lookupTypeWithLookupsSchema
+>;
+
+export const lookupListSchema = z.array(lookupTypeWithLookupsSchema);
 export type LookupListSchema = z.infer<typeof lookupListSchema>;
 
-export interface LookupType {
-  lookupType: string;
-  lookups: { label: string }[];
-}
-
-export interface Lookup {
-  id: number;
-  label: string;
-  lookupTypeId: number;
-  lookupTypeName: string;
-}
+oasRegisterSchemas([
+  { schemaName: 'BaseLookupTypeSchema', schema: baseLookupTypeSchema },
+  { schemaName: 'BaseLookupSchema', schema: baseLookupSchema },
+  {
+    schemaName: 'LookupTypeWithLookupsSchema',
+    schema: lookupTypeWithLookupsSchema,
+  },
+  { schemaName: 'LookupListSchema', schema: lookupListSchema },
+]);

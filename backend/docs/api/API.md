@@ -648,9 +648,9 @@ Authorization: Bearer <token>
 
 ### Lookup Data Structure
 
-#### LookupType Interface
+#### LookupTypeWithLookupsSchema Interface
 ```typescript
-interface LookupType {
+interface LookupTypeWithLookupsSchema {
   id: number;
   name: string;
   lookups: LookupItem[];

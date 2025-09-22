@@ -6,8 +6,9 @@ import {
   createJwtToken,
 } from '../utils/authHelper';
 import Lookup from '../services/lookup.service';
-import { UserLoginSchema } from '../schemas/user.schema';
+import { UserLoginSchema, UserSignupSchema } from '../schemas/user.schema';
 import { AuthenticatedRequest } from '../middleware/authRoleMiddleware';
+import { userRoleKeys, userStatusKeys } from '../utils/constants';
 
 export const postUserLogin = async (
   req: Request,
@@ -56,7 +57,21 @@ export const postUserSignup = async (
   next: NextFunction
 ): Promise<void> => {
   try {
-    const { email, password, phone, firstName, lastName } = req.body;
+    const {
+      email,
+      password,
+      phone,
+      firstName,
+      lastName,
+      title,
+      middleName,
+      maidenName,
+      gender,
+      dob,
+      bloodGroup,
+      marriedStatus,
+      bio,
+    }: UserSignupSchema = req.body;
 
     // Check if user already exists
     const userExists = await User.getUserByEmailOrPhone(req.db, {
@@ -72,28 +87,36 @@ export const postUserSignup = async (
     }
 
     // Get default user status and role IDs
-    const userStatusId = await Lookup.getUserStatusPendingId(req.db);
-    const userRoleId = await Lookup.getUserRoleUserId(req.db);
+    const userStatusId = await Lookup.getLookupIdByName(
+      req.db,
+      userStatusKeys.USER_STATUS_PENDING
+    );
+    // const userRoleId = await Lookup.getLookupIdByName(req.db, userRoleKeys.USER_ROLE_TENANT_USER);
 
     // Hash password
     const hashPassword = await getHashPassword(password);
 
     // Create user
     const createdUser = await User.signupUser(req.db, {
-      userData: {
-        email,
-        hashPassword,
-        phone,
-        firstName,
-        lastName,
-        // userStatus: userStatusId,
-        tenantId: 1, // Default tenant ID, adjust as needed
-      },
+      email,
+      hashPassword,
+      phone,
+      firstName,
+      lastName,
+      statusId: userStatusId,
+      tenantId: undefined, // tenantId should be null for signup
+      // Optional fields
+      title,
+      middleName,
+      maidenName,
+      gender,
+      dob,
+      bloodGroup,
+      marriedStatus,
+      bio,
     });
 
-    res.status(201).json({
-      user: createdUser,
-    });
+    res.status(201).json(createdUser);
   } catch (error) {
     next(error);
   }

@@ -22,7 +22,7 @@ const getLookupDataByTypeLabel = async ({
 }): Promise<Lookup> => {
   /** Get lookup data query */
   const getLookupDataQuery = `
-            SELECT l.id, l.label, l."lookupTypeId", lt.name
+            SELECT l.id, l.name, l.label, l."lookupTypeId", lt.name as typeName
             FROM lookup_type lt
             INNER JOIN lookup l ON lt.id = l."lookupTypeId"
             WHERE lt.name = $1 AND l.label = $2;
@@ -74,6 +74,12 @@ async function main(): Promise<void> {
       lookupLabel: roleKeys.platformSuperAdmin,
     });
 
+    const activeUserStatusData = await getLookupDataByTypeLabel({
+      client: pool,
+      lookupTypeName: lookupTypeKeys.userStatus,
+      lookupLabel: userStatusKeys.active,
+    });
+
     const userDataList: AppUser[] = [
       {
         title: 'Mr',
@@ -89,7 +95,7 @@ async function main(): Promise<void> {
         phone: '1234567890',
         password: 'Super@123',
         bio: 'This is Super Admin',
-        userStatus: userStatusKeys.active,
+        statusId: activeUserStatusData.id,
         tenantId: tenantId,
         userRoles: [platformSuperAdminRoleData.id],
       },
@@ -128,7 +134,7 @@ async function main(): Promise<void> {
             phone,
             password,
             bio,
-            "userStatus",
+            "statusId",
             "createdAt",
             "updatedAt")
           VALUES (
@@ -152,7 +158,7 @@ async function main(): Promise<void> {
           userData.phone,
           hashedPassword,
           userData.bio,
-          userData.userStatus,
+          userData.statusId,
         ])
       ).rows;
 
@@ -161,7 +167,7 @@ async function main(): Promise<void> {
       for (const roleId of userData.userRoles) {
         await pool.query(
           `
-            INSERT INTO user_role ("userId", "roleId", "createdAt", "updatedAt")
+            INSERT INTO user_role_xref ("userId", "roleId", "createdAt", "updatedAt")
             VALUES ($1, $2, NOW(), NOW())
           `,
           [userResponse.id, roleId]

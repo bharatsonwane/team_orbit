@@ -1,68 +1,16 @@
 import { z } from 'zod';
-import { docRegistry } from '../openApiSpecification/openAPIDocumentGenerator';
+import {
+  oasRegisterSchemas,
+  oasRegistry,
+} from '../openApiSpecification/openAPIDocumentGenerator';
 
-/**@description user Login schema */
-export const userLoginSchema = z.object({
-  email: z.string().email('Invalid email'),
-  password: z.string(),
-});
-export type UserLoginSchema = z.infer<typeof userLoginSchema>;
-docRegistry.register('UserLogin', userLoginSchema);
-
-/**@description user signup schema */
-export const userSignupSchema = z.object({
-  email: z.string().email('Invalid email'),
-  password: z.string().min(6, 'Password should be at least 6 characters long'),
-  phone: z.string().min(10),
-  firstName: z.string().min(2),
-  lastName: z.string().min(2),
-});
-export type UserSignupSchema = z.infer<typeof userSignupSchema>;
-docRegistry.register('UserSignup', userSignupSchema);
-
-export const userUpdatePasswordSchema = z.object({
-  password: z.string().min(6, 'Password should be at least 6 characters long'),
-  email: z.string().email('Invalid email'),
-  phone: z.string().min(10),
-});
-export type UserUpdatePasswordSchema = z.infer<typeof userUpdatePasswordSchema>;
-docRegistry.register('UserUpdatePassword', userUpdatePasswordSchema);
-
-/**@description User schema */
-export const userSchema = z.object({
-  id: z.number().int().optional(),
-  title: z.enum(['Mr', 'Mrs', 'Ms']),
+/**@description Base user schema with common fields */
+export const baseUserSchema = z.object({
+  title: z.enum(['Mr', 'Mrs', 'Ms']).optional(),
   firstName: z.string().min(1),
   lastName: z.string().min(1),
-  middleName: z.string().optional(),
-  maidenName: z.string().optional(),
-  gender: z.enum(['Male', 'Female', 'Other']),
-  dob: z
-    .string()
-    .regex(/^\d{4}-\d{2}-\d{2}$/, 'Invalid date format, should be YYYY-MM-DD'),
-  bloodGroup: z.enum(['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-']),
-  marriedStatus: z.enum(['Single', 'Married']),
-  email: z.string().email('Invalid email').optional(),
-  phone: z.string().min(10),
-  password: z
-    .string()
-    .min(6, 'Password should be at least 6 characters long')
-    .optional(),
-  profilePicture: z.string().optional(),
-  bio: z.string().optional(),
-  userStatusLookupId: z.number().int().optional(),
-  userRoleLookupId: z.number().int().optional(),
-});
-export type UserSchema = z.infer<typeof userSchema>;
-docRegistry.register('User', userSchema);
-
-/**@description User Update schema */
-export const userUpdateSchema = z.object({
-  title: z.enum(['Mr', 'Mrs', 'Ms']).optional(),
-  firstName: z.string().min(1).optional(),
-  lastName: z.string().min(1).optional(),
-  middleName: z.string().optional(),
-  maidenName: z.string().optional(),
+  middleName: z.string().min(1).optional(),
+  maidenName: z.string().min(1).optional(),
   gender: z.enum(['Male', 'Female', 'Other']).optional(),
   dob: z
     .string()
@@ -71,28 +19,130 @@ export const userUpdateSchema = z.object({
   bloodGroup: z
     .enum(['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'])
     .optional(),
-  marriedStatus: z.enum(['Single', 'Married']).optional(),
+  marriedStatus: z
+    .enum(['Single', 'Married', 'Divorced', 'Widowed'])
+    .optional(),
+
+  // Contact Information
+  email: z.string().email('Invalid email'),
+  phone: z.string().min(10),
+
+  // Additional Information
   bio: z.string().optional(),
 });
-export type UserUpdateSchema = z.infer<typeof userUpdateSchema>;
-docRegistry.register('UserUpdate', userUpdateSchema);
+export type BaseUserSchema = z.infer<typeof baseUserSchema>;
 
+/**@description user Login schema */
+export const userLoginSchema = z.object({
+  email: z.string().email('Invalid email'),
+  password: z.string(),
+});
+export type UserLoginSchema = z.infer<typeof userLoginSchema>;
+// oasRegistry.register('UserLogin', userLoginSchema);
+
+/**@description user signup schema */
+export const userSignupSchema = baseUserSchema
+  .extend({
+    password: z
+      .string()
+      .min(6, 'Password should be at least 6 characters long'),
+  })
+  .merge(
+    z.object({
+      // Override firstName and lastName to have stricter validation for signup
+      firstName: z.string().min(2),
+      lastName: z.string().min(2),
+    })
+  );
+export type UserSignupSchema = z.infer<typeof userSignupSchema>;
+// oasRegistry.register('UserSignup', userSignupSchema);
+
+export const userSignupServiceSchema = userSignupSchema
+  .extend({
+    hashPassword: z.string(),
+    statusId: z.number().int().optional(),
+    tenantId: z.number().int().optional(),
+  })
+  .omit({
+    password: true, // Remove password field since we use hashPassword instead
+  });
+export type UserSignupServiceSchema = z.infer<typeof userSignupServiceSchema>;
+
+/**@description User update password schema */
+export const userUpdatePasswordSchema = z.object({
+  password: z.string().min(6, 'Password should be at least 6 characters long'),
+  email: z.string().email('Invalid email'),
+  phone: z.string().min(10),
+});
+export type UserUpdatePasswordSchema = z.infer<typeof userUpdatePasswordSchema>;
+
+/**@description Full user schema with system fields */
+export const userSchema = baseUserSchema
+  .extend({
+    id: z.number().int().optional(),
+    password: z
+      .string()
+      .min(6, 'Password should be at least 6 characters long')
+      .optional(),
+    profilePicture: z.string().optional(),
+    statusId: z.number().int().optional(),
+  })
+  .merge(
+    z.object({
+      // Override required fields to be optional for full user schema
+      email: z.string().email('Invalid email').optional(),
+      // Override marriedStatus to match database constraint (only Single/Married in userSchema)
+      marriedStatus: z.enum(['Single', 'Married']).optional(),
+      // Make title and gender required in full user schema
+      title: z.enum(['Mr', 'Mrs', 'Ms']),
+      gender: z.enum(['Male', 'Female', 'Other']),
+      dob: z
+        .string()
+        .regex(
+          /^\d{4}-\d{2}-\d{2}$/,
+          'Invalid date format, should be YYYY-MM-DD'
+        ),
+      bloodGroup: z.enum(['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-']),
+    })
+  );
+export type UserSchema = z.infer<typeof userSchema>;
+
+/**@description User update schema - all fields optional */
+export const userUpdateSchema = baseUserSchema.partial().merge(
+  z.object({
+    // Override marriedStatus to match database constraint (only Single/Married in update)
+    marriedStatus: z.enum(['Single', 'Married']).optional(),
+  })
+);
+export type UserUpdateSchema = z.infer<typeof userUpdateSchema>;
+
+/**@description Application user interface */
 export interface AppUser {
   id?: number | null;
-  title: string;
+  title: 'Mr' | 'Mrs' | 'Ms';
   firstName: string;
   lastName: string;
   middleName: string;
   maidenName: string;
-  gender: string;
+  gender: 'Male' | 'Female' | 'Other';
   dob: string;
-  bloodGroup: string;
-  marriedStatus: string;
+  bloodGroup: 'A+' | 'A-' | 'B+' | 'B-' | 'AB+' | 'AB-' | 'O+' | 'O-';
+  marriedStatus: 'Single' | 'Married' | 'Divorced' | 'Widowed';
   email: string;
   phone: string;
   password: string;
   bio: string;
-  userStatus: string;
+  statusId: number;
   tenantId: number;
   userRoles: number[];
 }
+
+oasRegisterSchemas([
+  { schemaName: 'BaseUserSchema', schema: baseUserSchema },
+  { schemaName: 'UserLoginSchema', schema: userLoginSchema },
+  { schemaName: 'UserSignupSchema', schema: userSignupSchema },
+  { schemaName: 'UserUpdatePasswordSchema', schema: userUpdatePasswordSchema },
+  { schemaName: 'UserSchema', schema: userSchema },
+  { schemaName: 'UserSignupServiceSchema', schema: userSignupServiceSchema },
+  { schemaName: 'UserUpdateSchema', schema: userUpdateSchema },
+]);

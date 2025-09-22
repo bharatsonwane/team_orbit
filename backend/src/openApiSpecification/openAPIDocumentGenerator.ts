@@ -68,9 +68,17 @@ export function createApiResponses(configs: ApiResponseConfig[]) {
   return responses;
 }
 
-export const docRegistry = new OpenAPIRegistry();
+export const oasRegistry = new OpenAPIRegistry();
 
-export const bearerAuth = docRegistry.registerComponent(
+export const oasRegisterSchemas = (
+  schemaList: { schemaName: string; schema: z.ZodSchema }[]
+) => {
+  schemaList.forEach(schema => {
+    oasRegistry.register(schema.schemaName, schema.schema);
+  });
+};
+
+export const bearerAuth = oasRegistry.registerComponent(
   'securitySchemes',
   'bearerAuth',
   {
@@ -138,13 +146,13 @@ export const commonDocCreator = ({
     config.security = security;
   }
 
-  docRegistry.registerPath({ ...config });
+  oasRegistry.registerPath({ ...config });
 };
 
 extendZodWithOpenApi(z);
 
 export function generateOpenAPIDocument() {
-  const generator = new OpenApiGeneratorV3(docRegistry.definitions);
+  const generator = new OpenApiGeneratorV3(oasRegistry.definitions);
 
   return generator.generateDocument({
     openapi: '3.0.0',

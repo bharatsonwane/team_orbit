@@ -1,6 +1,6 @@
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { RouteGuardRenderer, mainRouteList} from './components/AppRouter';
-import { roleKeys } from './utils/constants';
+import { userRoleKeys } from './utils/constants';
 
 function App() {
   return (
@@ -21,7 +21,7 @@ function App() {
       <Route
         path="*"
         element={
-          <RouteGuardRenderer authRoles={[roleKeys.any]}>
+          <RouteGuardRenderer authRoles={[userRoleKeys.ANY]}>
             <Navigate to="/dashboard" replace />
           </RouteGuardRenderer>
         }

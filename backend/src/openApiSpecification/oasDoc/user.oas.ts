@@ -1,7 +1,7 @@
 import { z } from 'zod';
 import {
   createApiResponse,
-  docRegistry,
+  oasRegistry,
 } from '../../openApiSpecification/openAPIDocumentGenerator';
 import {
   userSchema,
@@ -23,7 +23,7 @@ export const getUserOASSchema = ({
   tags,
   security,
 }: DocConfig): void => {
-  docRegistry.registerPath({
+  oasRegistry.registerPath({
     method,
     path: routePath,
     tags,
@@ -39,7 +39,7 @@ export const getUserProfileOASSchema = ({
   tags,
   security,
 }: DocConfig): void => {
-  docRegistry.registerPath({
+  oasRegistry.registerPath({
     method,
     path: routePath,
     tags,
@@ -63,7 +63,7 @@ export const updateUserPasswordOASSchema = ({
   tags,
   security,
 }: DocConfig): void => {
-  docRegistry.registerPath({
+  oasRegistry.registerPath({
     method,
     path: routePath,
     tags,
@@ -107,7 +107,7 @@ export const testQueryOASSchema = ({
   method,
   tags,
 }: Omit<DocConfig, 'security'>): void => {
-  docRegistry.registerPath({
+  oasRegistry.registerPath({
     method,
     path: routePath,
     tags,

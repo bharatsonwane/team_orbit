@@ -713,7 +713,7 @@ The TeamOrbit backend has migrated to class-based services for better organizati
 export default class Lookup {
   constructor(reqObj: any) {}
 
-  static async retrieveLookupList(): Promise<LookupType[]> {
+  static async retrieveLookupList(): Promise<LookupTypeWithLookupsSchema[]> {
     const queryString = `
       SELECT 
         lt.id AS "lookupTypeId",

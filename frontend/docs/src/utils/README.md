@@ -25,7 +25,14 @@ Authentication helper functions for role-based access control and user permissio
 
 ### `constants.ts`
 
-Application constants including role keys for route protection and other shared constants.
+Application constants including lookup type keys, user role keys, status keys, and other shared constants.
+
+**Updated Constants Structure:**
+- `lookupTypeKeys` - Database lookup type identifiers (USER_ROLE, USER_STATUS, etc.)
+- `userRoleKeys` - User role constants (USER_ROLE_PLATFORM_ADMIN, etc.)
+- `userStatusKeys` - User status constants (USER_STATUS_ACTIVE, etc.)
+- `tenantStatusKeys` - Tenant status constants
+- `chatTypeKeys` - Chat type constants
 
 ### `date.ts`
 
@@ -56,8 +63,8 @@ import { hasRoleAccess } from '@/utils/authHelper';
 import type { UserRole } from '@/schemas/user';
 
 // Check if user has access based on allowed roles
-const allowedRoles: UserRole[] = ['ADMIN', 'USER'];
-const userRoles: UserRole[] = ['USER'];
+const allowedRoles: UserRole[] = [userRoleKeys.USER_ROLE_PLATFORM_ADMIN, userRoleKeys.USER_ROLE_TENANT_USER];
+const userRoles: UserRole[] = [userRoleKeys.USER_ROLE_TENANT_USER];
 
 if (hasRoleAccess({ allowedRoles, userRoles })) {
   // User has access
@@ -77,12 +84,12 @@ if (hasRoleAccess({ userRoles })) {
 ### Constants
 
 ```tsx
-import { roleKeys } from '@/utils/constants';
+import { userRoleKeys } from '@/utils/constants';
 
 // Use in route protection
 const protectedRoute = {
   path: '/admin',
-  authRoles: [roleKeys.ADMIN],
+  authRoles: [userRoleKeys.USER_ROLE_PLATFORM_ADMIN],
   element: <AdminPage />,
 };
 ```

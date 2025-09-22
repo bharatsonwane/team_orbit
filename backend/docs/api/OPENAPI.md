@@ -58,10 +58,10 @@ import {
 } from '@asteasolutions/zod-to-openapi';
 
 // Global registry for all API components
-export const docRegistry = new OpenAPIRegistry();
+export const oasRegistry = new OpenAPIRegistry();
 
 // Bearer token authentication scheme
-export const bearerAuth = docRegistry.registerComponent(
+export const bearerAuth = oasRegistry.registerComponent(
   'securitySchemes',
   'bearerAuth',
   {
@@ -127,7 +127,7 @@ export const commonDocCreator = ({
   security,
 }: CommonDocCreatorConfig): void => {
   // Registers complete route documentation with the OpenAPI registry
-  docRegistry.registerPath({
+  oasRegistry.registerPath({
     method,
     path: routePath,
     tags,
@@ -337,7 +337,7 @@ commonDocCreator({
 The bearer authentication is already configured in the document generator:
 
 ```typescript
-export const bearerAuth = docRegistry.registerComponent(
+export const bearerAuth = oasRegistry.registerComponent(
   'securitySchemes',
   'bearerAuth',
   {
@@ -428,7 +428,7 @@ const userSchema = z.object({
 
 ```typescript
 export function generateOpenAPIDocument() {
-  const generator = new OpenApiGeneratorV3(docRegistry.definitions);
+  const generator = new OpenApiGeneratorV3(oasRegistry.definitions);
 
   return generator.generateDocument({
     openapi: '3.0.0',
@@ -595,7 +595,7 @@ tags: [API_TAGS.USERS]
 
 ```typescript
 // Register reusable components
-docRegistry.registerComponent('schemas', 'PaginationMeta', z.object({
+oasRegistry.registerComponent('schemas', 'PaginationMeta', z.object({
   page: z.number(),
   limit: z.number(),
   total: z.number(),

@@ -20,17 +20,29 @@ export default class Tenant {
       // Start transaction
       await client.query('BEGIN');
 
-      // 1. Create the tenant
+      // 1. Create the tenant  
+      // First get the active tenant status ID
+      const activeTenantStatusQuery = `
+        SELECT l.id FROM lookup l
+        INNER JOIN lookup_type lt ON l."lookupTypeId" = lt.id
+        WHERE l.name = 'TENANT_STATUS_ACTIVE' AND lt.name = 'TENANT_STATUS'
+      `;
+      const statusResult = await client.query(activeTenantStatusQuery);
+      if (statusResult.rows.length === 0) {
+        throw new Error('TENANT_STATUS_ACTIVE not found');
+      }
+      const activeTenantStatusId = statusResult.rows[0].id;
+
       const tenantQuery = `
-        INSERT INTO tenant (name, label, description)
-        VALUES ($1, $2, $3)
-        RETURNING id, name, label, description, "isArchived", "createdAt", "updatedAt", "archivedAt"
+        INSERT INTO tenant (name, label, "statusId", "isArchived", "createdAt", "updatedAt")
+        VALUES ($1, $2, $3, FALSE, NOW(), NOW())
+        RETURNING id, name, label, "statusId", "isArchived", "createdAt", "updatedAt", "archivedAt"
       `;
 
       const tenantResult = await client.query(tenantQuery, [
         tenantData.name,
         tenantData.label,
-        tenantData.description || null,
+        activeTenantStatusId,
       ]);
 
       const tenant = tenantResult.rows[0];
@@ -44,19 +56,18 @@ export default class Tenant {
 
       // 4. Create the Tenant Admin user
       const adminUser = await User.signupUser(dbClient, {
-        userData: {
-          email: tenantData.adminUser.email,
-          hashPassword,
-          phone: tenantData.adminUser.phone || '',
-          firstName: tenantData.adminUser.firstName,
-          lastName: tenantData.adminUser.lastName,
-          tenantId: tenant.id,
-        },
+        email: tenantData.adminUser.email,
+        hashPassword,
+        phone: tenantData.adminUser.phone || '',
+        firstName: tenantData.adminUser.firstName,
+        lastName: tenantData.adminUser.lastName,
+        statusId: userStatusId,
+        tenantId: tenant.id,
       });
 
       // 5. Assign Tenant Admin role to the user
       await client.query(
-        `INSERT INTO user_role ("userId", "roleId") VALUES ($1, $2)`,
+        `INSERT INTO user_role_xref ("userId", "roleId", "createdAt", "updatedAt") VALUES ($1, $2, NOW(), NOW())`,
         [adminUser.id, tenantAdminRoleId]
       );
 
@@ -73,7 +84,7 @@ export default class Tenant {
           id: tenant.id,
           name: tenant.name,
           label: tenant.label,
-          description: tenant.description,
+          description: null, // Remove description from tenant schema
           isArchived: tenant.isArchived,
           createdAt: tenant.createdAt,
           updatedAt: tenant.updatedAt,
@@ -96,7 +107,7 @@ export default class Tenant {
     { includeArchived = false }: { includeArchived?: boolean } = {}
   ): Promise<TenantSchema[]> {
     const query = `
-      SELECT id, name, label, description, "isArchived", "createdAt", "updatedAt", "archivedAt"
+      SELECT id, name, label, "statusId", "isArchived", "createdAt", "updatedAt", "archivedAt"
       FROM tenant
       ${includeArchived ? '' : 'WHERE "isArchived" = FALSE'}
       ORDER BY "createdAt" DESC
@@ -114,7 +125,7 @@ export default class Tenant {
     { tenantId }: { tenantId: number }
   ): Promise<TenantSchema | null> {
     const query = `
-      SELECT id, name, label, description, "isArchived", "createdAt", "updatedAt", "archivedAt"
+      SELECT id, name, label, "statusId", "isArchived", "createdAt", "updatedAt", "archivedAt"
       FROM tenant
       WHERE id = $1
     `;
@@ -144,10 +155,7 @@ export default class Tenant {
       updateValues.push(updateData.label);
     }
 
-    if (updateData.description !== undefined) {
-      updateFields.push(`description = $${paramCount++}`);
-      updateValues.push(updateData.description);
-    }
+    // Remove description field as it's not in the database schema
 
     if (updateData.isArchived !== undefined) {
       updateFields.push(`"isArchived" = $${paramCount++}`);
@@ -167,7 +175,7 @@ export default class Tenant {
       UPDATE tenant 
       SET ${updateFields.join(', ')}
       WHERE id = $${paramCount}
-      RETURNING id, name, label, description, "isArchived", "createdAt", "updatedAt", "archivedAt"
+      RETURNING id, name, label, "statusId", "isArchived", "createdAt", "updatedAt", "archivedAt"
     `;
 
     const result = await db.query(query, updateValues);
@@ -195,15 +203,16 @@ export default class Tenant {
           JSON_AGG(
             JSON_BUILD_OBJECT(
               'id', l.id,
+              'name', l.name,
               'label', l.label,
               'lookupTypeId', l."lookupTypeId"
             )
           ) FILTER (WHERE l.id IS NOT NULL), 
           '[]'::json
         ) AS "userRoles"
-      FROM user_profile up
-      LEFT JOIN user_role ur ON up.id = ur."userId"
-      LEFT JOIN lookup l ON ur."roleId" = l.id
+      FROM app_user up
+      LEFT JOIN user_role_xref urx ON up.id = urx."userId"
+      LEFT JOIN lookup l ON urx."roleId" = l.id
       WHERE up."tenantId" = $1
       GROUP BY up.id, up.email, up."firstName", up."lastName", up.phone, up."tenantId", up."createdAt", up."updatedAt"
       ORDER BY up."createdAt" DESC

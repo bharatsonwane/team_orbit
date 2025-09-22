@@ -229,7 +229,7 @@ npm run type-check # TypeScript type checking
 ### Class-based Services
 ```typescript
 export default class Lookup {
-  static async retrieveLookupList(): Promise<LookupType[]> {
+  static async retrieveLookupList(): Promise<LookupTypeWithLookupsSchema[]> {
     // Business logic implementation
   }
 }

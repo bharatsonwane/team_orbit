@@ -1,32 +1,35 @@
 export const lookupTypeKeys = {
-  userRole: 'userRole',
-  userStatus: 'userStatus',
-  chatType: 'chatType',
+  USER_ROLE: 'USER_ROLE',
+  USER_STATUS: 'USER_STATUS',
+  TENANT_STATUS: 'TENANT_STATUS',
+  CHAT_TYPE: 'CHAT_TYPE',
 };
 
-export const roleKeys = {
-  platformSuperAdmin: 'Platform Super Admin',
-  platformAdmin: 'Platform Admin',
-  platformUser: 'Platform User',
-  platformAgent: 'Platform Agent',
-  platformManager: 'Platform Manager',
-  platformAuditor: 'Platform Auditor',
-  tenantAdmin: 'Tenant Admin',
-  tenantManager: 'Tenant Manager',
-  tenantAgent: 'Tenant Agent',
-  tenantUser: 'Tenant User',
-  tenantEmployee: 'Tenant Employee',
-  any: 'Any',
+export const userRoleKeys = {
+  ANY: 'ANY',
+  USER_ROLE_PLATFORM_SUPER_ADMIN: 'USER_ROLE_PLATFORM_SUPER_ADMIN',
+  USER_ROLE_PLATFORM_ADMIN: 'USER_ROLE_PLATFORM_ADMIN',
+  USER_ROLE_PLATFORM_USER: 'USER_ROLE_PLATFORM_USER',
+  USER_ROLE_TENANT_ADMIN: 'USER_ROLE_TENANT_ADMIN',
+  USER_ROLE_TENANT_MANAGER: 'USER_ROLE_TENANT_MANAGER',
+  USER_ROLE_TENANT_USER: 'USER_ROLE_TENANT_USER',
 };
 
 export const userStatusKeys = {
-  pending: 'Pending',
-  active: 'Active',
-  archived: 'Archived',
-  suspended: 'Suspended',
+  USER_STATUS_PENDING: 'USER_STATUS_PENDING',
+  USER_STATUS_ACTIVE: 'USER_STATUS_ACTIVE',
+  USER_STATUS_DEACTIVATED: 'USER_STATUS_DEACTIVATED',
+  USER_STATUS_ARCHIVED: 'USER_STATUS_ARCHIVED',
+};
+
+export const tenantStatusKeys = {
+  TENANT_STATUS_PENDING: 'TENANT_STATUS_PENDING',
+  TENANT_STATUS_ACTIVE: 'TENANT_STATUS_ACTIVE',
+  TENANT_STATUS_DEACTIVATED: 'TENANT_STATUS_DEACTIVATED',
+  TENANT_STATUS_ARCHIVED: 'TENANT_STATUS_ARCHIVED',
 };
 
 export const chatTypeKeys = {
-  oneToOne: '1:1 Chat',
-  group: 'Group Chat',
+  CHAT_TYPE_ONE_TO_ONE: 'CHAT_TYPE_ONE_TO_ONE',
+  CHAT_TYPE_GROUP: 'CHAT_TYPE_GROUP',
 };

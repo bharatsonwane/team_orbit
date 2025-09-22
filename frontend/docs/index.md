@@ -2,6 +2,13 @@
 
 Welcome to the comprehensive documentation for the TeamOrbit frontend application.
 
+## 📋 Recent Updates
+
+- **Schema Migration**: Updated to new lookup-based role and status system ([Migration Guide](./SCHEMA_MIGRATION.md))
+- **Documentation Organization**: All docs moved to `/docs` folder structure
+- **Constants Update**: New role and status constants aligned with backend
+- **Source Documentation**: Moved all `/src` docs to `/docs/src/` for better organization
+
 ## 🚀 Quick Start
 
 **New to the project?** Start here:
@@ -23,6 +30,23 @@ Welcome to the comprehensive documentation for the TeamOrbit frontend applicatio
 - **[Authentication](./features/AUTHENTICATION.md)** - Login/signup pages and user flows
 - **[Routing & Navigation](./features/ROUTING.md)** - React Router setup and navigation
 - **[Components](./components/COMPONENTS.md)** - Component library and usage
+
+### Architecture & Migration
+
+- **[Schema Migration Guide](./SCHEMA_MIGRATION.md)** - Database schema updates and frontend changes
+- **[Architecture Overview](./ARCHITECTURE.md)** - Application architecture and patterns
+- **[Documentation Strategy](./DOCUMENTATION_STRATEGY.md)** - Documentation organization and standards
+
+### Source Code Documentation
+
+- **[Components](./src/components/)** - Component-specific documentation
+- **[Utils](./src/utils/)** - Utility functions and helpers
+- **[Schemas](./src/schemas/)** - Type definitions and validation
+- **[Pages](./src/pages/)** - Page-level component documentation
+- **[Redux](./src/redux/)** - State management documentation
+- **[Config](./src/config/)** - Configuration documentation
+- **[Lib](./src/lib/)** - Library integrations
+- **[Routing System](./src/ROUTING_SYSTEM.md)** - Detailed routing documentation
 
 ### Deployment & Operations
 

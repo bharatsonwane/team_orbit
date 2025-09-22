@@ -1,4 +1,5 @@
 import { dbClientPool } from '../middleware/dbClientMiddleware';
+import { UserSignupServiceSchema } from '../schemas/user.schema';
 
 interface UserData {
   id?: number | null;
@@ -17,7 +18,7 @@ interface UserData {
   hashPassword?: string;
   profilePicture?: string | null;
   bio?: string | null;
-  userStatus?: string | null;
+  statusId?: number | null;
   tenantId?: number | null;
   createdAt?: string;
   updatedAt?: string;
@@ -39,12 +40,13 @@ interface UserProfile {
   password?: string;
   profilePicture: string | null;
   bio: string | null;
-  userStatus: string | null;
+  statusId: number;
   tenantId: number | null;
   createdAt: string;
   updatedAt: string;
   userRoles?: Array<{
     id: number;
+    name: string;
     label: string;
     lookupTypeId: number;
   }>;
@@ -61,7 +63,7 @@ export default class User {
       bloodGroup: '"bloodGroup"',
       marriedStatus: '"marriedStatus"',
       profilePicture: '"profilePicture"',
-      userStatus: '"userStatus"',
+      statusId: '"statusId"',
       tenantId: '"tenantId"',
       createdAt: '"createdAt"',
       updatedAt: '"updatedAt"',
@@ -71,21 +73,8 @@ export default class User {
 
   static async signupUser(
     dbClient: dbClientPool,
-    {
-      userData,
-    }: {
-      userData: {
-        email: string;
-        hashPassword: string;
-        phone: string;
-        firstName: string;
-        lastName: string;
-        userStatus?: string;
-        tenantId?: number;
-      };
-    }
+    userData: UserSignupServiceSchema
   ): Promise<UserProfile> {
-    /* insert user */
     const userSignupQuery = `
         INSERT INTO app_user (
                 email,
@@ -93,23 +82,41 @@ export default class User {
                 phone,
                 "firstName",
                 "lastName",
-                "userStatus",
+                "statusId",
                 "tenantId",
+                title,
+                "middleName",
+                "maidenName",
+                gender,
+                dob,
+                "bloodGroup",
+                "marriedStatus",
+                bio,
+                "isTemporaryPassword",
                 "createdAt",
                 "updatedAt"
             ) VALUES (
-                '${userData.email}',
-                '${userData.hashPassword}',
-                '${userData.phone}',
-                '${userData.firstName}',
-                '${userData.lastName}',
-                '${userData.userStatus || 'active'}',
-                ${userData.tenantId || 'NULL'},
-                NOW(),
-                NOW()
+                $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, NOW(), NOW()
         )
         RETURNING *;`;
-    const results = await dbClient.mainPool.query(userSignupQuery);
+    const results = await dbClient.mainPool.query(userSignupQuery, [
+      userData.email,
+      userData.hashPassword,
+      userData.phone,
+      userData.firstName,
+      userData.lastName,
+      userData.statusId,
+      userData.tenantId,
+      userData.title,
+      userData.middleName,
+      userData.maidenName,
+      userData.gender,
+      userData.dob,
+      userData.bloodGroup,
+      userData.marriedStatus,
+      userData.bio,
+      true // isTemporaryPassword
+    ]);
     const response = results.rows[0] as UserProfile;
     return response;
   }
@@ -133,7 +140,7 @@ export default class User {
       'hashPassword',
       'profilePicture',
       'bio',
-      'userStatus',
+      'statusId',
       'tenantId',
     ];
 
@@ -143,7 +150,8 @@ export default class User {
     );
 
     const columns = keysToInsert.map(key => User.getColumnName(key));
-    const values = keysToInsert.map(key => `'${(userData as any)[key]}'`);
+    const values = keysToInsert.map((key, index) => `$${index + 1}`);
+    const actualValues = keysToInsert.map(key => (userData as any)[key]);
 
     const queryString = `
     INSERT INTO app_user (
@@ -158,7 +166,7 @@ export default class User {
     RETURNING *;
   `;
 
-    const results = await dbClient.mainPool.query(queryString);
+    const results = await dbClient.mainPool.query(queryString, actualValues);
     const response = results.rows[0] as UserProfile;
     delete (response as any).password;
 
@@ -188,25 +196,31 @@ export default class User {
       'bio',
     ];
 
-    const setQueryString = Object.keys(updateData)
-      .filter(
-        key =>
-          (updateData as any)[key] !== undefined &&
-          (updateData as any)[key] !== null &&
-          acceptedKeys.includes(key)
-      )
-      .map(key => `${User.getColumnName(key)} = '${(updateData as any)[key]}'`)
-      .join(', ');
+    const updateFields = Object.keys(updateData).filter(
+      key =>
+        (updateData as any)[key] !== undefined &&
+        (updateData as any)[key] !== null &&
+        acceptedKeys.includes(key)
+    );
 
-    if (!setQueryString) {
+    if (updateFields.length === 0) {
       throw new Error('No valid fields to update');
     }
+
+    const setQueryString = updateFields
+      .map((key, index) => `${User.getColumnName(key)} = $${index + 1}`)
+      .join(', ');
+
+    const updateValues = updateFields.map(key => (updateData as any)[key]);
 
     const queryString = `
       UPDATE app_user
       SET ${setQueryString}, "updatedAt" = NOW()
-      WHERE id = ${userId} RETURNING *;`;
-    const results = await dbClient.mainPool.query(queryString);
+      WHERE id = $${updateValues.length + 1} RETURNING *;`;
+    const results = await dbClient.mainPool.query(queryString, [
+      ...updateValues,
+      userId,
+    ]);
 
     delete (results.rows[0] as any).password;
     return results.rows[0] as UserProfile;
@@ -224,9 +238,12 @@ export default class User {
   ): Promise<UserProfile> {
     const queryString = `
       UPDATE app_user
-      SET password = '${hashPassword}', "updatedAt" = NOW()
-      WHERE id = ${userId} RETURNING *;`;
-    const results = await dbClient.mainPool.query(queryString);
+      SET password = $1, "updatedAt" = NOW()
+      WHERE id = $2 RETURNING *;`;
+    const results = await dbClient.mainPool.query(queryString, [
+      hashPassword,
+      userId,
+    ]);
 
     delete (results.rows[0] as any).password;
     return results.rows[0] as UserProfile;
@@ -245,8 +262,17 @@ export default class User {
     }
   ): Promise<UserProfile | undefined> {
     const whereConditions = [];
-    if (email) whereConditions.push(`email = '${email}'`);
-    if (phone) whereConditions.push(`phone = '${phone}'`);
+    const whereValues = [];
+    let paramCount = 1;
+
+    if (email) {
+      whereConditions.push(`email = $${paramCount++}`);
+      whereValues.push(email);
+    }
+    if (phone) {
+      whereConditions.push(`phone = $${paramCount++}`);
+      whereValues.push(phone);
+    }
 
     if (whereConditions.length === 0) {
       throw new Error('Either email or phone must be provided');
@@ -268,7 +294,7 @@ export default class User {
         up.phone,
         ${includePassword ? 'up.password,' : ''}
         up.bio,
-        up."userStatus",
+        up."statusId",
         up."tenantId",
         up."createdAt",
         up."updatedAt",
@@ -276,6 +302,7 @@ export default class User {
           JSON_AGG(
             JSON_BUILD_OBJECT(
               'id', l.id,
+              'name', l.name,
               'label', l.label,
               'lookupTypeId', l."lookupTypeId"
             )
@@ -289,10 +316,10 @@ export default class User {
       WHERE ${whereConditions.join(' OR ')}
       GROUP BY up.id, up.title, up."firstName", up."lastName", up."middleName", 
                up."maidenName", up.gender, up.dob, up."bloodGroup", up."marriedStatus",
-               up.email, up.phone, up.password, up.bio, up."userStatus", up."tenantId",
+               up.email, up.phone, up.password, up.bio, up."statusId", up."tenantId",
                up."createdAt", up."updatedAt";`;
 
-    const results = await dbClient.mainPool.query(queryString);
+    const results = await dbClient.mainPool.query(queryString, whereValues);
     const response = results.rows[0] as UserProfile | undefined;
 
     return response;
@@ -317,7 +344,7 @@ export default class User {
         up.email,
         up.phone,
         up.bio,
-        up."userStatus",
+        up."statusId",
         up."tenantId",
         up."createdAt",
         up."updatedAt",
@@ -325,6 +352,7 @@ export default class User {
           JSON_AGG(
             JSON_BUILD_OBJECT(
               'id', l.id,
+              'name', l.name,
               'label', l.label,
               'lookupTypeId', l."lookupTypeId"
             )
@@ -335,13 +363,13 @@ export default class User {
         app_user up
       LEFT JOIN user_role_xref urx ON up.id = urx."userId"
       LEFT JOIN lookup l ON urx."roleId" = l.id
-      WHERE up.id = ${userId}
+      WHERE up.id = $1
       GROUP BY up.id, up.title, up."firstName", up."lastName", up."middleName", 
                up."maidenName", up.gender, up.dob, up."bloodGroup", up."marriedStatus",
-               up.email, up.phone, up.bio, up."userStatus", up."tenantId",
+               up.email, up.phone, up.bio, up."statusId", up."tenantId",
                up."createdAt", up."updatedAt";`;
 
-    const results = await dbClient.mainPool.query(queryString);
+    const results = await dbClient.mainPool.query(queryString, [userId]);
     const response = results.rows[0] as UserProfile | undefined;
 
     return response;
@@ -364,7 +392,7 @@ export default class User {
           up.phone,
           up."profilePicture",
           up.bio,
-          up."userStatus",
+          up."statusId",
           up."tenantId",
           up."createdAt",
           up."updatedAt"
