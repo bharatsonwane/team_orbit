@@ -30,7 +30,7 @@ interface AppUser {
   marriedStatus: string;
   email: string;
   phone: string;
-  password: string;
+  hashPassword: string;
   bio: string;
   lastPasswordChangedAt: Date;
   statusId: number;
@@ -242,7 +242,7 @@ export async function up(client: PoolClient): Promise<void> {
         marriedStatus: 'Married',
         email: 'superadmin@gmail.com',
         phone: '1234567890',
-        password: 'Super@123',
+        hashPassword: 'Super@123',
         lastPasswordChangedAt: new Date(),
         bio: 'This is Super Admin',
         statusId: activeUserStatusData.id as number,
@@ -253,7 +253,7 @@ export async function up(client: PoolClient): Promise<void> {
     for (const userData of userDataList) {
       /** Hash the password using bcrypt directly */
       const saltRounds = 10;
-      const hashPassword = await bcrypt.hash(userData.password, saltRounds);
+      const hashPassword = await bcrypt.hash(userData.hashPassword, saltRounds);
 
       /** Check if app_user already exists */
       const checkUserQuery = `

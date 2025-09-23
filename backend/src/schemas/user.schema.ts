@@ -192,7 +192,7 @@ export interface AppUser {
   marriedStatus: 'Single' | 'Married' | 'Divorced' | 'Widowed';
   email: string;
   phone: string;
-  password: string;
+  hashPassword: string;
   bio: string;
   statusId: number;
   tenantId: number;
