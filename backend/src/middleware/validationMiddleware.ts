@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import { z } from 'zod';
+import { fromError } from 'zod-validation-error';
 import { StatusCodes } from 'http-status-codes';
 import { ServiceResponse } from '../openApiSpecification/serviceResponse';
 
@@ -44,9 +45,9 @@ export const validateRequest =
       // schema.parse({ body: req.body, query: req.query, params: req.params });
       next();
     } catch (err: any) {
-      const errorMessage = `Invalid input: ${err.errors
-        .map((e: any) => e.message)
-        .join(', ')}`;
+      const validationError = fromError(err);
+      const errorMessage = validationError.toString();
+
       const statusCode = StatusCodes.BAD_REQUEST;
       const serviceResponse = ServiceResponse.failure(
         errorMessage,

@@ -9,15 +9,15 @@ interface JwtPayload {
 
 // AUTH
 export const getHashPassword = async (password: string): Promise<string> => {
-  const hashedPassword = await bcrypt.hash(password, 12);
-  return hashedPassword;
+  const hashPassword = await bcrypt.hash(password, 12);
+  return hashPassword;
 };
 
 export const validatePassword = async (
   password: string,
-  hashedPassword: string
+  hashPassword: string
 ): Promise<boolean> => {
-  const isPasswordValid = await bcrypt.compare(password, hashedPassword);
+  const isPasswordValid = await bcrypt.compare(password, hashPassword);
   return isPasswordValid;
 };
 

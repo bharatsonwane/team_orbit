@@ -103,7 +103,7 @@ async function main(): Promise<void> {
 
     for (const userData of userDataList) {
       /** Hash the password */
-      const hashedPassword = await getHashPassword(userData.password);
+      const hashPassword = await getHashPassword(userData.password);
 
       /** Check if app_user already exists */
       const checkUserQuery = `
@@ -132,7 +132,7 @@ async function main(): Promise<void> {
           "marriedStatus",
           email,
           phone,
-          "hashedPassword",
+          "hashPassword",
           bio,
           "statusId",
             "createdAt",
@@ -156,7 +156,7 @@ async function main(): Promise<void> {
           userData.marriedStatus,
           userData.email,
           userData.phone,
-          hashedPassword,
+          hashPassword,
           userData.bio,
           userData.statusId,
         ])

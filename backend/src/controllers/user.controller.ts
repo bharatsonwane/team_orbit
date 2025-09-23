@@ -29,12 +29,12 @@ export const postUserLogin = async (
 
     const isValidPassword = await validatePassword(
       password,
-      userData.hashedPassword || ''
+      userData.hashPassword || ''
     );
     if (!isValidPassword) {
       throw { statusCode: 401, message: 'Invalid email or password' };
     }
-    delete userData.hashedPassword;
+    delete userData.hashPassword;
 
     const token = createJwtToken({
       userId: userData.id,
@@ -94,12 +94,12 @@ export const postUserSignup = async (
     // const userRoleId = await Lookup.getLookupIdByName(req.db, userRoleKeys.USER_ROLE_TENANT_USER);
 
     // Hash password
-    const hashedPassword = await getHashPassword(password);
+    const hashPassword = await getHashPassword(password);
 
     // Create user
     const createdUser = await User.signupUser(req.db, {
       email,
-      hashedPassword,
+      hashPassword,
       phone,
       firstName,
       lastName,
@@ -216,9 +216,7 @@ export const updateUserProfile = async (
       updateData,
     });
 
-    res.status(200).json({
-      user: updatedUser,
-    });
+    res.status(200).json(updatedUser);
   } catch (error) {
     next(error);
   }
@@ -233,15 +231,13 @@ export const updateUserPassword = async (
     const { id } = req.params;
     const { password } = req.body;
 
-    const hashedPassword = await getHashPassword(password);
+    const hashPassword = await getHashPassword(password);
     const updatedUser = await User.updateUserPassword(req.db, {
       userId: parseInt(id),
-      hashedPassword,
+      hashPassword,
     });
 
-    res.status(200).json({
-      user: updatedUser,
-    });
+    res.status(200).json(updatedUser);
   } catch (error) {
     next(error);
   }

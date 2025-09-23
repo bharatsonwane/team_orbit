@@ -4,25 +4,9 @@ import {
   UserDataSchema,
   UserProfileSchema,
 } from '../schemas/user.schema';
+import { buildUpdateFields } from '../utils/queryHelper';
 
 export default class User {
-  // Helper function to map field names to database column names
-  private static getColumnName(key: string): string {
-    const columnMapping: { [key: string]: string } = {
-      firstName: '"firstName"',
-      lastName: '"lastName"',
-      middleName: '"middleName"',
-      maidenName: '"maidenName"',
-      bloodGroup: '"bloodGroup"',
-      marriedStatus: '"marriedStatus"',
-      hashedPassword: '"hashedPassword"',
-      statusId: '"statusId"',
-      tenantId: '"tenantId"',
-      createdAt: '"createdAt"',
-      updatedAt: '"updatedAt"',
-    };
-    return columnMapping[key] || key;
-  }
 
   static async signupUser(
     dbClient: dbClientPool,
@@ -31,7 +15,7 @@ export default class User {
     const userSignupQuery = `
         INSERT INTO app_user (
                 email,
-                "hashedPassword",
+                "hashPassword",
                 phone,
                 "firstName",
                 "lastName",
@@ -45,12 +29,11 @@ export default class User {
                 "bloodGroup",
                 "marriedStatus",
                 bio,
-                "isTemporaryPassword",
                 "createdAt",
                 "updatedAt"
             ) VALUES (
                 '${userData.email}',
-                '${userData.hashedPassword}',
+                '${userData.hashPassword}',
                 '${userData.phone}',
                 '${userData.firstName}',
                 '${userData.lastName}',
@@ -64,7 +47,6 @@ export default class User {
                 ${userData.bloodGroup ? `'${userData.bloodGroup}'` : 'NULL'},
                 ${userData.marriedStatus ? `'${userData.marriedStatus}'` : 'NULL'},
                 ${userData.bio ? `'${userData.bio}'` : 'NULL'},
-                TRUE,
                 NOW(),
                 NOW()
         )
@@ -78,48 +60,39 @@ export default class User {
     dbClient: dbClientPool,
     userData: Partial<UserDataSchema>
   ): Promise<UserProfileSchema> {
-    const acceptedKeys = [
-      'title',
-      'firstName',
-      'lastName',
-      'middleName',
-      'maidenName',
-      'gender',
-      'dob',
-      'bloodGroup',
-      'marriedStatus',
-      'email',
-      'phone',
-      'hashedPassword',
-      'bio',
-      'statusId',
-      'tenantId',
-    ];
-
-    const keysToInsert = acceptedKeys.filter(
-      key =>
-        (userData as any)[key] !== undefined && (userData as any)[key] !== null
-    );
-
-    const columns = keysToInsert.map(key => User.getColumnName(key));
-    const values = keysToInsert.map(key => {
-      const value = (userData as any)[key];
-      if (typeof value === 'string') {
-        return `'${value}'`;
-      } else if (typeof value === 'number') {
-        return value;
-      } else {
-        return 'NULL';
-      }
-    });
-
     const queryString = `
-    INSERT INTO app_user (
-      ${columns.join(', ')},
-      "createdAt",
-      "updatedAt"
+      INSERT INTO app_user (
+          title,
+          "firstName",
+          "lastName",
+          "middleName",
+          "maidenName",
+          gender,
+          dob,
+          "bloodGroup",
+          "marriedStatus",
+          email,
+          phone,
+          "hashPassword",
+          bio,
+          "statusId",
+          "createdAt",
+          "updatedAt"
     ) VALUES (
-      ${values.join(', ')},
+      ${userData.title},
+      ${userData.firstName},
+      ${userData.lastName},
+      ${userData.middleName},
+      ${userData.maidenName},
+      ${userData.gender},
+      ${userData.dob},
+      ${userData.bloodGroup},
+      ${userData.marriedStatus},
+      ${userData.email},
+      ${userData.phone},
+      ${userData.hashPassword || 'NULL'},
+      ${userData.bio},
+      ${userData.statusId},
       NOW(),
       NOW()
     )
@@ -128,7 +101,7 @@ export default class User {
 
     const results = await dbClient.mainPool.query(queryString);
     const response = results.rows[0] as UserProfileSchema;
-    delete (response as any).hashedPassword;
+    delete (response as any).hashPassword;
 
     return response;
   }
@@ -156,29 +129,14 @@ export default class User {
       'bio',
     ];
 
-    const updateFields = Object.keys(updateData).filter(
-      key =>
-        (updateData as any)[key] !== undefined &&
-        (updateData as any)[key] !== null &&
-        acceptedKeys.includes(key)
-    );
+    const updateFields = buildUpdateFields(acceptedKeys, updateData);
 
-    if (updateFields.length === 0) {
+    if (Object.keys(updateFields).length === 0) {
       throw new Error('No valid fields to update');
     }
 
-    const setQueryString = updateFields
-      .map(key => {
-        const value = (updateData as any)[key];
-        const column = User.getColumnName(key);
-        if (typeof value === 'string') {
-          return `${column} = '${value}'`;
-        } else if (typeof value === 'number') {
-          return `${column} = ${value}`;
-        } else {
-          return `${column} = NULL`;
-        }
-      })
+    const setQueryString = Object.entries(updateFields)
+      .map(([key, value]) => `${key} = ${value}`)
       .join(', ');
 
     const queryString = `
@@ -187,7 +145,7 @@ export default class User {
       WHERE id = ${userId} RETURNING *;`;
     const results = await dbClient.mainPool.query(queryString);
 
-    delete (results.rows[0] as any).password;
+    delete (results.rows[0] as any).hashPassword;
     return results.rows[0] as UserProfileSchema;
   }
 
@@ -195,19 +153,19 @@ export default class User {
     dbClient: dbClientPool,
     {
       userId,
-      hashedPassword,
+      hashPassword,
     }: {
       userId: number;
-      hashedPassword: string;
+      hashPassword: string;
     }
   ): Promise<UserProfileSchema> {
     const queryString = `
       UPDATE app_user
-      SET "hashedPassword" = '${hashedPassword}', "updatedAt" = NOW()
+      SET "hashPassword" = '${hashPassword}', "updatedAt" = NOW()
       WHERE id = ${userId} RETURNING *;`;
     const results = await dbClient.mainPool.query(queryString);
 
-    delete (results.rows[0] as any).password;
+    delete (results.rows[0] as any).hashPassword;
     return results.rows[0] as UserProfileSchema;
   }
 
@@ -263,7 +221,7 @@ export default class User {
         up."marriedStatus",
         up.email,
         up.phone,
-        ${includePassword ? 'up."hashedPassword",' : ''}
+        ${includePassword ? 'up."hashPassword",' : ''}
         up.bio,
         up."statusId",
         ls.name as "statusName",

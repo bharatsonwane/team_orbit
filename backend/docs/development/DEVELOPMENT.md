@@ -214,10 +214,10 @@ export const userService = {
       }
 
       // Create user
-      const hashedPassword = await bcrypt.hash(userData.password, 10);
+      const hashPassword = await bcrypt.hash(userData.password, 10);
       const user = await userRepository.create({
         ...userData,
-        password: hashedPassword,
+        password: hashPassword,
       });
 
       return user;
@@ -377,12 +377,12 @@ export const userService = {
       }
 
       // Hash password
-      const hashedPassword = await bcrypt.hash(userData.password, 10);
+      const hashPassword = await bcrypt.hash(userData.password, 10);
 
       // Create user
       const user = await userRepository.create({
         ...userData,
-        password: hashedPassword,
+        password: hashPassword,
       });
 
       logger.info('User created successfully:', { userId: user.id });
@@ -579,7 +579,7 @@ const validatedData = userSchema.parse(req.body);
 // Hash passwords with bcrypt
 import bcrypt from 'bcryptjs';
 
-const hashedPassword = async (password: string): Promise<string> => {
+const hashPassword = async (password: string): Promise<string> => {
   const saltRounds = 12;
   return await bcrypt.hash(password, saltRounds);
 };
