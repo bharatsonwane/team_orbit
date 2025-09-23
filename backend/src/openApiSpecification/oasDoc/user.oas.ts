@@ -4,7 +4,7 @@ import {
   oasRegistry,
 } from '../../openApiSpecification/openAPIDocumentGenerator';
 import {
-  userSchema,
+  baseUserSchema,
   userUpdatePasswordSchema,
 } from '../../schemas/user.schema';
 import { idSchema } from '../../schemas/common.schema';
@@ -28,7 +28,7 @@ export const getUserOASSchema = ({
     path: routePath,
     tags,
     security,
-    responses: createApiResponse(z.array(userSchema), 'Success'),
+    responses: createApiResponse(z.array(baseUserSchema), 'Success'),
   });
 };
 
@@ -49,7 +49,7 @@ export const getUserProfileOASSchema = ({
       'Retrieve the profile information of the currently authenticated user including roles',
     responses: createApiResponse(
       z.object({
-        user: userSchema,
+        user: baseUserSchema,
       }),
       'User profile retrieved successfully'
     ),

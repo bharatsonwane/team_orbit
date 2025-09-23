@@ -1,8 +1,7 @@
 import { dbClientPool } from '../middleware/dbClientMiddleware';
 import {
   UserSignupServiceSchema,
-  UserDataSchema,
-  UserProfileSchema,
+  BaseUserSchema,
 } from '../schemas/user.schema';
 import { buildUpdateFields } from '../utils/queryHelper';
 
@@ -11,7 +10,7 @@ export default class User {
   static async signupUser(
     dbClient: dbClientPool,
     userData: UserSignupServiceSchema
-  ): Promise<UserProfileSchema> {
+  ): Promise<BaseUserSchema> {
     const userSignupQuery = `
         INSERT INTO app_user (
                 email,
@@ -52,14 +51,14 @@ export default class User {
         )
         RETURNING *;`;
     const results = await dbClient.mainPool.query(userSignupQuery);
-    const response = results.rows[0] as UserProfileSchema;
+    const response = results.rows[0] as BaseUserSchema;
     return response;
   }
 
   static async createUserInfo(
     dbClient: dbClientPool,
-    userData: Partial<UserDataSchema>
-  ): Promise<UserProfileSchema> {
+    userData: Partial<BaseUserSchema>
+  ): Promise<BaseUserSchema> {
     const queryString = `
       INSERT INTO app_user (
           title,
@@ -100,7 +99,7 @@ export default class User {
   `;
 
     const results = await dbClient.mainPool.query(queryString);
-    const response = results.rows[0] as UserProfileSchema;
+    const response = results.rows[0] as BaseUserSchema;
     delete (response as any).hashPassword;
 
     return response;
@@ -113,9 +112,9 @@ export default class User {
       updateData,
     }: {
       userId: number;
-      updateData: Partial<UserDataSchema>;
+      updateData: Partial<BaseUserSchema>;
     }
-  ): Promise<UserProfileSchema> {
+  ): Promise<BaseUserSchema> {
     const acceptedKeys = [
       'title',
       'firstName',
@@ -146,7 +145,7 @@ export default class User {
     const results = await dbClient.mainPool.query(queryString);
 
     delete (results.rows[0] as any).hashPassword;
-    return results.rows[0] as UserProfileSchema;
+    return results.rows[0] as BaseUserSchema;
   }
 
   static async updateUserPassword(
@@ -158,7 +157,7 @@ export default class User {
       userId: number;
       hashPassword: string;
     }
-  ): Promise<UserProfileSchema> {
+  ): Promise<BaseUserSchema> {
     const queryString = `
       UPDATE app_user
       SET "hashPassword" = '${hashPassword}', "updatedAt" = NOW()
@@ -166,7 +165,7 @@ export default class User {
     const results = await dbClient.mainPool.query(queryString);
 
     delete (results.rows[0] as any).hashPassword;
-    return results.rows[0] as UserProfileSchema;
+    return results.rows[0] as BaseUserSchema;
   }
 
   static async getUserByIdOrEmailOrPhone(
@@ -182,7 +181,7 @@ export default class User {
       phone?: string;
       includePassword?: boolean;
     }
-  ): Promise<UserProfileSchema | undefined> {
+  ): Promise<BaseUserSchema | undefined> {
     const whereConditions = [];
 
     // Build WHERE conditions based on provided parameters
@@ -249,12 +248,12 @@ export default class User {
       GROUP BY up.id, ls.name, ls.label;`;
 
     const results = await dbClient.mainPool.query(queryString);
-    const response = results.rows[0] as UserProfileSchema | undefined;
+    const response = results.rows[0] as BaseUserSchema | undefined;
 
     return response;
   }
 
-  static async getUsers(dbClient: dbClientPool): Promise<UserProfileSchema[]> {
+  static async getUsers(dbClient: dbClientPool): Promise<BaseUserSchema[]> {
     const queryString = `
         SELECT 
           up.id,
@@ -282,6 +281,6 @@ export default class User {
 
     const results = await dbClient.mainPool.query(queryString);
 
-    return results.rows as UserProfileSchema[];
+    return results.rows as BaseUserSchema[];
   }
 }

@@ -1,18 +1,9 @@
 import { NextFunction, Request, Response } from 'express';
 import Chat from '../services/chat.service';
-
-interface ChatMessageBody {
-  text: string;
-  media?: string;
-  sentUserId: string;
-  chatChannelId: string;
-  deliveredTo?: string[];
-  readBy?: string[];
-  reaction?: Record<string, any>;
-}
+import { ChatMessageSchema } from '../schemas/chat.schema';
 
 export const sendMessage = async (
-  req: Request<{}, {}, ChatMessageBody>,
+  req: Request<{}, {}, ChatMessageSchema>,
   res: Response,
   next: NextFunction
 ): Promise<void> => {
@@ -20,8 +11,8 @@ export const sendMessage = async (
     const {
       text,
       media,
-      sentUserId,
-      chatChannelId,
+      senderUserId,
+      channelId,
       deliveredTo,
       readBy,
       reaction,
@@ -30,8 +21,8 @@ export const sendMessage = async (
     const savedMessage = await Chat.saveMessage(req.db, {
       text,
       media,
-      sentUserId,
-      chatChannelId,
+      senderUserId,
+      channelId,
       deliveredTo,
       readBy,
       reaction: reaction || {},
@@ -53,9 +44,9 @@ export const getMessagesByChatChannel = async (
   next: NextFunction
 ): Promise<void> => {
   try {
-    const { chatChannelId } = req.params as { chatChannelId: string };
+    const { channelId } = req.params as { channelId: string };
 
-    const messages = await Chat.getMessagesForChannel(req.db, chatChannelId);
+    const messages = await Chat.getMessagesForChannel(req.db, channelId);
     res.status(200).json({
       success: true,
       data: messages,

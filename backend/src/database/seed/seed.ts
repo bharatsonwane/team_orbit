@@ -1,43 +1,37 @@
 import { PoolClient } from 'pg';
 import db, { schemaNames } from '../db';
 import logger from '../../utils/logger';
-import { Lookup } from '../../schemas/lookup.schema';
-import { AppUser } from '../../schemas/user.schema';
+import { LookupSchema } from '../../schemas/lookup.schema';
+import { UserSignupSchema } from '../../schemas/user.schema';
 import {
   lookupTypeKeys,
-  roleKeys,
+  userRoleKeys,
   userStatusKeys,
+  tenantStatusKeys,
 } from '../../utils/constants';
 import { getHashPassword } from '../../utils/authHelper';
 
-/** Get lookup data by type label */
-const getLookupDataByTypeLabel = async ({
-  client,
-  lookupTypeName,
-  lookupLabel,
-}: {
-  client: PoolClient;
-  lookupTypeName: string;
-  lookupLabel: string;
-}): Promise<Lookup> => {
+/** Get lookup data by lookup name */
+const getLookupDataByName = async (
+  client: PoolClient,
+  lookupName: string
+): Promise<LookupSchema> => {
   /** Get lookup data query */
   const getLookupDataQuery = `
-            SELECT l.id, l.name, l.label, l."lookupTypeId", lt.name as typeName
-            FROM lookup_type lt
-            INNER JOIN lookup l ON lt.id = l."lookupTypeId"
-            WHERE lt.name = $1 AND l.label = $2;
-          `;
+        SELECT l.id, l.name, l.label, l."lookupTypeId", lt.name as typeName
+        FROM lookup_type lt
+        INNER JOIN lookup l ON lt.id = l."lookupTypeId"
+        WHERE l.name = $1;
+      `;
 
   /** Get lookup data result */
   const lookupDataResult = (
-    await client.query(getLookupDataQuery, [lookupTypeName, lookupLabel])
+    await client.query(getLookupDataQuery, [lookupName])
   ).rows;
 
   /** If lookup data result is empty, throw an error */
   if (lookupDataResult.length === 0) {
-    throw new Error(
-      `Lookup data not found for type: ${lookupTypeName}, label: ${lookupLabel}`
-    );
+    throw new Error(`Lookup data not found for name: ${lookupName}`);
   }
 
   /** Return lookup data result */
@@ -49,55 +43,59 @@ async function main(): Promise<void> {
     logger.info('seed main function called');
 
     const pool = await db.getSchemaPool(schemaNames.main);
+
+    // Get tenant status lookup data
+    const activeTenantStatusData = await getLookupDataByName(
+      pool,
+      tenantStatusKeys.TENANT_STATUS_ACTIVE
+    );
+
     /** create tenant data */
     const tenantData = {
-      name: 'iconnect',
-      label: 'iConnect Solutions Pte Ltd',
-      description:
-        'iConnect Solutions Pte Ltd is a software development company that provides software solutions to businesses.',
+      name: 'iConnect',
+      label: 'iConnect',
     };
     const tenantResult = await pool.query(
-      `INSERT INTO tenant (name, label, description) 
+      `INSERT INTO tenant (name, label, "statusId") 
        VALUES ($1, $2, $3)
        ON CONFLICT (name) DO UPDATE SET
          label = EXCLUDED.label,
-         description = EXCLUDED.description,
+         "statusId" = EXCLUDED."statusId",
          "updatedAt" = NOW()
        RETURNING id, name, label`,
-      [tenantData.name, tenantData.label, tenantData.description]
+      [tenantData.name, tenantData.label, activeTenantStatusData.id]
     );
     const tenantId = tenantResult.rows[0].id;
 
-    const platformSuperAdminRoleData = await getLookupDataByTypeLabel({
-      client: pool,
-      lookupTypeName: lookupTypeKeys.userRole,
-      lookupLabel: roleKeys.platformSuperAdmin,
-    });
+    // Get tenant admin role data
+    const tenantAdminRoleData = await getLookupDataByName(
+      pool,
+      userRoleKeys.USER_ROLE_TENANT_ADMIN
+    );
 
-    const activeUserStatusData = await getLookupDataByTypeLabel({
-      client: pool,
-      lookupTypeName: lookupTypeKeys.userStatus,
-      lookupLabel: userStatusKeys.active,
-    });
+    const activeUserStatusData = await getLookupDataByName(
+      pool,
+      userStatusKeys.USER_STATUS_ACTIVE
+    );
 
-    const userDataList: AppUser[] = [
+    const userDataList: UserSignupSchema[] = [
       {
         title: 'Mr',
-        firstName: 'SuperFirstName',
-        lastName: 'SuperLastName',
-        middleName: 'SuperMiddleName',
+        firstName: 'iConnect',
+        lastName: 'Admin',
+        middleName: '',
         maidenName: '',
         gender: 'Male',
-        dob: '1995-07-31',
-        bloodGroup: 'B+',
-        marriedStatus: 'Married',
-        email: 'superadmin@gmail.com',
-        phone: '1234567890',
-        password: 'Super@123',
-        bio: 'This is Super Admin',
+        dob: '1990-01-01',
+        bloodGroup: 'A+',
+        marriedStatus: 'Single',
+        email: 'iconnect@gmail.com',
+        phone: '9876543210',
+        password: 'Admin@123',
+        bio: 'iConnect Tenant Admin',
         statusId: activeUserStatusData.id,
         tenantId: tenantId,
-        userRoles: [platformSuperAdminRoleData.id],
+        userRoles: [tenantAdminRoleData.id],
       },
     ];
 
@@ -162,20 +160,20 @@ async function main(): Promise<void> {
         ])
       ).rows;
 
-      const userResponse = userResult[0] as AppUser;
+      const userResponse = userResult[0];
 
-      for (const roleId of userData.userRoles) {
-        await pool.query(
-          `
-            INSERT INTO user_role_xref ("userId", "roleId", "createdAt", "updatedAt")
-            VALUES ($1, $2, NOW(), NOW())
-          `,
-          [userResponse.id, roleId]
-        );
+      if (userData.userRoles) {
+        for (const roleId of userData.userRoles) {
+          await pool.query(
+            `
+              INSERT INTO user_role_xref ("userId", "roleId", "createdAt", "updatedAt")
+              VALUES ($1, $2, NOW(), NOW())
+            `,
+            [userResponse.id, roleId]
+          );
+        }
       }
     }
-
-    /** create app user data */
 
     logger.info('Seeding completed successfully!');
   } catch (error) {

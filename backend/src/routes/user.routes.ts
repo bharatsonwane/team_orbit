@@ -1,8 +1,8 @@
 import {
-  userSchema,
   userLoginSchema,
+  baseUserSchema,
   userSignupSchema,
-  userUpdateSchema,
+  userUpdatePasswordSchema,
 } from '../schemas/user.schema';
 import { getUserOASSchema, getUserProfileOASSchema, updateUserPasswordOASSchema } from '../openApiSpecification/oasDoc/user.oas';
 import { idValidation } from '../schemas/common.schema';
@@ -28,7 +28,7 @@ const registrar = new RouteRegistrar({
 // /**@description user login  */
 registrar.post('/login', {
   requestSchema: { bodySchema: userLoginSchema },
-  responseSchemas: [{ statusCode: 200, schema: userSchema }],
+  responseSchemas: [{ statusCode: 200, schema: baseUserSchema }],
   controller: postUserLogin,
 });
 
@@ -55,8 +55,8 @@ registrar.get('/list', {
 
 /**@description Create User */
 registrar.post('/create-user', {
-  requestSchema: { bodySchema: userSchema },
-  responseSchemas: [{ statusCode: 200, schema: userSchema }],
+  requestSchema: { bodySchema: userSignupSchema },
+  responseSchemas: [{ statusCode: 200, schema: userSignupSchema }],
   controller: createUserProfile,
 });
 
@@ -65,7 +65,7 @@ registrar.put('/:id/update-password/', {
   oasSchema: updateUserPasswordOASSchema,
   requestSchema: {
     paramsSchema: { id: idValidation },
-    bodySchema: userUpdateSchema,
+    bodySchema: userUpdatePasswordSchema,
   },
   middleware: [authRoleMiddleware()],
   controller: updateUserPassword,
@@ -82,9 +82,9 @@ registrar.get('/:id', {
 registrar.put('/:id', {
   requestSchema: {
     paramsSchema: { id: idValidation },
-    bodySchema: userUpdateSchema,
+    bodySchema: baseUserSchema,
   },
-  responseSchemas: [{ statusCode: 200, schema: userSchema }],
+  responseSchemas: [{ statusCode: 200, schema: baseUserSchema }],
   middleware: [authRoleMiddleware()],
   controller: updateUserProfile,
 });

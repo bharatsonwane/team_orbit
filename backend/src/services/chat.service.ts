@@ -1,38 +1,17 @@
 import { dbClientPool } from '../middleware/dbClientMiddleware';
-
-interface ChatMessageData {
-  text?: string | null;
-  media?: string | null;
-  sentUserId: string;
-  chatChannelId: string;
-  deliveredTo?: string[];
-  readBy?: string[];
-  reaction?: Record<string, any>;
-}
-
-interface ChatMessage {
-  id: string;
-  text: string | null;
-  media: string | null;
-  sentUserId: string;
-  chatChannelId: string;
-  createdAt: string;
-  deliveredTo: string[];
-  readBy: string[];
-  reaction: Record<string, any>;
-}
+import { ChatMessageSchema } from '../schemas/chat.schema';
 
 export default class Chat {
   static async saveMessage(
     dbClient: dbClientPool,
-    messageData: ChatMessageData
-  ): Promise<ChatMessage> {
+    messageData: ChatMessageSchema
+  ): Promise<ChatMessageSchema> {
     const query = `
       INSERT INTO chat_message (
         text,
         media,
         "sentUserId",
-        "chatChannelId",
+        "channelId",
         "createdAt",
         "deliveredTo",
         "readBy",
@@ -56,8 +35,8 @@ export default class Chat {
     const values = [
       messageData.text || null,
       messageData.media || null,
-      messageData.sentUserId,
-      messageData.chatChannelId,
+      messageData.senderUserId,
+      messageData.channelId,
       JSON.stringify(deliveredTo),
       JSON.stringify(readBy),
       JSON.stringify(reaction),
@@ -70,7 +49,7 @@ export default class Chat {
       if (!result || result.rows.length === 0) {
         throw new Error('No rows returned from insert');
       }
-      return result.rows[0] as ChatMessage;
+      return result.rows[0] as ChatMessageSchema;
     } catch (error) {
       console.error('Error saving chat message:', error);
       throw new Error('Failed to insert chat message');
@@ -79,40 +58,40 @@ export default class Chat {
 
   static async getMessagesForChannel(
     dbClient: dbClientPool,
-    chatChannelId: string
-  ): Promise<ChatMessage[]> {
+    channelId: string
+  ): Promise<ChatMessageSchema[]> {
     const query = `
       SELECT * FROM chat_message
-      WHERE "chatChannelId" = $1
+      WHERE "channelId" = $1
       ORDER BY "createdAt" ASC;
     `;
     try {
-      const result = await dbClient.mainPool.query(query, [chatChannelId]);
-      return result.rows as ChatMessage[];
+      const result = await dbClient.mainPool.query(query, [channelId]);
+      return result.rows as ChatMessageSchema[];
     } catch (error) {
       console.error('Error fetching messages:', error);
       throw new Error('Failed to fetch messages for chat channel');
     }
   }
 
-  static async saveMessageFromSocket(
-    dbClient: dbClientPool,
-    data: {
-      senderId: string;
-      receiverId: string;
-      message: string;
-      mediaUrl?: string;
-    }
-  ): Promise<ChatMessage> {
-    // This method is used by the socket.io handler
-    return await Chat.saveMessage(dbClient, {
-      text: data.message,
-      media: data.mediaUrl,
-      sentUserId: data.senderId,
-      chatChannelId: data.receiverId, // Using receiverId as chat_channel_id for simplicity
-      deliveredTo: [],
-      readBy: [],
-      reaction: {},
-    });
-  }
+  // static async saveMessageFromSocket(
+  //   dbClient: dbClientPool,
+  //   data: {
+  //     senderUserId: string;
+  //     receiverId: string;
+  //     message: string;
+  //     mediaUrl?: string;
+  //   }
+  // ): Promise<ChatMessageSchema> {
+  //   // This method is used by the socket.io handler
+  //   // return await Chat.saveMessage(dbClient, {
+  //   //   text: data.message,
+  //   //   media: data.mediaUrl,
+  //   //   senderUserId: data.senderUserId,
+  //   //   channelId: data.receiverId,
+  //   //   deliveredTo: [],
+  //   //   readBy: [],
+  //   //   reaction: {},
+  //   // });
+  // }
 }
