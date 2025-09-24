@@ -1,7 +1,10 @@
 import { Response, NextFunction } from 'express';
 import { AuthenticatedRequest } from '../middleware/authRoleMiddleware';
 import Tenant from '../services/tenant.service';
-import type { CreateTenantSchema, UpdateTenantSchema } from '../schemas/tenant.schema';
+import type {
+  CreateTenantSchema,
+  UpdateTenantSchema,
+} from '../schemas/tenant.schema';
 
 export const createTenant = async (
   req: AuthenticatedRequest,
@@ -11,13 +14,9 @@ export const createTenant = async (
   try {
     const tenantData = req.body as CreateTenantSchema;
 
-    const result = await Tenant.createTenant(req.db.mainPool, { tenantData });
+    const result = await Tenant.createTenant(req.db, { tenantData });
 
-    res.status(201).json({
-      message: 'Tenant created successfully',
-      tenant: result.tenant,
-      adminUser: result.adminUser,
-    });
+    res.status(201).json(result);
   } catch (error) {
     next(error);
   }
@@ -30,12 +29,10 @@ export const getTenants = async (
 ): Promise<void> => {
   try {
     const includeArchived = req.query.includeArchived === 'true';
-    
-    const tenants = await Tenant.getTenants(req.db.mainPool, { includeArchived });
 
-    res.status(200).json({
-      tenants,
-    });
+    const tenants = await Tenant.getTenants(req.db, { includeArchived });
+
+    res.status(200).json(tenants);
   } catch (error) {
     next(error);
   }
@@ -54,15 +51,13 @@ export const getTenantById = async (
       throw { statusCode: 400, message: 'Invalid tenant ID' };
     }
 
-    const tenant = await Tenant.getTenantById(req.db.mainPool, { tenantId });
+    const tenant = await Tenant.getTenantById(req.db, { tenantId });
 
     if (!tenant) {
       throw { statusCode: 404, message: 'Tenant not found' };
     }
 
-    res.status(200).json({
-      tenant,
-    });
+    res.status(200).json(tenant);
   } catch (error) {
     next(error);
   }
@@ -82,15 +77,12 @@ export const updateTenant = async (
       throw { statusCode: 400, message: 'Invalid tenant ID' };
     }
 
-    const updatedTenant = await Tenant.updateTenant(req.db.mainPool, {
+    const updatedTenant = await Tenant.updateTenant(req.db, {
       tenantId,
       updateData,
     });
 
-    res.status(200).json({
-      message: 'Tenant updated successfully',
-      tenant: updatedTenant,
-    });
+    res.status(200).json(updatedTenant);
   } catch (error) {
     next(error);
   }
@@ -109,11 +101,9 @@ export const getTenantUsers = async (
       throw { statusCode: 400, message: 'Invalid tenant ID' };
     }
 
-    const users = await Tenant.getTenantUsers(req.db.mainPool, { tenantId });
+    const users = await Tenant.getTenantUsers(req.db, { tenantId });
 
-    res.status(200).json({
-      users,
-    });
+    res.status(200).json(users);
   } catch (error) {
     next(error);
   }

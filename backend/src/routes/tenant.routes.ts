@@ -1,8 +1,7 @@
 import {
   createTenantSchema,
   updateTenantSchema,
-  tenantSchema,
-  tenantWithAdminSchema,
+  baseTenantSchema,
 } from '../schemas/tenant.schema';
 import { idValidation } from '../schemas/common.schema';
 import {
@@ -14,6 +13,7 @@ import {
 } from '../controllers/tenant.controller';
 import RouteRegistrar from '../middleware/RouteRegistrar';
 import { authRoleMiddleware } from '../middleware/authRoleMiddleware';
+import { userRoleKeys } from '../utils/constants';
 
 const registrar = new RouteRegistrar({
   basePath: '/api/tenant',
@@ -23,22 +23,40 @@ const registrar = new RouteRegistrar({
 /**@description Create new tenant with Tenant Admin */
 registrar.post('/create', {
   requestSchema: { bodySchema: createTenantSchema },
-  responseSchemas: [{ statusCode: 201, schema: tenantWithAdminSchema }],
-  middleware: [authRoleMiddleware('Platform Super Admin', 'Platform Admin', 'Platform Manager')],
+  responseSchemas: [{ statusCode: 201, schema: baseTenantSchema }],
+  middleware: [
+    authRoleMiddleware(
+      userRoleKeys.USER_ROLE_PLATFORM_SUPER_ADMIN,
+      userRoleKeys.USER_ROLE_PLATFORM_ADMIN,
+      userRoleKeys.USER_ROLE_PLATFORM_USER
+    ),
+  ],
   controller: createTenant,
 });
 
 /**@description Get all tenants */
 registrar.get('/list', {
-  middleware: [authRoleMiddleware('Platform Super Admin', 'Platform Admin', 'Platform Manager')],
+  middleware: [
+    authRoleMiddleware(
+      userRoleKeys.USER_ROLE_PLATFORM_SUPER_ADMIN,
+      userRoleKeys.USER_ROLE_PLATFORM_ADMIN,
+      userRoleKeys.USER_ROLE_PLATFORM_USER
+    ),
+  ],
   controller: getTenants,
 });
 
 /**@description Get tenant by ID */
 registrar.get('/:id', {
   requestSchema: { paramsSchema: { id: idValidation } },
-  responseSchemas: [{ statusCode: 200, schema: tenantSchema }],
-  middleware: [authRoleMiddleware('Platform Super Admin', 'Platform Admin', 'Platform Manager')],
+  responseSchemas: [{ statusCode: 200, schema: baseTenantSchema }],
+  middleware: [
+    authRoleMiddleware(
+      userRoleKeys.USER_ROLE_PLATFORM_SUPER_ADMIN,
+      userRoleKeys.USER_ROLE_PLATFORM_ADMIN,
+      userRoleKeys.USER_ROLE_PLATFORM_USER
+    ),
+  ],
   controller: getTenantById,
 });
 
@@ -48,15 +66,27 @@ registrar.put('/:id', {
     paramsSchema: { id: idValidation },
     bodySchema: updateTenantSchema,
   },
-  responseSchemas: [{ statusCode: 200, schema: tenantSchema }],
-  middleware: [authRoleMiddleware('Platform Super Admin', 'Platform Admin', 'Platform Manager')],
+  responseSchemas: [{ statusCode: 200, schema: baseTenantSchema }],
+  middleware: [
+    authRoleMiddleware(
+      userRoleKeys.USER_ROLE_PLATFORM_SUPER_ADMIN,
+      userRoleKeys.USER_ROLE_PLATFORM_ADMIN,
+      userRoleKeys.USER_ROLE_PLATFORM_USER
+    ),
+  ],
   controller: updateTenant,
 });
 
 /**@description Get tenant users */
 registrar.get('/:id/users', {
   requestSchema: { paramsSchema: { id: idValidation } },
-  middleware: [authRoleMiddleware('Platform Super Admin', 'Platform Admin', 'Platform Manager')],
+  middleware: [
+    authRoleMiddleware(
+      userRoleKeys.USER_ROLE_PLATFORM_SUPER_ADMIN,
+      userRoleKeys.USER_ROLE_PLATFORM_ADMIN,
+      userRoleKeys.USER_ROLE_PLATFORM_USER
+    ),
+  ],
   controller: getTenantUsers,
 });
 

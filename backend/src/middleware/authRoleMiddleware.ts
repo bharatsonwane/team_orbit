@@ -49,8 +49,8 @@ export const authRoleMiddleware = (...allowedRoles: string[]) => {
 
       if (
         !userRoles ||
-        !userRoles.some((role: { label: string }) =>
-          allowedRoles.includes(role.label)
+        !userRoles.some((role: { name: string }) =>
+          allowedRoles.includes(role.name)
         )
       ) {
         res

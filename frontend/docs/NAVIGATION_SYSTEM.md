@@ -95,7 +95,7 @@ The application now supports a comprehensive multi-tenant role system:
 | `platformAdmin` | Platform Administrator | Platform management |
 | `platformUser` | Platform User | Platform features |
 | `platformAgent` | Platform Agent | Agent-specific features |
-| `platformManager` | Platform Manager | Management features |
+| `platformManager` | USER_ROLE_PLATFORM_USER | Management features |
 | `platformAuditor` | Platform Auditor | Audit and compliance |
 
 #### **Tenant Roles** (Organization-specific access)
@@ -131,8 +131,8 @@ export const roleKeys = {
 ```typescript
 // New multi-tenant system
 export const roleKeys = {
-  platformSuperAdmin: 'Platform Super Admin',
-  platformAdmin: 'Platform Admin',
+  platformSuperAdmin: 'USER_ROLE_PLATFORM_SUPER_ADMIN',
+  platformAdmin: 'USER_ROLE_PLATFORM_ADMIN',
   // ... more platform roles
   tenantAdmin: 'Tenant Admin',
   tenantManager: 'Tenant Manager',

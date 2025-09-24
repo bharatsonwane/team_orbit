@@ -14,7 +14,7 @@ const baseLookupSchema = z.object({
   name: z.string(),
   label: z.string(),
   isSystem: z.boolean(),
-  sortOrder: z.number(),
+  sortOrder: z.number().optional(),
   lookupTypeId: z.number(),
 });
 export type LookupSchema = z.infer<typeof baseLookupSchema>;

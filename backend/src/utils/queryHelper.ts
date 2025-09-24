@@ -8,20 +8,6 @@ export function buildUpdateFields(
   acceptedKeys: string[],
   values: Record<string, any>
 ): Record<string, string> {
-  const columnMapping: { [key: string]: string } = {
-    firstName: '"firstName"',
-    lastName: '"lastName"',
-    middleName: '"middleName"',
-    maidenName: '"maidenName"',
-    bloodGroup: '"bloodGroup"',
-    marriedStatus: '"marriedStatus"',
-    hashPassword: '"hashPassword"',
-    statusId: '"statusId"',
-    tenantId: '"tenantId"',
-    createdAt: '"createdAt"',
-    updatedAt: '"updatedAt"',
-  };
-
   const updateFields: Record<string, string> = {};
 
   // Filter and process only the accepted keys that have values
@@ -31,15 +17,16 @@ export function buildUpdateFields(
       values[key] !== undefined &&
       values[key] !== null
     ) {
-      const columnName = columnMapping[key] || key;
       const value = values[key];
 
       if (typeof value === 'string') {
-        updateFields[columnName] = `'${value}'`;
+        updateFields[key] = `'${value}'`;
       } else if (typeof value === 'number') {
-        updateFields[columnName] = `${value}`;
+        updateFields[key] = `${value}`;
+      } else if (typeof value === 'boolean') {
+        updateFields[key] = `${value}`;
       } else {
-        updateFields[columnName] = 'NULL';
+        updateFields[key] = 'NULL';
       }
     }
   });

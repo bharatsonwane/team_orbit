@@ -10,7 +10,7 @@ import { UserLoginSchema, UserSignupSchema } from '../schemas/user.schema';
 import { AuthenticatedRequest } from '../middleware/authRoleMiddleware';
 import { userRoleKeys, userStatusKeys } from '../utils/constants';
 
-export const postUserLogin = async (
+export const userLogin = async (
   req: Request,
   res: Response,
   next: NextFunction
@@ -39,7 +39,7 @@ export const postUserLogin = async (
     const token = createJwtToken({
       userId: userData.id,
       email: userData.email,
-      userRole: userData.userRoles,
+      userRoles: userData.userRoles,
     });
 
     res.status(200).json({
@@ -51,7 +51,7 @@ export const postUserLogin = async (
   }
 };
 
-export const postUserSignup = async (
+export const userSignup = async (
   req: Request,
   res: Response,
   next: NextFunction

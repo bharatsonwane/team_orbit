@@ -46,12 +46,12 @@ const lookupData: LookupTypeWithLookupsSchema[] = [
     lookups: [
       {
         name: 'USER_ROLE_PLATFORM_SUPER_ADMIN',
-        label: 'Platform Super Admin',
+        label: 'USER_ROLE_PLATFORM_SUPER_ADMIN',
         isSystem: true,
       },
       {
         name: 'USER_ROLE_PLATFORM_ADMIN',
-        label: 'Platform Admin',
+        label: 'USER_ROLE_PLATFORM_ADMIN',
         isSystem: true,
       },
       {

@@ -11,8 +11,8 @@ import {
   getUserById,
   getUserProfile,
   getUsers,
-  postUserLogin,
-  postUserSignup,
+  userLogin,
+  userSignup,
   signoutUser,
   updateUserPassword,
   updateUserProfile,
@@ -29,14 +29,14 @@ const registrar = new RouteRegistrar({
 registrar.post('/login', {
   requestSchema: { bodySchema: userLoginSchema },
   responseSchemas: [{ statusCode: 200, schema: baseUserSchema }],
-  controller: postUserLogin,
+  controller: userLogin,
 });
 
 /**@description user signup  */
 registrar.post('/signup', {
   requestSchema: { bodySchema: userSignupSchema },
   responseSchemas: [{ statusCode: 200, schema: userSignupSchema }],
-  controller: postUserSignup,
+  controller: userSignup,
 });
 
 // /api/user/profile

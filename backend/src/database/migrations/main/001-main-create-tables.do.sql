@@ -1,8 +1,8 @@
 -- lookup_type Table
 CREATE TABLE IF NOT EXISTS lookup_type (
     id SERIAL PRIMARY KEY,
-    name VARCHAR(255) UNIQUE NOT NULL,  -- Internal name (e.g., 'USER_ROLE', 'USER_STATUS', 'TENANT_STATUS')
-    label VARCHAR(255) NOT NULL,        -- Display label (e.g., 'User Role', 'User Status', 'Tenant Status')
+    name VARCHAR(255) UNIQUE NOT NULL,  -- Internal name (e.g., 'USER_ROLE')
+    label VARCHAR(255) NOT NULL,        -- Display label (e.g., 'User Role')
     "isSystem" BOOLEAN NOT NULL,        -- System values that cannot be deleted
     "createdAt" TIMESTAMP DEFAULT NOW() NOT NULL,
     "updatedAt" TIMESTAMP DEFAULT NOW() NOT NULL,
@@ -16,7 +16,7 @@ CREATE TABLE IF NOT EXISTS lookup_type (
 CREATE TABLE IF NOT EXISTS lookup (
     id SERIAL PRIMARY KEY,
     name VARCHAR(100) UNIQUE NOT NULL,              -- Internal name (e.g., 'ROLE_PLATFORM_ADMIN', 'STATUS_ACTIVE', 'ROLE_TENANT_ADMIN')
-    label VARCHAR(255) NOT NULL,                    -- Display label (e.g., 'Platform Admin', 'Active', 'Tenant Admin')
+    label VARCHAR(255) NOT NULL,                    -- Display label (e.g., 'USER_ROLE_PLATFORM_ADMIN')
     "isSystem" BOOLEAN,                             -- System values that cannot be deleted
     "sortOrder" INT DEFAULT 0,                      -- For ordering items within a type
     "isArchived" BOOLEAN DEFAULT FALSE,             -- Soft delete instead of hard delete

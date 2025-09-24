@@ -11,8 +11,8 @@ This document outlines the recent schema changes made to align the frontend with
 #### Before
 ```typescript
 export const roleKeys = {
-  platformSuperAdmin: 'Platform Super Admin',
-  platformAdmin: 'Platform Admin',
+  platformSuperAdmin: 'USER_ROLE_PLATFORM_SUPER_ADMIN',
+  platformAdmin: 'USER_ROLE_PLATFORM_ADMIN',
   // ... other roles
 };
 ```

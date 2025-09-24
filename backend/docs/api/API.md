@@ -529,9 +529,9 @@ Authorization: Bearer <token>
 ### Access Control
 
 All tenant management endpoints require Platform-level permissions:
-- **Platform Super Admin** - Full access to all tenant operations
-- **Platform Admin** - Full access to tenant management
-- **Platform Manager** - Access to tenant management features
+- **USER_ROLE_PLATFORM_SUPER_ADMIN** - Full access to all tenant operations
+- **USER_ROLE_PLATFORM_ADMIN** - Full access to tenant management
+- **USER_ROLE_PLATFORM_USER** - Access to tenant management features
 
 ## 📋 Lookup Endpoints
 

@@ -105,7 +105,7 @@ All protected routes automatically include the AppLayout with sidebar navigation
 - **`/profile`** - User profile management (all users)
 - **`/`** - Home page (all users)
 
-#### Platform Management (Platform Admin/Super Admin/Manager)
+#### Platform Management (USER_ROLE_PLATFORM_ADMIN/Super Admin/Manager)
 - **`/tenant-management`** - Create and manage tenant organizations
 
 #### Multi-Tenant Management (Admin/Super Admin)
@@ -163,7 +163,7 @@ The application supports a comprehensive multi-tenant role system:
 2. **`platformAdmin`** - Platform Administrator
 3. **`platformUser`** - Platform User
 4. **`platformAgent`** - Platform Agent
-5. **`platformManager`** - Platform Manager
+5. **`platformManager`** - USER_ROLE_PLATFORM_USER
 6. **`platformAuditor`** - Platform Auditor
 
 #### **Tenant Roles** (Organization-specific access)
@@ -187,7 +187,7 @@ The application supports a comprehensive multi-tenant role system:
 | Training (Personal) | ✅ | ✅ | ✅ | ✅ | ✅ |
 | Social Network (View) | ✅ | ✅ | ✅ | ✅ | ✅ |
 | Chat & Messaging | ✅ | ✅ | ✅ | ✅ | ✅ |
-| **Tenant Management** | ❌ | ❌ | ❌ | ❌ | **Platform Admin/Super Admin/Manager Only** |
+| **Tenant Management** | ❌ | ❌ | ❌ | ❌ | **USER_ROLE_PLATFORM_ADMIN/Super Admin/Manager Only** |
 | Employee Onboarding | ❌ | ❌ | ✅ | ✅ | ✅ |
 | Department Management | ❌ | ❌ | ✅ | ✅ | ✅ |
 | Leave Approvals | ❌ | ❌ | ✅ | ✅ | ✅ |
@@ -195,7 +195,7 @@ The application supports a comprehensive multi-tenant role system:
 | Analytics & Reports | ❌ | ❌ | ✅ | ✅ | ✅ |
 | Workspace Settings | ❌ | ❌ | ❌ | ✅ | ✅ |
 | Announcements | ❌ | ❌ | ✅ | ✅ | ✅ |
-| Domain Configuration | ❌ | ❌ | ❌ | ❌ | Platform Super Admin Only |
+| Domain Configuration | ❌ | ❌ | ❌ | ❌ | USER_ROLE_PLATFORM_SUPER_ADMIN Only |
 
 ### Role Descriptions
 
@@ -206,8 +206,8 @@ The application supports a comprehensive multi-tenant role system:
 - **Tenant Admin** - Full tenant administration (workspace settings, user management)
 
 #### **Platform Roles**
-- **Platform Super Admin** - System-wide administration and configuration
-- **Platform Admin** - Platform-level user and tenant management
+- **USER_ROLE_PLATFORM_SUPER_ADMIN** - System-wide administration and configuration
+- **USER_ROLE_PLATFORM_ADMIN** - Platform-level user and tenant management
 - **Platform User/Agent/Manager/Auditor** - Various platform-specific roles with specialized access
 
 ## 🎨 Layout System

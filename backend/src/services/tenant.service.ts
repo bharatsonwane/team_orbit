@@ -1,33 +1,42 @@
-import { PoolClient } from 'pg';
-import type { CreateTenantSchema, UpdateTenantSchema, TenantSchema } from '../schemas/tenant.schema';
+import type {
+  CreateTenantSchema,
+  UpdateTenantSchema,
+  BaseTenantSchema,
+} from '../schemas/tenant.schema';
 import type { dbClientPool } from '../middleware/dbClientMiddleware';
 import { getHashPassword } from '../utils/authHelper';
+import { buildUpdateFields } from '../utils/queryHelper';
 import User from './user.service';
 import Lookup from './lookup.service';
+import { dbTransactionKeys } from '../utils/constants';
 
 export default class Tenant {
   /**
    * Create a new tenant with automatic Tenant Admin creation
    */
   static async createTenant(
-    db: PoolClient,
+    db: dbClientPool,
     { tenantData }: { tenantData: CreateTenantSchema }
-  ): Promise<{ tenant: TenantSchema; adminUser: any }> {
+  ): Promise<BaseTenantSchema> {
     const client = db;
-    const dbClient: dbClientPool = { mainPool: client };
+    const dbClient: dbClientPool = { mainPool: client.mainPool };
 
     try {
       // Start transaction
-      await client.query('BEGIN');
+      await client.mainPool.query(dbTransactionKeys.BEGIN);
 
-      // 1. Create the tenant  
+      // 1. Create the tenant
       // First get the active tenant status ID
       const activeTenantStatusQuery = `
         SELECT l.id FROM lookup l
         INNER JOIN lookup_type lt ON l."lookupTypeId" = lt.id
         WHERE l.name = 'TENANT_STATUS_ACTIVE' AND lt.name = 'TENANT_STATUS'
       `;
-      const statusResult = await client.query(activeTenantStatusQuery);
+
+      const statusResult = await dbClient.mainPool.query(
+        activeTenantStatusQuery
+      );
+
       if (statusResult.rows.length === 0) {
         throw new Error('TENANT_STATUS_ACTIVE not found');
       }
@@ -39,7 +48,7 @@ export default class Tenant {
         RETURNING id, name, label, "statusId", "isArchived", "createdAt", "updatedAt", "archivedAt"
       `;
 
-      const tenantResult = await client.query(tenantQuery, [
+      const tenantResult = await dbClient.mainPool.query(tenantQuery, [
         tenantData.name,
         tenantData.label,
         activeTenantStatusId,
@@ -48,8 +57,12 @@ export default class Tenant {
       const tenant = tenantResult.rows[0];
 
       // 2. Get Tenant Admin role ID
-      const tenantAdminRoleId = await Lookup.getTenantAdminRoleId(client);
-      const userStatusId = await Lookup.getUserStatusActiveId(client);
+      const tenantAdminRoleId = await Lookup.getTenantAdminRoleId(
+        dbClient.mainPool
+      );
+      const userStatusId = await Lookup.getUserStatusActiveId(
+        dbClient.mainPool
+      );
 
       // 3. Hash the admin user password
       const hashPassword = await getHashPassword(tenantData.adminUser.password);
@@ -66,35 +79,35 @@ export default class Tenant {
       });
 
       // 5. Assign Tenant Admin role to the user
-      await client.query(
+      await dbClient.mainPool.query(
         `INSERT INTO user_role_xref ("userId", "roleId", "createdAt", "updatedAt") VALUES ($1, $2, NOW(), NOW())`,
         [adminUser.id, tenantAdminRoleId]
       );
 
       // 6. Get the admin user with roles for response
-      const adminUserWithRoles = await User.getUserByIdOrEmailOrPhone(dbClient, { 
-        userId: adminUser.id 
-      });
+      const adminUserWithRoles = await User.getUserByIdOrEmailOrPhone(
+        dbClient,
+        {
+          userId: adminUser.id,
+        }
+      );
 
       // Commit transaction
-      await client.query('COMMIT');
+      await dbClient.mainPool.query(dbTransactionKeys.COMMIT);
 
       return {
-        tenant: {
-          id: tenant.id,
-          name: tenant.name,
-          label: tenant.label,
-          description: null, // Remove description from tenant schema
-          isArchived: tenant.isArchived,
-          createdAt: tenant.createdAt,
-          updatedAt: tenant.updatedAt,
-          archivedAt: tenant.archivedAt,
-        },
-        adminUser: adminUserWithRoles,
+        id: tenant.id,
+        name: tenant.name,
+        label: tenant.label,
+        statusId: tenant.statusId,
+        isArchived: tenant.isArchived,
+        createdAt: tenant.createdAt,
+        updatedAt: tenant.updatedAt,
+        archivedAt: tenant.archivedAt,
       };
     } catch (error) {
       // Rollback transaction on error
-      await client.query('ROLLBACK');
+      await dbClient.mainPool.query(dbTransactionKeys.ROLLBACK);
       throw error;
     }
   }
@@ -103,9 +116,9 @@ export default class Tenant {
    * Get all tenants
    */
   static async getTenants(
-    db: PoolClient,
+    db: dbClientPool,
     { includeArchived = false }: { includeArchived?: boolean } = {}
-  ): Promise<TenantSchema[]> {
+  ): Promise<BaseTenantSchema[]> {
     const query = `
       SELECT id, name, label, "statusId", "isArchived", "createdAt", "updatedAt", "archivedAt"
       FROM tenant
@@ -113,7 +126,7 @@ export default class Tenant {
       ORDER BY "createdAt" DESC
     `;
 
-    const result = await db.query(query);
+    const result = await db.mainPool.query(query);
     return result.rows;
   }
 
@@ -121,16 +134,16 @@ export default class Tenant {
    * Get tenant by ID
    */
   static async getTenantById(
-    db: PoolClient,
+    db: dbClientPool,
     { tenantId }: { tenantId: number }
-  ): Promise<TenantSchema | null> {
+  ): Promise<BaseTenantSchema | null> {
     const query = `
       SELECT id, name, label, "statusId", "isArchived", "createdAt", "updatedAt", "archivedAt"
       FROM tenant
       WHERE id = $1
     `;
 
-    const result = await db.query(query, [tenantId]);
+    const result = await db.mainPool.query(query, [tenantId]);
     return result.rows[0] || null;
   }
 
@@ -138,55 +151,49 @@ export default class Tenant {
    * Update tenant
    */
   static async updateTenant(
-    db: PoolClient,
-    { tenantId, updateData }: { tenantId: number; updateData: UpdateTenantSchema }
-  ): Promise<TenantSchema> {
-    const updateFields = [];
-    const updateValues = [];
-    let paramCount = 1;
+    db: dbClientPool,
+    {
+      tenantId,
+      updateData,
+    }: { tenantId: number; updateData: UpdateTenantSchema }
+  ): Promise<BaseTenantSchema> {
+    const acceptedKeys = ['label', 'isArchived'];
 
-    if (updateData.name !== undefined) {
-      updateFields.push(`name = $${paramCount++}`);
-      updateValues.push(updateData.name);
+    const updateFields = buildUpdateFields(acceptedKeys, updateData);
+
+    if (Object.keys(updateFields).length === 0) {
+      throw new Error('No valid fields to update');
     }
 
-    if (updateData.label !== undefined) {
-      updateFields.push(`label = $${paramCount++}`);
-      updateValues.push(updateData.label);
-    }
-
-    // Remove description field as it's not in the database schema
-
+    // Handle archivedAt field based on isArchived
     if (updateData.isArchived !== undefined) {
-      updateFields.push(`"isArchived" = $${paramCount++}`);
-      updateValues.push(updateData.isArchived);
-      
       if (updateData.isArchived) {
-        updateFields.push(`"archivedAt" = NOW()`);
+        updateFields["archivedAt"] = 'NOW()';
       } else {
-        updateFields.push(`"archivedAt" = NULL`);
+        updateFields["archivedAt"] = 'NULL';
       }
     }
 
-    updateFields.push(`"updatedAt" = NOW()`);
-    updateValues.push(tenantId);
+    const setQueryString = Object.entries(updateFields)
+      .map(([key, value]) => `"${key}" = ${value}`)
+      .join(', ');
 
-    const query = `
-      UPDATE tenant 
-      SET ${updateFields.join(', ')}
-      WHERE id = $${paramCount}
+    const queryString = `
+      UPDATE tenant
+      SET ${setQueryString}, "updatedAt" = NOW()
+      WHERE id = ${tenantId}
       RETURNING id, name, label, "statusId", "isArchived", "createdAt", "updatedAt", "archivedAt"
     `;
 
-    const result = await db.query(query, updateValues);
-    return result.rows[0];
+    const results = await db.mainPool.query(queryString);
+    return results.rows[0] as BaseTenantSchema;
   }
 
   /**
    * Get tenant users (admin, managers, etc.)
    */
   static async getTenantUsers(
-    db: PoolClient,
+    db: dbClientPool,
     { tenantId }: { tenantId: number }
   ): Promise<any[]> {
     const query = `
@@ -218,7 +225,7 @@ export default class Tenant {
       ORDER BY up."createdAt" DESC
     `;
 
-    const result = await db.query(query, [tenantId]);
+    const result = await db.mainPool.query(query, [tenantId]);
     return result.rows;
   }
 }

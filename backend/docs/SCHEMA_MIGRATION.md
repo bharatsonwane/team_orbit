@@ -26,7 +26,7 @@ CREATE TABLE lookup_type (
 CREATE TABLE lookup (
     id SERIAL PRIMARY KEY,
     name VARCHAR(100) UNIQUE NOT NULL,        -- e.g., 'USER_ROLE_PLATFORM_ADMIN'
-    label VARCHAR(255) NOT NULL,              -- e.g., 'Platform Admin'
+    label VARCHAR(255) NOT NULL,              -- e.g., 'USER_ROLE_PLATFORM_ADMIN'
     "isSystem" BOOLEAN,                       -- System values that cannot be deleted
     "sortOrder" INT DEFAULT 0,                -- For ordering items within a type
     "lookupTypeId" INT NOT NULL,              -- Foreign key to lookup_type
@@ -151,8 +151,8 @@ const lookupData = [
     label: 'User Role', 
     isSystem: true,
     lookups: [
-      { name: 'USER_ROLE_PLATFORM_SUPER_ADMIN', label: 'Platform Super Admin', isSystem: true },
-      { name: 'USER_ROLE_PLATFORM_ADMIN', label: 'Platform Admin', isSystem: true },
+      { name: 'USER_ROLE_PLATFORM_SUPER_ADMIN', label: 'USER_ROLE_PLATFORM_SUPER_ADMIN', isSystem: true },
+      { name: 'USER_ROLE_PLATFORM_ADMIN', label: 'USER_ROLE_PLATFORM_ADMIN', isSystem: true },
       // ... other roles
     ]
   },
@@ -194,7 +194,7 @@ const lookupData = [
     {
       id: 1,
       name: "USER_ROLE_PLATFORM_ADMIN",
-      label: "Platform Admin", 
+      label: "USER_ROLE_PLATFORM_ADMIN", 
       lookupTypeId: 1
     }
   ]

@@ -135,7 +135,7 @@ export default class User {
     }
 
     const setQueryString = Object.entries(updateFields)
-      .map(([key, value]) => `${key} = ${value}`)
+      .map(([key, value]) => `"${key}" = ${value}`)
       .join(', ');
 
     const queryString = `
@@ -234,7 +234,8 @@ export default class User {
               'id', l.id,
               'name', l.name,
               'label', l.label,
-              'lookupTypeId', l."lookupTypeId"
+              'lookupTypeId', l."lookupTypeId",
+              'isSystem', l."isSystem"
             )
           ) FILTER (WHERE l.id IS NOT NULL), 
           '[]'::json

@@ -1,6 +1,25 @@
 import { z } from 'zod';
 import { oasRegisterSchemas } from '../openApiSpecification/openAPIDocumentGenerator';
 
+export const baseTenantSchema = z.object({
+  id: z.number().optional(),
+  name: z.string().min(2, 'Tenant name must be at least 2 characters').max(255),
+  label: z
+    .string()
+    .min(2, 'Tenant label must be at least 2 characters')
+    .max(255),
+  statusId: z.number(),
+  isArchived: z.boolean().optional(),
+  createdAt: z.string().optional(),
+  updatedAt: z.string().optional(),
+  archivedAt: z.string().nullable(),
+  createdBy: z.number().optional(),
+  updatedBy: z.number().optional(),
+  archivedBy: z.number().optional(),
+});
+
+export type BaseTenantSchema = z.infer<typeof baseTenantSchema>;
+
 // Tenant creation schema
 export const createTenantSchema = z.object({
   name: z.string().min(2, 'Tenant name must be at least 2 characters').max(255),
@@ -22,52 +41,13 @@ export type CreateTenantSchema = z.infer<typeof createTenantSchema>;
 
 // Tenant update schema
 export const updateTenantSchema = z.object({
-  name: z.string().min(2).max(255).optional(),
   label: z.string().min(2).max(255).optional(),
   isArchived: z.boolean().optional(),
 });
 
 export type UpdateTenantSchema = z.infer<typeof updateTenantSchema>;
 
-// Tenant response schema
-export const tenantSchema = z.object({
-  id: z.number(),
-  name: z.string(),
-  label: z.string(),
-  description: z.string().nullable(), // Keep for backward compatibility
-  isArchived: z.boolean(),
-  createdAt: z.string(),
-  updatedAt: z.string(),
-  archivedAt: z.string().nullable(),
-});
-
-export type TenantSchema = z.infer<typeof tenantSchema>;
-
-// Tenant with admin user response
-export const tenantWithAdminSchema = z.object({
-  tenant: tenantSchema,
-  adminUser: z.object({
-    id: z.number(),
-    email: z.string(),
-    firstName: z.string(),
-    lastName: z.string(),
-    phone: z.string().nullable(),
-    tenantId: z.number(),
-    userRoles: z.array(
-      z.object({
-        id: z.number(),
-        label: z.string(),
-        lookupTypeId: z.number(),
-      })
-    ),
-  }),
-});
-
-export type TenantWithAdminSchema = z.infer<typeof tenantWithAdminSchema>;
-
 oasRegisterSchemas([
   { schemaName: 'CreateTenantSchema', schema: createTenantSchema },
   { schemaName: 'UpdateTenantSchema', schema: updateTenantSchema },
-  { schemaName: 'TenantSchema', schema: tenantSchema },
-  { schemaName: 'TenantWithAdminSchema', schema: tenantWithAdminSchema },
 ]);

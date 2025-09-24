@@ -1,3 +1,10 @@
+// Database transaction constants
+export const dbTransactionKeys = {
+  BEGIN: 'BEGIN',
+  COMMIT: 'COMMIT',
+  ROLLBACK: 'ROLLBACK',
+};
+
 export const lookupTypeKeys = {
   USER_ROLE: 'USER_ROLE',
   USER_STATUS: 'USER_STATUS',
