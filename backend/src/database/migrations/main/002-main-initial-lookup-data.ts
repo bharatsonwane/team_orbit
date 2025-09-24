@@ -5,7 +5,9 @@ interface Lookup {
   id?: number;
   name: string;
   label: string;
+  description?: string;
   isSystem: boolean;
+  sortOrder?: number;
   lookupTypeId?: number;
 }
 
@@ -46,33 +48,45 @@ const lookupData: LookupTypeWithLookupsSchema[] = [
     lookups: [
       {
         name: 'PLATFORM_SUPER_ADMIN',
-        label: 'PLATFORM_SUPER_ADMIN',
+        label: 'Platform Super Admin',
+        description: 'Highest level administrator with full system access',
         isSystem: true,
+        sortOrder: 1,
       },
       {
         name: 'PLATFORM_ADMIN',
-        label: 'PLATFORM_ADMIN',
+        label: 'Platform Admin',
+        description: 'Platform administrator with administrative privileges',
         isSystem: true,
+        sortOrder: 2,
       },
       {
         name: 'PLATFORM_USER',
         label: 'Platform User',
+        description: 'Standard platform user with basic access',
         isSystem: true,
+        sortOrder: 3,
       },
       {
         name: 'TENANT_ADMIN',
         label: 'Tenant Admin',
+        description: 'Tenant administrator with full tenant access',
         isSystem: true,
+        sortOrder: 4,
       },
       {
         name: 'TENANT_MANAGER',
         label: 'Tenant Manager',
+        description: 'Tenant manager with limited administrative access',
         isSystem: true,
+        sortOrder: 5,
       },
       {
         name: 'TENANT_USER',
         label: 'Tenant User',
+        description: 'Standard tenant user with basic tenant access',
         isSystem: true,
+        sortOrder: 6,
       },
     ],
   },
@@ -84,22 +98,30 @@ const lookupData: LookupTypeWithLookupsSchema[] = [
       {
         name: 'PENDING',
         label: 'Pending',
+        description: 'User account is pending activation',
         isSystem: true,
+        sortOrder: 1,
       },
       {
         name: 'ACTIVE',
         label: 'Active',
+        description: 'User account is active and can access the system',
         isSystem: true,
+        sortOrder: 2,
       },
       {
         name: 'DEACTIVATED',
         label: 'Deactivated',
+        description: 'User account is temporarily deactivated',
         isSystem: true,
+        sortOrder: 3,
       },
       {
         name: 'ARCHIVED',
         label: 'Archived',
+        description: 'User account is permanently archived',
         isSystem: true,
+        sortOrder: 4,
       },
     ],
   },
@@ -111,22 +133,30 @@ const lookupData: LookupTypeWithLookupsSchema[] = [
       {
         name: 'PENDING',
         label: 'Pending',
+        description: 'Tenant is pending approval',
         isSystem: true,
+        sortOrder: 1,
       },
       {
         name: 'ACTIVE',
         label: 'Active',
+        description: 'Tenant is active and operational',
         isSystem: true,
+        sortOrder: 2,
       },
       {
         name: 'DEACTIVATED',
         label: 'Deactivated',
+        description: 'Tenant is temporarily deactivated',
         isSystem: true,
+        sortOrder: 3,
       },
       {
         name: 'ARCHIVED',
         label: 'Archived',
+        description: 'Tenant is permanently archived',
         isSystem: true,
+        sortOrder: 4,
       },
     ],
   },
@@ -138,12 +168,16 @@ const lookupData: LookupTypeWithLookupsSchema[] = [
       {
         name: 'ONE_TO_ONE',
         label: '1:1 Chat',
+        description: 'Direct message between two users',
         isSystem: true,
+        sortOrder: 1,
       },
       {
         name: 'GROUP',
         label: 'Group Chat',
+        description: 'Group conversation with multiple users',
         isSystem: true,
+        sortOrder: 2,
       },
     ],
   },
@@ -181,30 +215,41 @@ export async function up(client: PoolClient): Promise<void> {
       for (const lookup of data.lookups) {
         await client.query(
           `
-                INSERT INTO lookup (name, label, "isSystem", "lookupTypeId", "createdAt", "updatedAt")
-                VALUES ($1, $2, $3, $4, NOW(), NOW())
-                ON CONFLICT ("lookupTypeId", label) DO NOTHING;
+                INSERT INTO lookup (name, label, description, "isSystem", "sortOrder", "lookupTypeId", "createdAt", "updatedAt")
+                VALUES ($1, $2, $3, $4, $5, $6, NOW(), NOW())
+                ON CONFLICT ("lookupTypeId", name) DO NOTHING;
             `,
-          [lookup.name, lookup.label, lookup.isSystem, lookupTypeId]
+          [
+            lookup.name,
+            lookup.label,
+            lookup.description || null,
+            lookup.isSystem,
+            lookup.sortOrder || 0,
+            lookupTypeId,
+          ]
         );
       }
     }
 
     /** Get lookup data by lookup name */
-    const getLookupDataByName = async (
-      lookupName: string
-    ): Promise<Lookup> => {
+    const getLookupDataByLookupTypeNameAndLookupName = async ({
+      lookupName,
+      lookupTypeName,
+    }: {
+      lookupName: string;
+      lookupTypeName: string;
+    }): Promise<Lookup> => {
       /** Get lookup data query */
       const getLookupDataQuery = `
         SELECT l.id, l.name, l.label, l."lookupTypeId", lt.name as typeName
         FROM lookup_type lt
         INNER JOIN lookup l ON lt.id = l."lookupTypeId"
-        WHERE l.name = $1;
+        WHERE l.name = $1 AND lt.name = $2;
       `;
 
       /** Get lookup data result */
       const lookupDataResult = (
-        await client.query(getLookupDataQuery, [lookupName])
+        await client.query(getLookupDataQuery, [lookupName, lookupTypeName])
       ).rows;
 
       /** If lookup data result is empty, throw an error */
@@ -216,17 +261,23 @@ export async function up(client: PoolClient): Promise<void> {
       return lookupDataResult[0];
     };
 
-    return { getLookupDataByName };
+    return { getLookupDataByLookupTypeNameAndLookupName };
   };
 
-  const { getLookupDataByName } = await upsertAndFetchLookupData();
+  const { getLookupDataByLookupTypeNameAndLookupName } =
+    await upsertAndFetchLookupData();
 
-  const superAdminRoleData = await getLookupDataByName(
-    'PLATFORM_SUPER_ADMIN'
+  const superAdminRoleData = await getLookupDataByLookupTypeNameAndLookupName({
+    lookupName: 'PLATFORM_SUPER_ADMIN',
+    lookupTypeName: 'USER_ROLE',
+  });
+
+  const activeUserStatusData = await getLookupDataByLookupTypeNameAndLookupName(
+    {
+      lookupName: 'ACTIVE',
+      lookupTypeName: 'USER_STATUS',
+    }
   );
-
-  const activeUserStatusData =
-    await getLookupDataByName('ACTIVE');
 
   const upsertAndFetchUserData = async () => {
     const userDataList: AppUser[] = [

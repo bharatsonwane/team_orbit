@@ -10,23 +10,29 @@ import {
   tenantStatusKeys,
 } from '../../utils/constants';
 import { getHashPassword } from '../../utils/authHelper';
+import Lookup from '../../services/lookup.service';
 
 /** Get lookup data by lookup name */
-const getLookupDataByName = async (
-  client: PoolClient,
-  lookupName: string
-): Promise<LookupSchema> => {
+const getLookupDataByLookupTypeNameAndLookupName = async ({
+  client,
+  lookupTypeName,
+  lookupName,
+}: {
+  client: PoolClient;
+  lookupTypeName: string;
+  lookupName: string;
+}): Promise<LookupSchema> => {
   /** Get lookup data query */
   const getLookupDataQuery = `
         SELECT l.id, l.name, l.label, l."lookupTypeId", lt.name as typeName
         FROM lookup_type lt
         INNER JOIN lookup l ON lt.id = l."lookupTypeId"
-        WHERE l.name = $1;
+        WHERE l.name = $1 AND lt.name = $2;
       `;
 
   /** Get lookup data result */
   const lookupDataResult = (
-    await client.query(getLookupDataQuery, [lookupName])
+    await client.query(getLookupDataQuery, [lookupName, lookupTypeName])
   ).rows;
 
   /** If lookup data result is empty, throw an error */
@@ -45,10 +51,12 @@ async function main(): Promise<void> {
     const pool = await db.getSchemaPool(schemaNames.main);
 
     // Get tenant status lookup data
-    const activeTenantStatusData = await getLookupDataByName(
-      pool,
-      tenantStatusKeys.ACTIVE
-    );
+    const activeTenantStatusData =
+      await getLookupDataByLookupTypeNameAndLookupName({
+        client: pool,
+        lookupTypeName: lookupTypeKeys.TENANT_STATUS,
+        lookupName: tenantStatusKeys.ACTIVE,
+      });
 
     /** create tenant data */
     const tenantData = {
@@ -68,15 +76,19 @@ async function main(): Promise<void> {
     const tenantId = tenantResult.rows[0].id;
 
     // Get tenant admin role data
-    const tenantAdminRoleData = await getLookupDataByName(
-      pool,
-      userRoleKeys.TENANT_ADMIN
-    );
+    const tenantAdminRoleData =
+      await getLookupDataByLookupTypeNameAndLookupName({
+        client: pool,
+        lookupTypeName: lookupTypeKeys.USER_ROLE,
+        lookupName: userRoleKeys.TENANT_ADMIN,
+      });
 
-    const activeUserStatusData = await getLookupDataByName(
-      pool,
-      userStatusKeys.ACTIVE
-    );
+    const activeUserStatusData =
+      await getLookupDataByLookupTypeNameAndLookupName({
+        client: pool,
+        lookupTypeName: lookupTypeKeys.USER_STATUS,
+        lookupName: userStatusKeys.ACTIVE,
+      });
 
     const userDataList: UserSignupSchema[] = [
       {
@@ -95,7 +107,7 @@ async function main(): Promise<void> {
         bio: 'iConnect Tenant Admin',
         statusId: activeUserStatusData.id,
         tenantId: tenantId,
-        userRoles: [tenantAdminRoleData.id],
+        roleIds: [tenantAdminRoleData.id],
       },
     ];
 
@@ -162,8 +174,8 @@ async function main(): Promise<void> {
 
       const userResponse = userResult[0];
 
-      if (userData.userRoles) {
-        for (const roleId of userData.userRoles) {
+      if (userData.roleIds) {
+        for (const roleId of userData.roleIds) {
           await pool.query(
             `
               INSERT INTO user_role_xref ("userId", "roleId", "createdAt", "updatedAt")

@@ -78,19 +78,19 @@ export default class User {
           "createdAt",
           "updatedAt"
     ) VALUES (
-      ${userData.title},
-      ${userData.firstName},
-      ${userData.lastName},
-      ${userData.middleName},
-      ${userData.maidenName},
-      ${userData.gender},
-      ${userData.dob},
-      ${userData.bloodGroup},
-      ${userData.marriedStatus},
-      ${userData.email},
-      ${userData.phone},
-      ${userData.hashPassword || 'NULL'},
-      ${userData.bio},
+      '${userData.title}',
+      '${userData.firstName}',
+      '${userData.lastName}',
+      '${userData.middleName}',
+      '${userData.maidenName}',
+      '${userData.gender}',
+      '${userData.dob}',
+      '${userData.bloodGroup}',
+      '${userData.marriedStatus}',
+      '${userData.email}',
+      '${userData.phone}',
+      '${userData.hashPassword || "NULL"}',
+      '${userData.bio}',
       ${userData.statusId},
       NOW(),
       NOW()
@@ -239,7 +239,7 @@ export default class User {
             )
           ) FILTER (WHERE l.id IS NOT NULL), 
           '[]'::json
-        ) as "userRoles"
+        ) as "roles"
       FROM 
         app_user up
       LEFT JOIN lookup ls ON up."statusId" = ls.id

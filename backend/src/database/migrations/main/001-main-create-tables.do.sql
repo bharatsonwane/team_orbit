@@ -15,11 +15,12 @@ CREATE TABLE IF NOT EXISTS lookup_type (
 -- lookup Table
 CREATE TABLE IF NOT EXISTS lookup (
     id SERIAL PRIMARY KEY,
-    name VARCHAR(100) NOT NULL,              -- Internal name (e.g., 'ROLE_PLATFORM_ADMIN', 'STATUS_ACTIVE', 'ROLE_TENANT_ADMIN')
-    label VARCHAR(255) NOT NULL,                    -- Display label (e.g., 'PLATFORM_ADMIN')
-    "isSystem" BOOLEAN,                             -- System values that cannot be deleted
-    "sortOrder" INT DEFAULT 0,                      -- For ordering items within a type
-    "isArchived" BOOLEAN DEFAULT FALSE,             -- Soft delete instead of hard delete
+    name VARCHAR(100) NOT NULL,              -- Internal name (e.g., 'USER_ROLE_PLATFORM_ADMIN', 'USER_STATUS_ACTIVE')
+    label VARCHAR(255) NOT NULL,             -- Display label (e.g., 'Platform Admin', 'Active')
+    description TEXT,                        -- Optional description for the lookup value
+    "isSystem" BOOLEAN DEFAULT FALSE NOT NULL, -- System values that cannot be deleted
+    "sortOrder" INT DEFAULT 0 NOT NULL,      -- For ordering items within a type
+    "isArchived" BOOLEAN DEFAULT FALSE NOT NULL, -- Soft delete instead of hard delete
     "createdAt" TIMESTAMP DEFAULT NOW() NOT NULL,
     "updatedAt" TIMESTAMP DEFAULT NOW() NOT NULL,
     "archivedAt" TIMESTAMP DEFAULT NULL,
@@ -27,7 +28,7 @@ CREATE TABLE IF NOT EXISTS lookup (
     "updatedBy" INT DEFAULT NULL,
     "archivedBy" INT DEFAULT NULL,
     "lookupTypeId" INT NOT NULL,
-    CONSTRAINT fk_lookup_lookup_type FOREIGN KEY ("lookupTypeId") REFERENCES lookup_type (id),  -- Foreign key constraint
+    CONSTRAINT fk_lookup_lookup_type FOREIGN KEY ("lookupTypeId") REFERENCES lookup_type (id) ON DELETE CASCADE,
     CONSTRAINT unique_lookup_type_id_name UNIQUE ("lookupTypeId", name),                        -- Unique constraint for lookup type and name
     CONSTRAINT unique_lookup_type_id_label UNIQUE ("lookupTypeId", label)                       -- Unique constraint for lookup type and label
 );

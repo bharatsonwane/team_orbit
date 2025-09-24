@@ -39,7 +39,7 @@ export const userLogin = async (
     const token = createJwtToken({
       userId: userData.id,
       email: userData.email,
-      userRoles: userData.userRoles,
+      userRoles: userData.roles,
     });
 
     res.status(200).json({

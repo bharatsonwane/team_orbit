@@ -29,7 +29,8 @@ export const baseUserSchema = z.object({
   bio: z.string().optional(),
   statusId: z.number().int().optional(),
   tenantId: z.number().int().optional(),
-  userRoles: z.array(baseLookupSchema).optional(),
+  roleIds: z.array(z.number().int()).optional(),
+  roles: z.array(baseLookupSchema).optional(),
 });
 export type BaseUserSchema = z.infer<typeof baseUserSchema>;
 
@@ -42,14 +43,24 @@ export type UserLoginSchema = z.infer<typeof userLoginSchema>;
 // oasRegistry.register('UserLogin', userLoginSchema);
 
 /**@description user signup schema */
-export const userSignupSchema = baseUserSchema.extend({
-  password: z.string().min(6, 'Password should be at least 6 characters long'),
-});
+export const userSignupSchema = baseUserSchema
+  .omit({
+    id: true,
+    roleIds: true,
+    roles: true,
+    statusId: true,
+    tenantId: true,
+  })
+  .extend({
+    password: z
+      .string()
+      .min(6, 'Password should be at least 6 characters long'),
+  });
 
 export type UserSignupSchema = z.infer<typeof userSignupSchema>;
 // oasRegistry.register('UserSignup', userSignupSchema);
 
-export const userSignupServiceSchema = userSignupSchema
+export const userSignupServiceSchema = baseUserSchema
   .extend({
     hashPassword: z.string(),
   })
