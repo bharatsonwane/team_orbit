@@ -30,7 +30,7 @@ export default class Tenant {
       const activeTenantStatusQuery = `
         SELECT l.id FROM lookup l
         INNER JOIN lookup_type lt ON l."lookupTypeId" = lt.id
-        WHERE l.name = 'TENANT_STATUS_ACTIVE' AND lt.name = 'TENANT_STATUS'
+        WHERE l.name = 'ACTIVE' AND lt.name = 'TENANT_STATUS'
       `;
 
       const statusResult = await dbClient.mainPool.query(
@@ -38,7 +38,7 @@ export default class Tenant {
       );
 
       if (statusResult.rows.length === 0) {
-        throw new Error('TENANT_STATUS_ACTIVE not found');
+        throw new Error('ACTIVE not found');
       }
       const activeTenantStatusId = statusResult.rows[0].id;
 

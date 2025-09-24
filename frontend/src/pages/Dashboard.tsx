@@ -10,22 +10,24 @@ import {
 
 import { useAuthService } from '../contexts/AuthContextProvider';
 import { hasRoleAccess } from '../utils/authHelper';
+import { userRoleKeys } from '@/schemas/user';
 
 export default function Dashboard() {
   const { loggedInUser, logout } = useAuthService();
+  console.log("bharat-loggedInUser", loggedInUser)
 
   // Check user roles using the new authHelper
   const isAdmin = loggedInUser
     ? hasRoleAccess({
-        allowedRoles: ['ADMIN', 'SUPER'],
-        userRoles: [loggedInUser.role],
+        allowedRoles: [userRoleKeys.PLATFORM_ADMIN, userRoleKeys.PLATFORM_SUPER_ADMIN],
+        userRoles: [loggedInUser.roles],
       })
     : false;
 
   const isSuper = loggedInUser
     ? hasRoleAccess({
-        allowedRoles: ['SUPER'],
-        userRoles: [loggedInUser.role],
+        allowedRoles: [userRoleKeys.PLATFORM_SUPER_ADMIN],
+        userRoles: [loggedInUser.roles],
       })
     : false;
 

@@ -23,8 +23,8 @@ import {
 import { ThemeToggle } from '@/components/theme-toggle';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useAuthService } from '@/contexts/AuthContextProvider';
-import { userRoleKeys } from '@/utils/constants';
-import type { UserRole } from '@/schemas/user';
+import { userRoleKeys, type UserRoleKey } from '@/schemas/user';
+
 
 // Default company info - can be made configurable later
 const companyInfo = {
@@ -44,15 +44,15 @@ export function AppSidebar() {
     );
   };
 
-  // Check if user has access to a navigation item
-  const hasAccess = (authRoles: UserRole[]) => {
+  // Check if user has access to a navigation item  
+  const hasAccess = (authRoles: UserRoleKey[]) => {
     if (!loggedInUser) return false;
 
     // Handle the ANY role - if ANY is in allowed roles, grant access
-    if (authRoles.includes(userRoleKeys.ANY as UserRole)) return true;
+    if (authRoles.includes(userRoleKeys.ANY as UserRoleKey)) return true;
 
     // Check if user's role is in the allowed roles
-    return authRoles.includes(loggedInUser.role as UserRole);
+    return authRoles.includes(loggedInUser.roles as UserRoleKey[]);
   };
 
   // Filter navigation items based on user role
@@ -191,7 +191,7 @@ export function AppSidebar() {
                 : 'User'}
             </span>
             <span className='truncate text-xs text-muted-foreground block'>
-              {loggedInUser?.role || 'Employee'}
+              {loggedInUser?.roles || 'Employee'}
             </span>
           </div>
         </div>

@@ -15,8 +15,8 @@ CREATE TABLE IF NOT EXISTS lookup_type (
 -- lookup Table
 CREATE TABLE IF NOT EXISTS lookup (
     id SERIAL PRIMARY KEY,
-    name VARCHAR(100) UNIQUE NOT NULL,              -- Internal name (e.g., 'ROLE_PLATFORM_ADMIN', 'STATUS_ACTIVE', 'ROLE_TENANT_ADMIN')
-    label VARCHAR(255) NOT NULL,                    -- Display label (e.g., 'USER_ROLE_PLATFORM_ADMIN')
+    name VARCHAR(100) NOT NULL,              -- Internal name (e.g., 'ROLE_PLATFORM_ADMIN', 'STATUS_ACTIVE', 'ROLE_TENANT_ADMIN')
+    label VARCHAR(255) NOT NULL,                    -- Display label (e.g., 'PLATFORM_ADMIN')
     "isSystem" BOOLEAN,                             -- System values that cannot be deleted
     "sortOrder" INT DEFAULT 0,                      -- For ordering items within a type
     "isArchived" BOOLEAN DEFAULT FALSE,             -- Soft delete instead of hard delete
@@ -28,6 +28,7 @@ CREATE TABLE IF NOT EXISTS lookup (
     "archivedBy" INT DEFAULT NULL,
     "lookupTypeId" INT NOT NULL,
     CONSTRAINT fk_lookup_lookup_type FOREIGN KEY ("lookupTypeId") REFERENCES lookup_type (id),  -- Foreign key constraint
+    CONSTRAINT unique_lookup_type_id_name UNIQUE ("lookupTypeId", name),                        -- Unique constraint for lookup type and name
     CONSTRAINT unique_lookup_type_id_label UNIQUE ("lookupTypeId", label)                       -- Unique constraint for lookup type and label
 );
 

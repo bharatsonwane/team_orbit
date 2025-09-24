@@ -110,13 +110,13 @@ export default class Lookup {
       SELECT l.id 
       FROM lookup l
       INNER JOIN lookup_type lt ON l."lookupTypeId" = lt.id
-      WHERE l.name = 'USER_STATUS_PENDING' AND lt.name = 'USER_STATUS';
+      WHERE l.name = 'PENDING' AND lt.name = 'USER_STATUS';
     `;
     const results = await dbClient.mainPool.query(queryString);
     const response = results.rows;
 
     if (response.length === 0) {
-      throw new HttpError('USER_STATUS_PENDING not found.', 404);
+      throw new HttpError('PENDING not found.', 404);
     }
 
     return response[0].id;
@@ -127,12 +127,12 @@ export default class Lookup {
       SELECT l.id
       FROM lookup l
       INNER JOIN lookup_type lt ON l."lookupTypeId" = lt.id
-      WHERE l.name = 'USER_ROLE_TENANT_USER' AND lt.name = 'USER_ROLE';`;
+      WHERE l.name = 'TENANT_USER' AND lt.name = 'USER_ROLE';`;
     const results = await dbClient.mainPool.query(queryString);
     const response = results.rows;
 
     if (response.length === 0) {
-      throw new HttpError('USER_ROLE_TENANT_USER not found.', 404);
+      throw new HttpError('TENANT_USER not found.', 404);
     }
 
     return response[0].id;
@@ -143,12 +143,12 @@ export default class Lookup {
       SELECT l.id
       FROM lookup l
       INNER JOIN lookup_type lt ON l."lookupTypeId" = lt.id
-      WHERE l.name = 'USER_ROLE_TENANT_ADMIN' AND lt.name = 'USER_ROLE';`;
+      WHERE l.name = 'TENANT_ADMIN' AND lt.name = 'USER_ROLE';`;
     const results = await dbClient.query(queryString);
     const response = results.rows;
 
     if (response.length === 0) {
-      throw new HttpError('USER_ROLE_TENANT_ADMIN not found.', 404);
+      throw new HttpError('TENANT_ADMIN not found.', 404);
     }
 
     return response[0].id;
@@ -159,12 +159,12 @@ export default class Lookup {
       SELECT l.id
       FROM lookup l
       INNER JOIN lookup_type lt ON l."lookupTypeId" = lt.id
-      WHERE l.name = 'USER_STATUS_ACTIVE' AND lt.name = 'USER_STATUS';`;
+      WHERE l.name = 'ACTIVE' AND lt.name = 'USER_STATUS';`;
     const results = await dbClient.query(queryString);
     const response = results.rows;
 
     if (response.length === 0) {
-      throw new HttpError('USER_STATUS_ACTIVE not found.', 404);
+      throw new HttpError('ACTIVE not found.', 404);
     }
 
     return response[0].id;

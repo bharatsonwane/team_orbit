@@ -45,32 +45,32 @@ const lookupData: LookupTypeWithLookupsSchema[] = [
     isSystem: true,
     lookups: [
       {
-        name: 'USER_ROLE_PLATFORM_SUPER_ADMIN',
-        label: 'USER_ROLE_PLATFORM_SUPER_ADMIN',
+        name: 'PLATFORM_SUPER_ADMIN',
+        label: 'PLATFORM_SUPER_ADMIN',
         isSystem: true,
       },
       {
-        name: 'USER_ROLE_PLATFORM_ADMIN',
-        label: 'USER_ROLE_PLATFORM_ADMIN',
+        name: 'PLATFORM_ADMIN',
+        label: 'PLATFORM_ADMIN',
         isSystem: true,
       },
       {
-        name: 'USER_ROLE_PLATFORM_USER',
+        name: 'PLATFORM_USER',
         label: 'Platform User',
         isSystem: true,
       },
       {
-        name: 'USER_ROLE_TENANT_ADMIN',
+        name: 'TENANT_ADMIN',
         label: 'Tenant Admin',
         isSystem: true,
       },
       {
-        name: 'USER_ROLE_TENANT_MANAGER',
+        name: 'TENANT_MANAGER',
         label: 'Tenant Manager',
         isSystem: true,
       },
       {
-        name: 'USER_ROLE_TENANT_USER',
+        name: 'TENANT_USER',
         label: 'Tenant User',
         isSystem: true,
       },
@@ -82,22 +82,22 @@ const lookupData: LookupTypeWithLookupsSchema[] = [
     isSystem: true,
     lookups: [
       {
-        name: 'USER_STATUS_PENDING',
+        name: 'PENDING',
         label: 'Pending',
         isSystem: true,
       },
       {
-        name: 'USER_STATUS_ACTIVE',
+        name: 'ACTIVE',
         label: 'Active',
         isSystem: true,
       },
       {
-        name: 'USER_STATUS_DEACTIVATED',
+        name: 'DEACTIVATED',
         label: 'Deactivated',
         isSystem: true,
       },
       {
-        name: 'USER_STATUS_ARCHIVED',
+        name: 'ARCHIVED',
         label: 'Archived',
         isSystem: true,
       },
@@ -109,22 +109,22 @@ const lookupData: LookupTypeWithLookupsSchema[] = [
     isSystem: true,
     lookups: [
       {
-        name: 'TENANT_STATUS_PENDING',
+        name: 'PENDING',
         label: 'Pending',
         isSystem: true,
       },
       {
-        name: 'TENANT_STATUS_ACTIVE',
+        name: 'ACTIVE',
         label: 'Active',
         isSystem: true,
       },
       {
-        name: 'TENANT_STATUS_DEACTIVATED',
+        name: 'DEACTIVATED',
         label: 'Deactivated',
         isSystem: true,
       },
       {
-        name: 'TENANT_STATUS_ARCHIVED',
+        name: 'ARCHIVED',
         label: 'Archived',
         isSystem: true,
       },
@@ -136,12 +136,12 @@ const lookupData: LookupTypeWithLookupsSchema[] = [
     isSystem: true,
     lookups: [
       {
-        name: 'CHAT_TYPE_ONE_TO_ONE',
+        name: 'ONE_TO_ONE',
         label: '1:1 Chat',
         isSystem: true,
       },
       {
-        name: 'CHAT_TYPE_GROUP',
+        name: 'GROUP',
         label: 'Group Chat',
         isSystem: true,
       },
@@ -222,11 +222,11 @@ export async function up(client: PoolClient): Promise<void> {
   const { getLookupDataByName } = await upsertAndFetchLookupData();
 
   const superAdminRoleData = await getLookupDataByName(
-    'USER_ROLE_PLATFORM_SUPER_ADMIN'
+    'PLATFORM_SUPER_ADMIN'
   );
 
   const activeUserStatusData =
-    await getLookupDataByName('USER_STATUS_ACTIVE');
+    await getLookupDataByName('ACTIVE');
 
   const upsertAndFetchUserData = async () => {
     const userDataList: AppUser[] = [

@@ -47,7 +47,7 @@ async function main(): Promise<void> {
     // Get tenant status lookup data
     const activeTenantStatusData = await getLookupDataByName(
       pool,
-      tenantStatusKeys.TENANT_STATUS_ACTIVE
+      tenantStatusKeys.ACTIVE
     );
 
     /** create tenant data */
@@ -70,12 +70,12 @@ async function main(): Promise<void> {
     // Get tenant admin role data
     const tenantAdminRoleData = await getLookupDataByName(
       pool,
-      userRoleKeys.USER_ROLE_TENANT_ADMIN
+      userRoleKeys.TENANT_ADMIN
     );
 
     const activeUserStatusData = await getLookupDataByName(
       pool,
-      userStatusKeys.USER_STATUS_ACTIVE
+      userStatusKeys.ACTIVE
     );
 
     const userDataList: UserSignupSchema[] = [

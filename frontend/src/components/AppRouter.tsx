@@ -2,8 +2,7 @@ import React, { type ReactNode } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { useAuthService } from '@/contexts/AuthContextProvider';
 import { hasRoleAccess } from '../utils/authHelper';
-import type { UserRole } from '../schemas/user';
-import { userRoleKeys } from '../utils/constants';
+import { userRoleKeys, type UserRoleKey } from '../schemas/user';
 
 import {
   Building2,
@@ -39,7 +38,7 @@ import { AppLayout } from '@/components/AppLayout';
 
 export interface AuthRoute {
   title: string;
-  authRoles: string[]; // adjust to (keyof typeof roleKeys)[] if roleKeys is an enum/object
+  authRoles: UserRoleKey[]; // adjust to (keyof typeof roleKeys)[] if roleKeys is an enum/object
   path: string; // Made optional for parent navigation items
   description?: string;
   element: ReactNode;
@@ -47,7 +46,7 @@ export interface AuthRoute {
 
 export interface SidebarRouteWithChildren {
   title: string;
-  authRoles: string[]; // adjust to (keyof typeof roleKeys)[] if roleKeys is an enum/object
+  authRoles: UserRoleKey[]; // adjust to (keyof typeof roleKeys)[] if roleKeys is an enum/object
   path?: string; // Made optional for parent navigation items
   description?: string;
   href?: string;
@@ -58,7 +57,7 @@ export interface SidebarRouteWithChildren {
 
 interface RouteGuardRendererProps {
   children?: React.ReactNode;
-  authRoles?: string[];
+  authRoles?: UserRoleKey[];
   routes?: AuthRoute[];
 }
 
@@ -68,35 +67,12 @@ export const RouteGuardRenderer: React.FC<RouteGuardRendererProps> = ({
   routes = [],
 }) => {
   const { loggedInUser } = useAuthService();
+  const roleNameList = loggedInUser?.roles?.map(role => role) || []
 
-  const checkUserAuthorization = (): boolean => {
-    if (authRoles.length === 0) {
-      // If no auth roles, return true (public route)
-      return true;
-    }
-
-    if (!loggedInUser) {
-      return false;
-    }
-
-    // Convert string roles to UserRole type
-    const allowedRoles = authRoles.filter(role =>
-      Object.values(userRoleKeys).includes(role as UserRole)
-    ) as UserRole[];
-
-    // Special case for ANY role
-    if (authRoles.includes(userRoleKeys.ANY)) {
-      return true;
-    }
-
-    // Use the new hasRoleAccess helper
-    return hasRoleAccess({
-      allowedRoles,
-      userRoles: [loggedInUser.role],
-    });
-  };
-
-  const isAuthorized = checkUserAuthorization();
+  const isAuthorized = hasRoleAccess({
+    allowedRoles: authRoles,
+    userRoles: roleNameList,
+  });
 
   if (!isAuthorized) {
     return (
@@ -207,8 +183,8 @@ export const sidebarNavigationItems: SidebarRouteWithChildren[] = [
     title: 'Platform Management',
     icon: Building2,
     authRoles: [
-      userRoleKeys.USER_ROLE_PLATFORM_SUPER_ADMIN,
-      userRoleKeys.USER_ROLE_PLATFORM_ADMIN,
+      userRoleKeys.PLATFORM_SUPER_ADMIN,
+      userRoleKeys.PLATFORM_ADMIN,
     ],
     childItems: [
       {
@@ -217,8 +193,8 @@ export const sidebarNavigationItems: SidebarRouteWithChildren[] = [
         path: '/tenant-management',
         icon: Building2,
         authRoles: [
-          userRoleKeys.USER_ROLE_PLATFORM_SUPER_ADMIN,
-          userRoleKeys.USER_ROLE_PLATFORM_ADMIN,
+          userRoleKeys.PLATFORM_SUPER_ADMIN,
+          userRoleKeys.PLATFORM_ADMIN,
         ],
         element: <TenantManagement />,
       },
@@ -228,8 +204,8 @@ export const sidebarNavigationItems: SidebarRouteWithChildren[] = [
     title: 'Multi-Tenant',
     icon: Building2,
     authRoles: [
-      userRoleKeys.USER_ROLE_PLATFORM_ADMIN,
-      userRoleKeys.USER_ROLE_PLATFORM_SUPER_ADMIN,
+      userRoleKeys.PLATFORM_ADMIN,
+      userRoleKeys.PLATFORM_SUPER_ADMIN,
     ],
     childItems: [
       {
@@ -238,8 +214,8 @@ export const sidebarNavigationItems: SidebarRouteWithChildren[] = [
         path: '/workspace/settings',
         icon: Settings,
         authRoles: [
-          userRoleKeys.USER_ROLE_PLATFORM_ADMIN,
-          userRoleKeys.USER_ROLE_PLATFORM_SUPER_ADMIN,
+          userRoleKeys.PLATFORM_ADMIN,
+          userRoleKeys.PLATFORM_SUPER_ADMIN,
         ],
         element: (
           <ComingSoon
@@ -254,10 +230,10 @@ export const sidebarNavigationItems: SidebarRouteWithChildren[] = [
         path: '/workspace/branding',
         icon: FileText,
         authRoles: [
-          userRoleKeys.USER_ROLE_TENANT_ADMIN,
-          userRoleKeys.USER_ROLE_TENANT_MANAGER,
-          userRoleKeys.USER_ROLE_PLATFORM_ADMIN,
-          userRoleKeys.USER_ROLE_PLATFORM_SUPER_ADMIN,
+          userRoleKeys.TENANT_ADMIN,
+          userRoleKeys.TENANT_MANAGER,
+          userRoleKeys.PLATFORM_ADMIN,
+          userRoleKeys.PLATFORM_SUPER_ADMIN,
         ],
         element: (
           <ComingSoon
@@ -271,7 +247,7 @@ export const sidebarNavigationItems: SidebarRouteWithChildren[] = [
         href: '/workspace/domain',
         path: '/workspace/domain',
         icon: Shield,
-        authRoles: [userRoleKeys.USER_ROLE_PLATFORM_SUPER_ADMIN],
+        authRoles: [userRoleKeys.PLATFORM_SUPER_ADMIN],
         element: (
           <ComingSoon
             title='Domain Configuration'
@@ -305,10 +281,10 @@ export const sidebarNavigationItems: SidebarRouteWithChildren[] = [
         path: '/employees/onboarding',
         icon: UserCheck,
         authRoles: [
-          userRoleKeys.USER_ROLE_TENANT_ADMIN,
-          userRoleKeys.USER_ROLE_TENANT_MANAGER,
-          userRoleKeys.USER_ROLE_PLATFORM_ADMIN,
-          userRoleKeys.USER_ROLE_PLATFORM_SUPER_ADMIN,
+          userRoleKeys.TENANT_ADMIN,
+          userRoleKeys.TENANT_MANAGER,
+          userRoleKeys.PLATFORM_ADMIN,
+          userRoleKeys.PLATFORM_SUPER_ADMIN,
         ],
         element: (
           <ComingSoon
@@ -323,10 +299,10 @@ export const sidebarNavigationItems: SidebarRouteWithChildren[] = [
         path: '/departments',
         icon: Building2,
         authRoles: [
-          userRoleKeys.USER_ROLE_TENANT_ADMIN,
-          userRoleKeys.USER_ROLE_TENANT_MANAGER,
-          userRoleKeys.USER_ROLE_PLATFORM_ADMIN,
-          userRoleKeys.USER_ROLE_PLATFORM_SUPER_ADMIN,
+          userRoleKeys.TENANT_ADMIN,
+          userRoleKeys.TENANT_MANAGER,
+          userRoleKeys.PLATFORM_ADMIN,
+          userRoleKeys.PLATFORM_SUPER_ADMIN,
         ],
         element: (
           <ComingSoon
@@ -400,10 +376,10 @@ export const sidebarNavigationItems: SidebarRouteWithChildren[] = [
         path: '/leave/approvals',
         icon: UserCheck,
         authRoles: [
-          userRoleKeys.USER_ROLE_TENANT_ADMIN,
-          userRoleKeys.USER_ROLE_TENANT_MANAGER,
-          userRoleKeys.USER_ROLE_PLATFORM_ADMIN,
-          userRoleKeys.USER_ROLE_PLATFORM_SUPER_ADMIN,
+          userRoleKeys.TENANT_ADMIN,
+          userRoleKeys.TENANT_MANAGER,
+          userRoleKeys.PLATFORM_ADMIN,
+          userRoleKeys.PLATFORM_SUPER_ADMIN,
         ],
         element: (
           <ComingSoon
@@ -418,10 +394,10 @@ export const sidebarNavigationItems: SidebarRouteWithChildren[] = [
         path: '/attendance/analytics',
         icon: BarChart3,
         authRoles: [
-          userRoleKeys.USER_ROLE_TENANT_ADMIN,
-          userRoleKeys.USER_ROLE_TENANT_MANAGER,
-          userRoleKeys.USER_ROLE_PLATFORM_ADMIN,
-          userRoleKeys.USER_ROLE_PLATFORM_SUPER_ADMIN,
+          userRoleKeys.TENANT_ADMIN,
+          userRoleKeys.TENANT_MANAGER,
+          userRoleKeys.PLATFORM_ADMIN,
+          userRoleKeys.PLATFORM_SUPER_ADMIN,
         ],
         element: (
           <ComingSoon
@@ -443,10 +419,10 @@ export const sidebarNavigationItems: SidebarRouteWithChildren[] = [
         path: '/training/programs',
         icon: BookOpen,
         authRoles: [
-          userRoleKeys.USER_ROLE_TENANT_ADMIN,
-          userRoleKeys.USER_ROLE_TENANT_MANAGER,
-          userRoleKeys.USER_ROLE_PLATFORM_ADMIN,
-          userRoleKeys.USER_ROLE_PLATFORM_SUPER_ADMIN,
+          userRoleKeys.TENANT_ADMIN,
+          userRoleKeys.TENANT_MANAGER,
+          userRoleKeys.PLATFORM_ADMIN,
+          userRoleKeys.PLATFORM_SUPER_ADMIN,
         ],
         element: (
           <ComingSoon
@@ -500,10 +476,10 @@ export const sidebarNavigationItems: SidebarRouteWithChildren[] = [
         path: '/training/progress',
         icon: BarChart3,
         authRoles: [
-          userRoleKeys.USER_ROLE_TENANT_ADMIN,
-          userRoleKeys.USER_ROLE_TENANT_MANAGER,
-          userRoleKeys.USER_ROLE_PLATFORM_ADMIN,
-          userRoleKeys.USER_ROLE_PLATFORM_SUPER_ADMIN,
+          userRoleKeys.TENANT_ADMIN,
+          userRoleKeys.TENANT_MANAGER,
+          userRoleKeys.PLATFORM_ADMIN,
+          userRoleKeys.PLATFORM_SUPER_ADMIN,
         ],
         element: (
           <ComingSoon
@@ -538,10 +514,10 @@ export const sidebarNavigationItems: SidebarRouteWithChildren[] = [
         path: '/social/announcements',
         icon: Bell,
         authRoles: [
-          userRoleKeys.USER_ROLE_TENANT_ADMIN,
-          userRoleKeys.USER_ROLE_TENANT_MANAGER,
-          userRoleKeys.USER_ROLE_PLATFORM_ADMIN,
-          userRoleKeys.USER_ROLE_PLATFORM_SUPER_ADMIN,
+          userRoleKeys.TENANT_ADMIN,
+          userRoleKeys.TENANT_MANAGER,
+          userRoleKeys.PLATFORM_ADMIN,
+          userRoleKeys.PLATFORM_SUPER_ADMIN,
         ],
         element: (
           <ComingSoon
@@ -569,10 +545,10 @@ export const sidebarNavigationItems: SidebarRouteWithChildren[] = [
         path: '/social/updates',
         icon: FileText,
         authRoles: [
-          userRoleKeys.USER_ROLE_TENANT_ADMIN,
-          userRoleKeys.USER_ROLE_TENANT_MANAGER,
-          userRoleKeys.USER_ROLE_PLATFORM_ADMIN,
-          userRoleKeys.USER_ROLE_PLATFORM_SUPER_ADMIN,
+          userRoleKeys.TENANT_ADMIN,
+          userRoleKeys.TENANT_MANAGER,
+          userRoleKeys.PLATFORM_ADMIN,
+          userRoleKeys.PLATFORM_SUPER_ADMIN,
         ],
         element: (
           <ComingSoon
@@ -668,14 +644,14 @@ export const otherProtectedRouteList: AuthRoute[] = [
   {
     path: '/admin',
     element: <Admin />,
-    authRoles: [userRoleKeys.USER_ROLE_PLATFORM_ADMIN, userRoleKeys.USER_ROLE_PLATFORM_SUPER_ADMIN],
+    authRoles: [userRoleKeys.PLATFORM_ADMIN, userRoleKeys.PLATFORM_SUPER_ADMIN],
     title: 'Admin',
     description: 'Admin dashboard',
   },
   {
     path: '/super-admin',
     element: <SuperAdmin />,
-    authRoles: [userRoleKeys.USER_ROLE_PLATFORM_SUPER_ADMIN],
+    authRoles: [userRoleKeys.PLATFORM_SUPER_ADMIN],
     title: 'Super Admin',
     description: 'Super admin dashboard',
   },

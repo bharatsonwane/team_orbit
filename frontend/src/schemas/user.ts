@@ -1,17 +1,20 @@
 import { z } from 'zod';
-import { userRoleKeys } from '@/utils/constants';
+
+export const userRoleKeys = {
+  ANY: 'ANY',
+  PLATFORM_SUPER_ADMIN: 'PLATFORM_SUPER_ADMIN',
+  PLATFORM_ADMIN: 'PLATFORM_ADMIN',
+  PLATFORM_USER: 'PLATFORM_USER',
+  TENANT_ADMIN: 'TENANT_ADMIN',
+  TENANT_MANAGER: 'TENANT_MANAGER',
+  TENANT_USER: 'TENANT_USER',
+} as const;
+
+export type UserRoleKey = (typeof userRoleKeys)[keyof typeof userRoleKeys];
+export const userRoleList: UserRoleKey[] = Object.values(userRoleKeys);
 
 // User role enum
-export const userRoleSchema = z.enum([
-  userRoleKeys.ANY,
-  userRoleKeys.USER_ROLE_PLATFORM_SUPER_ADMIN,
-  userRoleKeys.USER_ROLE_PLATFORM_ADMIN,
-  userRoleKeys.USER_ROLE_PLATFORM_USER,
-  userRoleKeys.USER_ROLE_TENANT_ADMIN,
-  userRoleKeys.USER_ROLE_TENANT_MANAGER,
-  userRoleKeys.USER_ROLE_TENANT_USER,
-]);
-export type UserRole = z.infer<typeof userRoleSchema>;
+export const userRoleSchema = z.enum(Object.values(userRoleKeys));
 
 // User schema
 export const userSchema = z.object({
@@ -19,7 +22,7 @@ export const userSchema = z.object({
   email: z.string().email(),
   first_name: z.string(),
   last_name: z.string(),
-  role: userRoleSchema,
+  roles: userRoleSchema.array(),
   created_at: z.string(),
   updated_at: z.string(),
 });

@@ -9,7 +9,7 @@ const baseLookupTypeSchema = z.object({
 });
 export type BaseLookupTypeSchema = z.infer<typeof baseLookupTypeSchema>;
 
-const baseLookupSchema = z.object({
+export const baseLookupSchema = z.object({
   id: z.number(),
   name: z.string(),
   label: z.string(),

@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { oasRegisterSchemas } from '../openApiSpecification/openAPIDocumentGenerator';
+import { baseLookupSchema } from './lookup.schema';
 
 /**@description Base user schema with common fields */
 export const baseUserSchema = z.object({
@@ -28,7 +29,7 @@ export const baseUserSchema = z.object({
   bio: z.string().optional(),
   statusId: z.number().int().optional(),
   tenantId: z.number().int().optional(),
-  userRoles: z.array(z.number().int()).optional(),
+  userRoles: z.array(baseLookupSchema).optional(),
 });
 export type BaseUserSchema = z.infer<typeof baseUserSchema>;
 

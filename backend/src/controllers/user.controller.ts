@@ -89,9 +89,9 @@ export const userSignup = async (
     // Get default user status and role IDs
     const userStatusId = await Lookup.getLookupIdByName(
       req.db,
-      userStatusKeys.USER_STATUS_PENDING
+      userStatusKeys.PENDING
     );
-    // const userRoleId = await Lookup.getLookupIdByName(req.db, userRoleKeys.USER_ROLE_TENANT_USER);
+    // const userRoleId = await Lookup.getLookupIdByName(req.db, userRoleKeys.TENANT_USER);
 
     // Hash password
     const hashPassword = await getHashPassword(password);
@@ -131,7 +131,7 @@ export const createUserProfile = async (
     const userData = req.body;
     const userStatusId = await Lookup.getLookupIdByName(
       req.db,
-      userStatusKeys.USER_STATUS_PENDING
+      userStatusKeys.PENDING
     );
 
     const createdUser = await User.createUserInfo(req.db, {

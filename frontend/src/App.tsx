@@ -1,6 +1,6 @@
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { RouteGuardRenderer, mainRouteList} from './components/AppRouter';
-import { userRoleKeys } from './utils/constants';
+import { userRoleKeys } from './schemas/user';
 
 function App() {
   return (

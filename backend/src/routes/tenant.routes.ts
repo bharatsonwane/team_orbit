@@ -26,9 +26,9 @@ registrar.post('/create', {
   responseSchemas: [{ statusCode: 201, schema: baseTenantSchema }],
   middleware: [
     authRoleMiddleware(
-      userRoleKeys.USER_ROLE_PLATFORM_SUPER_ADMIN,
-      userRoleKeys.USER_ROLE_PLATFORM_ADMIN,
-      userRoleKeys.USER_ROLE_PLATFORM_USER
+      userRoleKeys.PLATFORM_SUPER_ADMIN,
+      userRoleKeys.PLATFORM_ADMIN,
+      userRoleKeys.PLATFORM_USER
     ),
   ],
   controller: createTenant,
@@ -38,9 +38,9 @@ registrar.post('/create', {
 registrar.get('/list', {
   middleware: [
     authRoleMiddleware(
-      userRoleKeys.USER_ROLE_PLATFORM_SUPER_ADMIN,
-      userRoleKeys.USER_ROLE_PLATFORM_ADMIN,
-      userRoleKeys.USER_ROLE_PLATFORM_USER
+      userRoleKeys.PLATFORM_SUPER_ADMIN,
+      userRoleKeys.PLATFORM_ADMIN,
+      userRoleKeys.PLATFORM_USER
     ),
   ],
   controller: getTenants,
@@ -52,9 +52,9 @@ registrar.get('/:id', {
   responseSchemas: [{ statusCode: 200, schema: baseTenantSchema }],
   middleware: [
     authRoleMiddleware(
-      userRoleKeys.USER_ROLE_PLATFORM_SUPER_ADMIN,
-      userRoleKeys.USER_ROLE_PLATFORM_ADMIN,
-      userRoleKeys.USER_ROLE_PLATFORM_USER
+      userRoleKeys.PLATFORM_SUPER_ADMIN,
+      userRoleKeys.PLATFORM_ADMIN,
+      userRoleKeys.PLATFORM_USER
     ),
   ],
   controller: getTenantById,
@@ -69,9 +69,9 @@ registrar.put('/:id', {
   responseSchemas: [{ statusCode: 200, schema: baseTenantSchema }],
   middleware: [
     authRoleMiddleware(
-      userRoleKeys.USER_ROLE_PLATFORM_SUPER_ADMIN,
-      userRoleKeys.USER_ROLE_PLATFORM_ADMIN,
-      userRoleKeys.USER_ROLE_PLATFORM_USER
+      userRoleKeys.PLATFORM_SUPER_ADMIN,
+      userRoleKeys.PLATFORM_ADMIN,
+      userRoleKeys.PLATFORM_USER
     ),
   ],
   controller: updateTenant,
@@ -82,9 +82,9 @@ registrar.get('/:id/users', {
   requestSchema: { paramsSchema: { id: idValidation } },
   middleware: [
     authRoleMiddleware(
-      userRoleKeys.USER_ROLE_PLATFORM_SUPER_ADMIN,
-      userRoleKeys.USER_ROLE_PLATFORM_ADMIN,
-      userRoleKeys.USER_ROLE_PLATFORM_USER
+      userRoleKeys.PLATFORM_SUPER_ADMIN,
+      userRoleKeys.PLATFORM_ADMIN,
+      userRoleKeys.PLATFORM_USER
     ),
   ],
   controller: getTenantUsers,
