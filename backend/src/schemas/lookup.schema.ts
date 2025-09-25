@@ -49,14 +49,13 @@ export const lookupTypeWithLookupsSchema = z.object({
   name: z.string(),
   label: z.string(),
   isSystem: z.boolean(),
+  createdAt: z.string().optional(),
   lookups: z.array(
     baseLookupSchema.extend({
       id: z.number().int(),
       isArchived: z.boolean().default(false),
     })
-  ),
-  createdAt: z.string().optional(),
-  updatedAt: z.string().optional(),
+  )
 });
 
 export const lookupListSchema = z.array(lookupTypeWithLookupsSchema);

@@ -8,7 +8,7 @@ import {
 import Lookup from '../services/lookup.service';
 import { UserLoginSchema, UserSignupSchema } from '../schemas/user.schema';
 import { AuthenticatedRequest } from '../middleware/authRoleMiddleware';
-import { userRoleKeys, userStatusKeys } from '../utils/constants';
+import { lookupTypeKeys, userRoleKeys, userStatusKeys } from '../utils/constants';
 
 export const userLogin = async (
   req: Request,
@@ -87,11 +87,11 @@ export const userSignup = async (
     }
 
     // Get default user status and role IDs
-    const userStatusId = await Lookup.getLookupIdByName(
-      req.db,
-      userStatusKeys.PENDING
-    );
-    // const userRoleId = await Lookup.getLookupIdByName(req.db, userRoleKeys.TENANT_USER);
+    const userStatusLookupData = await Lookup.getLookupDataByLookupTypeNameAndLookupName(req.db, {
+      lookupTypeName: lookupTypeKeys.USER_STATUS,
+      lookupName: userStatusKeys.PENDING,
+    });
+    const userStatusId = userStatusLookupData.id;
 
     // Hash password
     const hashPassword = await getHashPassword(password);
@@ -129,10 +129,14 @@ export const createUserProfile = async (
 ): Promise<void> => {
   try {
     const userData = req.body;
-    const userStatusId = await Lookup.getLookupIdByName(
+    const userStatusLookupData = await Lookup.getLookupDataByLookupTypeNameAndLookupName(
       req.db,
-      userStatusKeys.PENDING
+      {
+        lookupTypeName: lookupTypeKeys.USER_STATUS,
+        lookupName: userStatusKeys.PENDING,
+      }
     );
+    const userStatusId = userStatusLookupData.id;
 
     const createdUser = await User.createUserInfo(req.db, {
       ...userData,

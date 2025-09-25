@@ -8,7 +8,12 @@ import { getHashPassword } from '../utils/authHelper';
 import { buildUpdateFields } from '../utils/queryHelper';
 import User from './user.service';
 import Lookup from './lookup.service';
-import { dbTransactionKeys } from '../utils/constants';
+import {
+  dbTransactionKeys,
+  lookupTypeKeys,
+  userRoleKeys,
+  userStatusKeys,
+} from '../utils/constants';
 
 export default class Tenant {
   /**
@@ -57,12 +62,19 @@ export default class Tenant {
       const tenant = tenantResult.rows[0];
 
       // 2. Get Tenant Admin role ID
-      const tenantAdminRoleId = await Lookup.getTenantAdminRoleId(
-        dbClient.mainPool
-      );
-      const userStatusId = await Lookup.getUserStatusActiveId(
-        dbClient.mainPool
-      );
+      const tenantAdminRoleLookupData =
+        await Lookup.getLookupDataByLookupTypeNameAndLookupName(dbClient, {
+          lookupTypeName: lookupTypeKeys.USER_ROLE,
+          lookupName: userRoleKeys.TENANT_ADMIN,
+        });
+      const tenantAdminRoleId = tenantAdminRoleLookupData.id;
+
+      const userStatusLookupData =
+        await Lookup.getLookupDataByLookupTypeNameAndLookupName(dbClient, {
+          lookupTypeName: lookupTypeKeys.USER_STATUS,
+          lookupName: userStatusKeys.ACTIVE,
+        });
+      const userStatusId = userStatusLookupData.id;
 
       // 3. Hash the admin user password
       const hashPassword = await getHashPassword(tenantData.adminUser.password);
@@ -168,9 +180,9 @@ export default class Tenant {
     // Handle archivedAt field based on isArchived
     if (updateData.isArchived !== undefined) {
       if (updateData.isArchived) {
-        updateFields["archivedAt"] = 'NOW()';
+        updateFields['archivedAt'] = 'NOW()';
       } else {
-        updateFields["archivedAt"] = 'NULL';
+        updateFields['archivedAt'] = 'NULL';
       }
     }
 

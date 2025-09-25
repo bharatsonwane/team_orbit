@@ -1,7 +1,10 @@
 import { HttpError } from '../utils/httpError';
 import { dbClientPool } from '../middleware/dbClientMiddleware';
 import { PoolClient } from 'pg';
-import { LookupListSchema, LookupTypeWithLookupsSchema } from '../schemas/lookup.schema';
+import {
+  LookupListSchema,
+  LookupTypeWithLookupsSchema,
+} from '../schemas/lookup.schema';
 
 export default class Lookup {
   constructor() {}
@@ -14,12 +17,19 @@ export default class Lookup {
       SELECT 
         lt.id,
         lt.name,
+        lt.label,
+        lt."isSystem",
+        lt."createdAt",
         COALESCE(
           JSON_AGG(
             JSON_BUILD_OBJECT(
               'id', l.id,
               'name', l.name,
               'label', l.label,
+              'description', l.description,
+              'isSystem', l."isSystem",
+              'sortOrder', l."sortOrder",
+              'createdBy', l."createdBy",
               'lookupTypeId', l."lookupTypeId"
             )
             ORDER BY l."sortOrder", l.label
@@ -46,12 +56,19 @@ export default class Lookup {
       SELECT 
         lt.id,
         lt.name,
+        lt.label,
+        lt."isSystem",
+        lt."createdAt",
         COALESCE(
           JSON_AGG(
             JSON_BUILD_OBJECT(
               'id', l.id,
               'name', l.name,
               'label', l.label,
+              'description', l.description,
+              'isSystem', l."isSystem",
+              'sortOrder', l."sortOrder",
+              'createdBy', l."createdBy",
               'lookupTypeId', l."lookupTypeId"
             )
             ORDER BY l."sortOrder", l.label
@@ -75,16 +92,22 @@ export default class Lookup {
     return response[0];
   }
 
-  static async getLookupIdByName(
+  static async getLookupDataByLookupTypeNameAndLookupName(
     dbClient: dbClientPool,
-    name: string
-  ): Promise<any> {
+    {
+      lookupTypeName,
+      lookupName,
+    }: {
+      lookupTypeName: string;
+      lookupName: string;
+    }
+  ): Promise<LookupTypeWithLookupsSchema> {
     const queryString = `
       SELECT 
         l.id,
         l.name,
         l.label,
-        l."lookupTypeId",
+        l.description,
         l."isSystem",
         l."sortOrder",
         l."isArchived",
@@ -95,78 +118,17 @@ export default class Lookup {
         l."updatedBy",
         l."archivedBy"
       FROM lookup l
-      WHERE l.name = '${name}';
+      INNER JOIN lookup_type lt ON l."lookupTypeId" = lt.id
+      WHERE l.name = '${lookupName}' AND lt.name = '${lookupTypeName}';
     `;
     const results = await dbClient.mainPool.query(queryString);
     const response = results.rows;
     if (response.length === 0) {
-      throw new HttpError('Lookup not found', 404);
+      throw new HttpError(
+        `Lookup ${lookupName} not found in lookup type ${lookupTypeName}`,
+        404
+      );
     }
-    return response[0].id;
-  }
-
-  static async getUserStatusPendingId(dbClient: dbClientPool): Promise<number> {
-    const queryString = `
-      SELECT l.id 
-      FROM lookup l
-      INNER JOIN lookup_type lt ON l."lookupTypeId" = lt.id
-      WHERE l.name = 'PENDING' AND lt.name = 'USER_STATUS';
-    `;
-    const results = await dbClient.mainPool.query(queryString);
-    const response = results.rows;
-
-    if (response.length === 0) {
-      throw new HttpError('PENDING not found.', 404);
-    }
-
-    return response[0].id;
-  }
-
-  static async getUserRoleUserId(dbClient: dbClientPool): Promise<number> {
-    const queryString = `
-      SELECT l.id
-      FROM lookup l
-      INNER JOIN lookup_type lt ON l."lookupTypeId" = lt.id
-      WHERE l.name = 'TENANT_USER' AND lt.name = 'USER_ROLE';`;
-    const results = await dbClient.mainPool.query(queryString);
-    const response = results.rows;
-
-    if (response.length === 0) {
-      throw new HttpError('TENANT_USER not found.', 404);
-    }
-
-    return response[0].id;
-  }
-
-  static async getTenantAdminRoleId(dbClient: PoolClient): Promise<number> {
-    const queryString = `
-      SELECT l.id
-      FROM lookup l
-      INNER JOIN lookup_type lt ON l."lookupTypeId" = lt.id
-      WHERE l.name = 'TENANT_ADMIN' AND lt.name = 'USER_ROLE';`;
-    const results = await dbClient.query(queryString);
-    const response = results.rows;
-
-    if (response.length === 0) {
-      throw new HttpError('TENANT_ADMIN not found.', 404);
-    }
-
-    return response[0].id;
-  }
-
-  static async getUserStatusActiveId(dbClient: PoolClient): Promise<number> {
-    const queryString = `
-      SELECT l.id
-      FROM lookup l
-      INNER JOIN lookup_type lt ON l."lookupTypeId" = lt.id
-      WHERE l.name = 'ACTIVE' AND lt.name = 'USER_STATUS';`;
-    const results = await dbClient.query(queryString);
-    const response = results.rows;
-
-    if (response.length === 0) {
-      throw new HttpError('ACTIVE not found.', 404);
-    }
-
-    return response[0].id;
+    return response[0];
   }
 }
