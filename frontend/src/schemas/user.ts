@@ -61,3 +61,9 @@ export const authResponseSchema = z.object({
 });
 
 export type AuthResponse = z.infer<typeof authResponseSchema>;
+
+// Login response interface
+export interface LoginResponse {
+  user: User;
+  token: string;
+}

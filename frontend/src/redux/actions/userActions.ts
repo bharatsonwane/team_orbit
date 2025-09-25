@@ -1,28 +1,8 @@
 import { createAsyncThunk } from '@reduxjs/toolkit';
 import getAxios, { getAppErrorMessage } from '../../utils/axiosApi';
+import type { LoginCredentials, LoginResponse, User } from '@/schemas/user';
 
-// User interface
-export interface User {
-  id: string;
-  email: string;
-  first_name: string;
-  last_name: string;
-  role: 'USER' | 'ADMIN' | 'SUPER';
-  created_at: string;
-  updated_at: string;
-}
 
-// Login credentials interface
-export interface LoginCredentials {
-  email: string;
-  password: string;
-}
-
-// Login response interface
-export interface LoginResponse {
-  user: User;
-  token: string;
-}
 
 /** Login action - API call only */
 export const loginAction = createAsyncThunk(

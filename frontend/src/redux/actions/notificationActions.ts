@@ -1,14 +1,6 @@
+import type { Notification } from '@/schemas/notification';
+import { getAppErrorMessage } from '@/utils/axiosApi';
 import { createAsyncThunk } from '@reduxjs/toolkit';
-
-// Notification interface
-export interface Notification {
-  id: string;
-  type: 'success' | 'error' | 'warning' | 'info';
-  title: string;
-  message: string;
-  duration?: number;
-  timestamp: number;
-}
 
 // Get notification action
 export const getNotificationAction = createAsyncThunk(
@@ -32,8 +24,8 @@ export const getNotificationAction = createAsyncThunk(
       };
 
       return fullNotification;
-    } catch (error: any) {
-      return rejectWithValue(error.message || 'Failed to create notification');
+    } catch (error) {
+      return rejectWithValue(getAppErrorMessage(error));
     }
   }
 );
