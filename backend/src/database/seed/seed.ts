@@ -1,7 +1,11 @@
 import { PoolClient } from 'pg';
+import { z } from 'zod';
 import db, { schemaNames } from '../db';
 import logger from '../../utils/logger';
-import { BaseLookupSchema } from '../../schemas/lookup.schema';
+import {
+  BaseLookupSchema,
+  LookupWithTrackingSchema,
+} from '../../schemas/lookup.schema';
 import { UserSignupSchema } from '../../schemas/user.schema';
 import {
   lookupTypeKeys,
@@ -21,7 +25,7 @@ const getLookupDataByLookupTypeNameAndLookupName = async ({
   client: PoolClient;
   lookupTypeName: string;
   lookupName: string;
-}): Promise<BaseLookupSchema> => {
+}): Promise<LookupWithTrackingSchema> => {
   /** Get lookup data query */
   const getLookupDataQuery = `
         SELECT l.id, l.name, l.label, l."lookupTypeId", lt.name as typeName
@@ -90,7 +94,13 @@ async function main(): Promise<void> {
         lookupName: userStatusKeys.ACTIVE,
       });
 
-    const userDataList: UserSignupSchema[] = [
+    const userDataList: Array<
+      UserSignupSchema & {
+        statusId: number;
+        tenantId: number;
+        roleIds: number[];
+      }
+    > = [
       {
         title: 'Mr',
         firstName: 'iConnect',

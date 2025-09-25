@@ -66,6 +66,7 @@ export type LookupTypeWithTrackingSchema = z.infer<
 >;
 
 export type BaseLookupSchema = z.infer<typeof baseLookupSchema>;
+export type LookupWithTrackingSchema = z.infer<typeof lookupWithTrackingSchema>;
 export type LookupTypeWithLookupsSchema = z.infer<
   typeof lookupTypeWithLookupsSchema
 >;
