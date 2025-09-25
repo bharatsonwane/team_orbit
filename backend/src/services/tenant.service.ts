@@ -15,6 +15,7 @@ import {
   userRoleKeys,
   userStatusKeys,
 } from '../utils/constants';
+import { UserWithTrackingSchema } from '../schemas/user.schema';
 
 export default class Tenant {
   /**
@@ -208,7 +209,7 @@ export default class Tenant {
   static async getTenantUsers(
     db: dbClientPool,
     { tenantId }: { tenantId: number }
-  ): Promise<any[]> {
+  ): Promise<UserWithTrackingSchema[]> {
     const query = `
       SELECT 
         up.id,
