@@ -1,14 +1,14 @@
 import { HttpError } from '../utils/httpError';
 import { dbClientPool } from '../middleware/dbClientMiddleware';
 import { PoolClient } from 'pg';
-import { LookupTypeWithLookupsSchema } from '../schemas/lookup.schema';
+import { LookupListSchema, LookupTypeWithLookupsSchema } from '../schemas/lookup.schema';
 
 export default class Lookup {
   constructor() {}
 
   static async retrieveLookupList(
     dbClient: dbClientPool
-  ): Promise<LookupTypeWithLookupsSchema[]> {
+  ): Promise<LookupListSchema> {
     // SQL Query to fetch all LookupTypes with their associated Lookups using JSON aggregation
     const queryString = `
       SELECT 
