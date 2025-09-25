@@ -20,9 +20,9 @@ interface RequestSchema {
 }
 
 interface ResponseSchema {
+  statusCode?: number;
   schema: any;
   description?: string;
-  statusCode?: number;
 }
 
 interface CommonDocCreatorConfig {
@@ -122,25 +122,23 @@ export const commonDocCreator = ({
   };
 
   // api request type which is not a get request
-  if (method === 'post' || method === 'put' || method === 'patch') {
-    const responses: Record<string, any> = {};
-    responseSchemas.forEach(
-      ({ schema, description = 'Success', statusCode = StatusCodes.OK }) => {
-        if (schema && statusCode !== undefined) {
-          responses[statusCode] = {
-            description,
-            content: {
-              'application/json': {
-                schema: schema,
-              },
+  const responses: Record<string, any> = {};
+  responseSchemas.forEach(
+    ({ schema, description = '', statusCode = StatusCodes.OK }) => {
+      if (schema && statusCode !== undefined) {
+        responses[statusCode] = {
+          description,
+          content: {
+            'application/json': {
+              schema: schema,
             },
-          };
-        }
+          },
+        };
       }
-    );
+    }
+  );
 
-    config.responses = responses;
-  }
+  config.responses = responses;
 
   if (security) {
     config.security = security;

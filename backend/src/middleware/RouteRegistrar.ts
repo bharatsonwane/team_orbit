@@ -15,7 +15,7 @@ interface RouteOptions {
     querySchema?: any;
     paramsSchema?: any;
   };
-  responseSchemas?: any;
+  responseSchemas?: { statusCode: number; schema: any }[];
 }
 
 interface OpenApiDocConfig {
@@ -23,7 +23,7 @@ interface OpenApiDocConfig {
   method: 'get' | 'post' | 'put' | 'delete' | 'patch';
   tags: string[];
   requestSchema?: any;
-  responseSchemas?: any;
+  responseSchemas?: { statusCode: number; schema: any }[];
   security?: Array<Record<string, string[]>>;
 }
 
