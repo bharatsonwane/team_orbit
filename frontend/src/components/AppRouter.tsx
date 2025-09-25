@@ -38,7 +38,7 @@ import { AppLayout } from '@/components/AppLayout';
 
 export interface AuthRoute {
   title: string;
-  authRoles: UserRoleKey[]; // adjust to (keyof typeof roleKeys)[] if roleKeys is an enum/object
+  allowedRoles: UserRoleKey[]; // adjust to (keyof typeof roleKeys)[] if roleKeys is an enum/object
   path: string; // Made optional for parent navigation items
   description?: string;
   element: ReactNode;
@@ -46,7 +46,7 @@ export interface AuthRoute {
 
 export interface SidebarRouteWithChildren {
   title: string;
-  authRoles: UserRoleKey[]; // adjust to (keyof typeof roleKeys)[] if roleKeys is an enum/object
+  allowedRoles: UserRoleKey[]; // adjust to (keyof typeof roleKeys)[] if roleKeys is an enum/object
   path?: string; // Made optional for parent navigation items
   description?: string;
   href?: string;
@@ -57,21 +57,21 @@ export interface SidebarRouteWithChildren {
 
 interface RouteGuardRendererProps {
   children?: React.ReactNode;
-  authRoles?: UserRoleKey[];
+  allowedRoles?: UserRoleKey[];
   routes?: AuthRoute[];
 }
 
 export const RouteGuardRenderer: React.FC<RouteGuardRendererProps> = ({
   children,
-  authRoles = [],
+  allowedRoles = [],
   routes = [],
 }) => {
   const { loggedInUser } = useAuthService();
-  const roleNameList = loggedInUser?.roles?.map(role => role) || []
+  const roleNameList = loggedInUser?.roles?.map(role => role) || [];
 
   const isAuthorized = hasRoleAccess({
-    allowedRoles: authRoles,
-    userRoles: roleNameList,
+    allowedRoleNames: allowedRoles,
+    userRoleNames: roleNameList.map(role => role.name as UserRoleKey) || [],
   });
 
   if (!isAuthorized) {
@@ -109,7 +109,10 @@ export const RouteGuardRenderer: React.FC<RouteGuardRendererProps> = ({
             key={route.path}
             path={route.path}
             element={
-              <RouteGuardRenderer key={route.path} authRoles={route.authRoles}>
+              <RouteGuardRenderer
+                key={route.path}
+                allowedRoles={route.allowedRoles}
+              >
                 {route.element}
               </RouteGuardRenderer>
             }
@@ -136,7 +139,7 @@ const flattenNavigationItems = (
       // Convert SidebarRouteWithChildren to AuthRoute
       const route: AuthRoute = {
         title: item.title,
-        authRoles: item.authRoles,
+        allowedRoles: item.allowedRoles,
         path: item.path,
         description: item.description,
         element: item.element,
@@ -157,14 +160,14 @@ export const publicRouteList: AuthRoute[] = [
   {
     path: '/login',
     element: <Login />,
-    authRoles: [],
+    allowedRoles: [],
     title: 'Login',
     description: 'User login page',
   },
   {
     path: '/signup',
     element: <Signup />,
-    authRoles: [],
+    allowedRoles: [],
     title: 'Sign Up',
     description: 'User registration page',
   },
@@ -176,13 +179,13 @@ export const sidebarNavigationItems: SidebarRouteWithChildren[] = [
     icon: Home,
     href: '/dashboard',
     path: '/dashboard',
-    authRoles: [userRoleKeys.ANY],
+    allowedRoles: [userRoleKeys.ANY],
     element: <Dashboard />,
   },
   {
     title: 'Platform Management',
-    icon: Building2,
-    authRoles: [
+    icon: Home,
+    allowedRoles: [
       userRoleKeys.PLATFORM_SUPER_ADMIN,
       userRoleKeys.PLATFORM_ADMIN,
     ],
@@ -191,8 +194,8 @@ export const sidebarNavigationItems: SidebarRouteWithChildren[] = [
         title: 'Tenant Management',
         href: '/tenant-management',
         path: '/tenant-management',
-        icon: Building2,
-        authRoles: [
+        icon: Home,
+        allowedRoles: [
           userRoleKeys.PLATFORM_SUPER_ADMIN,
           userRoleKeys.PLATFORM_ADMIN,
         ],
@@ -203,7 +206,7 @@ export const sidebarNavigationItems: SidebarRouteWithChildren[] = [
   {
     title: 'Multi-Tenant',
     icon: Building2,
-    authRoles: [
+    allowedRoles: [
       userRoleKeys.PLATFORM_ADMIN,
       userRoleKeys.PLATFORM_SUPER_ADMIN,
     ],
@@ -213,7 +216,7 @@ export const sidebarNavigationItems: SidebarRouteWithChildren[] = [
         href: '/workspace/settings',
         path: '/workspace/settings',
         icon: Settings,
-        authRoles: [
+        allowedRoles: [
           userRoleKeys.PLATFORM_ADMIN,
           userRoleKeys.PLATFORM_SUPER_ADMIN,
         ],
@@ -229,7 +232,7 @@ export const sidebarNavigationItems: SidebarRouteWithChildren[] = [
         href: '/workspace/branding',
         path: '/workspace/branding',
         icon: FileText,
-        authRoles: [
+        allowedRoles: [
           userRoleKeys.TENANT_ADMIN,
           userRoleKeys.TENANT_MANAGER,
           userRoleKeys.PLATFORM_ADMIN,
@@ -247,7 +250,7 @@ export const sidebarNavigationItems: SidebarRouteWithChildren[] = [
         href: '/workspace/domain',
         path: '/workspace/domain',
         icon: Shield,
-        authRoles: [userRoleKeys.PLATFORM_SUPER_ADMIN],
+        allowedRoles: [userRoleKeys.PLATFORM_SUPER_ADMIN],
         element: (
           <ComingSoon
             title='Domain Configuration'
@@ -260,14 +263,14 @@ export const sidebarNavigationItems: SidebarRouteWithChildren[] = [
   {
     title: 'Employee Management',
     icon: Users,
-    authRoles: [userRoleKeys.ANY],
+    allowedRoles: [userRoleKeys.ANY],
     childItems: [
       {
         title: 'Employee Directory',
         href: '/employees',
         path: '/employees',
         icon: Users,
-        authRoles: [userRoleKeys.ANY],
+        allowedRoles: [userRoleKeys.ANY],
         element: (
           <ComingSoon
             title='Employee Directory'
@@ -280,7 +283,7 @@ export const sidebarNavigationItems: SidebarRouteWithChildren[] = [
         href: '/employees/onboarding',
         path: '/employees/onboarding',
         icon: UserCheck,
-        authRoles: [
+        allowedRoles: [
           userRoleKeys.TENANT_ADMIN,
           userRoleKeys.TENANT_MANAGER,
           userRoleKeys.PLATFORM_ADMIN,
@@ -298,7 +301,7 @@ export const sidebarNavigationItems: SidebarRouteWithChildren[] = [
         href: '/departments',
         path: '/departments',
         icon: Building2,
-        authRoles: [
+        allowedRoles: [
           userRoleKeys.TENANT_ADMIN,
           userRoleKeys.TENANT_MANAGER,
           userRoleKeys.PLATFORM_ADMIN,
@@ -316,7 +319,7 @@ export const sidebarNavigationItems: SidebarRouteWithChildren[] = [
         href: '/teams',
         path: '/teams',
         icon: Users,
-        authRoles: [userRoleKeys.ANY],
+        allowedRoles: [userRoleKeys.ANY],
         element: (
           <ComingSoon
             title='Teams'
@@ -329,14 +332,14 @@ export const sidebarNavigationItems: SidebarRouteWithChildren[] = [
   {
     title: 'Attendance & Leave',
     icon: Clock,
-    authRoles: [userRoleKeys.ANY],
+    allowedRoles: [userRoleKeys.ANY],
     childItems: [
       {
         title: 'Check In/Out',
         href: '/attendance/checkin',
         path: '/attendance/checkin',
         icon: Clock,
-        authRoles: [userRoleKeys.ANY],
+        allowedRoles: [userRoleKeys.ANY],
         element: (
           <ComingSoon
             title='Check In/Out'
@@ -349,7 +352,7 @@ export const sidebarNavigationItems: SidebarRouteWithChildren[] = [
         href: '/attendance/logs',
         path: '/attendance/logs',
         icon: BarChart3,
-        authRoles: [userRoleKeys.ANY],
+        allowedRoles: [userRoleKeys.ANY],
         element: (
           <ComingSoon
             title='Attendance Logs'
@@ -362,7 +365,7 @@ export const sidebarNavigationItems: SidebarRouteWithChildren[] = [
         href: '/leave/requests',
         path: '/leave/requests',
         icon: Calendar,
-        authRoles: [userRoleKeys.ANY],
+        allowedRoles: [userRoleKeys.ANY],
         element: (
           <ComingSoon
             title='Leave Requests'
@@ -375,7 +378,7 @@ export const sidebarNavigationItems: SidebarRouteWithChildren[] = [
         href: '/leave/approvals',
         path: '/leave/approvals',
         icon: UserCheck,
-        authRoles: [
+        allowedRoles: [
           userRoleKeys.TENANT_ADMIN,
           userRoleKeys.TENANT_MANAGER,
           userRoleKeys.PLATFORM_ADMIN,
@@ -393,7 +396,7 @@ export const sidebarNavigationItems: SidebarRouteWithChildren[] = [
         href: '/attendance/analytics',
         path: '/attendance/analytics',
         icon: BarChart3,
-        authRoles: [
+        allowedRoles: [
           userRoleKeys.TENANT_ADMIN,
           userRoleKeys.TENANT_MANAGER,
           userRoleKeys.PLATFORM_ADMIN,
@@ -411,14 +414,14 @@ export const sidebarNavigationItems: SidebarRouteWithChildren[] = [
   {
     title: 'Training & Learning',
     icon: GraduationCap,
-    authRoles: [userRoleKeys.ANY],
+    allowedRoles: [userRoleKeys.ANY],
     childItems: [
       {
         title: 'Training Programs',
         href: '/training/programs',
         path: '/training/programs',
         icon: BookOpen,
-        authRoles: [
+        allowedRoles: [
           userRoleKeys.TENANT_ADMIN,
           userRoleKeys.TENANT_MANAGER,
           userRoleKeys.PLATFORM_ADMIN,
@@ -436,7 +439,7 @@ export const sidebarNavigationItems: SidebarRouteWithChildren[] = [
         href: '/training/my-learning',
         path: '/training/my-learning',
         icon: GraduationCap,
-        authRoles: [userRoleKeys.ANY],
+        allowedRoles: [userRoleKeys.ANY],
         element: (
           <ComingSoon
             title='My Learning'
@@ -449,7 +452,7 @@ export const sidebarNavigationItems: SidebarRouteWithChildren[] = [
         href: '/training/assessments',
         path: '/training/assessments',
         icon: FileText,
-        authRoles: [userRoleKeys.ANY],
+        allowedRoles: [userRoleKeys.ANY],
         element: (
           <ComingSoon
             title='Assessments'
@@ -462,7 +465,7 @@ export const sidebarNavigationItems: SidebarRouteWithChildren[] = [
         href: '/training/certificates',
         path: '/training/certificates',
         icon: Award,
-        authRoles: [userRoleKeys.ANY],
+        allowedRoles: [userRoleKeys.ANY],
         element: (
           <ComingSoon
             title='Certificates'
@@ -475,7 +478,7 @@ export const sidebarNavigationItems: SidebarRouteWithChildren[] = [
         href: '/training/progress',
         path: '/training/progress',
         icon: BarChart3,
-        authRoles: [
+        allowedRoles: [
           userRoleKeys.TENANT_ADMIN,
           userRoleKeys.TENANT_MANAGER,
           userRoleKeys.PLATFORM_ADMIN,
@@ -493,14 +496,14 @@ export const sidebarNavigationItems: SidebarRouteWithChildren[] = [
   {
     title: 'Social Network',
     icon: Hash,
-    authRoles: [userRoleKeys.ANY],
+    allowedRoles: [userRoleKeys.ANY],
     childItems: [
       {
         title: 'Newsfeed',
         href: '/social/feed',
         path: '/social/feed',
         icon: Hash,
-        authRoles: [userRoleKeys.ANY],
+        allowedRoles: [userRoleKeys.ANY],
         element: (
           <ComingSoon
             title='Newsfeed'
@@ -513,7 +516,7 @@ export const sidebarNavigationItems: SidebarRouteWithChildren[] = [
         href: '/social/announcements',
         path: '/social/announcements',
         icon: Bell,
-        authRoles: [
+        allowedRoles: [
           userRoleKeys.TENANT_ADMIN,
           userRoleKeys.TENANT_MANAGER,
           userRoleKeys.PLATFORM_ADMIN,
@@ -531,7 +534,7 @@ export const sidebarNavigationItems: SidebarRouteWithChildren[] = [
         href: '/social/polls',
         path: '/social/polls',
         icon: BarChart3,
-        authRoles: [userRoleKeys.ANY],
+        allowedRoles: [userRoleKeys.ANY],
         element: (
           <ComingSoon
             title='Polls & Surveys'
@@ -544,7 +547,7 @@ export const sidebarNavigationItems: SidebarRouteWithChildren[] = [
         href: '/social/updates',
         path: '/social/updates',
         icon: FileText,
-        authRoles: [
+        allowedRoles: [
           userRoleKeys.TENANT_ADMIN,
           userRoleKeys.TENANT_MANAGER,
           userRoleKeys.PLATFORM_ADMIN,
@@ -562,14 +565,14 @@ export const sidebarNavigationItems: SidebarRouteWithChildren[] = [
   {
     title: 'Team Chat',
     icon: MessageSquare,
-    authRoles: [userRoleKeys.ANY],
+    allowedRoles: [userRoleKeys.ANY],
     childItems: [
       {
         title: 'Messages',
         href: '/chat/messages',
         path: '/chat/messages',
         icon: MessageSquare,
-        authRoles: [userRoleKeys.ANY],
+        allowedRoles: [userRoleKeys.ANY],
         element: (
           <ComingSoon
             title='Messages'
@@ -582,7 +585,7 @@ export const sidebarNavigationItems: SidebarRouteWithChildren[] = [
         href: '/chat/channels',
         path: '/chat/channels',
         icon: Hash,
-        authRoles: [userRoleKeys.ANY],
+        allowedRoles: [userRoleKeys.ANY],
         element: (
           <ComingSoon
             title='Team Channels'
@@ -595,7 +598,7 @@ export const sidebarNavigationItems: SidebarRouteWithChildren[] = [
         href: '/chat/files',
         path: '/chat/files',
         icon: FileText,
-        authRoles: [userRoleKeys.ANY],
+        allowedRoles: [userRoleKeys.ANY],
         element: (
           <ComingSoon
             title='File Sharing'
@@ -610,7 +613,7 @@ export const sidebarNavigationItems: SidebarRouteWithChildren[] = [
     icon: Bell,
     href: '/notifications',
     path: '/notifications',
-    authRoles: [userRoleKeys.ANY],
+    allowedRoles: [userRoleKeys.ANY],
     element: (
       <ComingSoon
         title='Notifications'
@@ -623,7 +626,7 @@ export const sidebarNavigationItems: SidebarRouteWithChildren[] = [
     icon: Settings,
     href: '/settings',
     path: '/settings',
-    authRoles: [userRoleKeys.ANY],
+    allowedRoles: [userRoleKeys.ANY],
     element: (
       <ComingSoon
         title='Settings'
@@ -637,21 +640,24 @@ export const otherProtectedRouteList: AuthRoute[] = [
   {
     path: '/profile',
     element: <Profile />,
-    authRoles: [userRoleKeys.ANY],
+    allowedRoles: [userRoleKeys.ANY],
     title: 'Profile',
     description: 'User profile management',
   },
   {
     path: '/admin',
     element: <Admin />,
-    authRoles: [userRoleKeys.PLATFORM_ADMIN, userRoleKeys.PLATFORM_SUPER_ADMIN],
+    allowedRoles: [
+      userRoleKeys.PLATFORM_ADMIN,
+      userRoleKeys.PLATFORM_SUPER_ADMIN,
+    ],
     title: 'Admin',
     description: 'Admin dashboard',
   },
   {
     path: '/super-admin',
     element: <SuperAdmin />,
-    authRoles: [userRoleKeys.PLATFORM_SUPER_ADMIN],
+    allowedRoles: [userRoleKeys.PLATFORM_SUPER_ADMIN],
     title: 'Super Admin',
     description: 'Super admin dashboard',
   },
@@ -668,7 +674,7 @@ export const protectedRouteList: AuthRoute[] = [
   {
     path: '/',
     element: <HomeScreen />,
-    authRoles: [userRoleKeys.ANY],
+    allowedRoles: [userRoleKeys.ANY],
     title: 'Home',
     description: 'Application home page',
   },
@@ -686,7 +692,7 @@ export const mainRouteList: AuthRoute[] = [
         <RouteGuardRenderer routes={protectedRouteList} />
       </AppLayout>
     ),
-    authRoles: [userRoleKeys.ANY],
+    allowedRoles: [userRoleKeys.ANY],
     title: 'Page Not Found',
     description: 'The page you are looking for does not exist.',
   },

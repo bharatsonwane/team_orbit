@@ -23,8 +23,6 @@ import {
 import { ThemeToggle } from '@/components/theme-toggle';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useAuthService } from '@/contexts/AuthContextProvider';
-import { userRoleKeys, type UserRoleKey } from '@/schemas/user';
-
 
 // Default company info - can be made configurable later
 const companyInfo = {
@@ -32,7 +30,12 @@ const companyInfo = {
   logo: '/logos/teamorbit.png',
 };
 
-import { sidebarNavigationItems, type SidebarRouteWithChildren } from './AppRouter';
+import {
+  sidebarNavigationItems,
+  type SidebarRouteWithChildren,
+} from './AppRouter';
+import { hasRoleAccess } from '@/utils/authHelper';
+import type { UserRoleKey } from '@/schemas/user';
 
 export function AppSidebar() {
   const location = useLocation();
@@ -44,45 +47,39 @@ export function AppSidebar() {
     );
   };
 
-  // Check if user has access to a navigation item  
-  const hasAccess = (authRoles: UserRoleKey[]) => {
-    if (!loggedInUser) return false;
+  // Recursive function to filter navigation items based on user role
+  const filterNavigationItems = (
+    items: SidebarRouteWithChildren[]
+  ): SidebarRouteWithChildren[] => {
+    const filteredItems: SidebarRouteWithChildren[] = [];
 
-    // Handle the ANY role - if ANY is in allowed roles, grant access
-    if (authRoles.includes(userRoleKeys.ANY as UserRoleKey)) return true;
-
-    // Check if user's role is in the allowed roles
-    return authRoles.includes(loggedInUser.roles as UserRoleKey[]);
-  };
-
-  // Filter navigation items based on user role
-  const filterNavigationItems = (items: SidebarRouteWithChildren[]) => {
-    return items
-      .filter(item => {
-        // Check if user has access to the main item
-        if (!hasAccess(item.authRoles)) return false;
-
-        // If item has childItems, filter them too
-        if (item.childItems) {
-          const filteredSubItems = item.childItems.filter(subItem =>
-            hasAccess(subItem.authRoles)
-          );
-          // Only show parent if it has at least one accessible child
-          return filteredSubItems.length > 0;
-        }
-
-        return true;
-      })
-      .map(item => {
-        // Filter childItems for items that have them
-        if (item.childItems) {
-          return {
-            ...item,
-            childItems: item.childItems.filter(subItem => hasAccess(subItem.authRoles)),
-          };
-        }
-        return item;
+    // Step 1: Iterate through each navigation item
+    for (const item of items) {
+      // Step 2: Check if user has access to the main item
+      const isAuthorized = hasRoleAccess({
+        allowedRoleNames: item.allowedRoles,
+        userRoleNames: loggedInUser?.roles?.map(role => role.name as UserRoleKey) || [],
       });
+
+      if (!isAuthorized) {
+        continue;
+      }
+
+      // Step 3: Handle child items recursively
+      let filteredChildItems: SidebarRouteWithChildren[] = [];
+      if (item.childItems && item.childItems.length > 0) {
+        filteredChildItems = filterNavigationItems(item.childItems);
+      }
+
+      const filteredItem: SidebarRouteWithChildren = {
+        ...item,
+        childItems: filteredChildItems,
+      };
+      filteredItems.push(filteredItem);
+    }
+
+    // Step 6: Return the filtered items
+    return filteredItems;
   };
 
   const filteredNavigationItems = filterNavigationItems(sidebarNavigationItems);
@@ -122,8 +119,9 @@ export function AppSidebar() {
                             tooltip={item.title}
                             className={cn(
                               'w-full',
-                              item.childItems.some(subItem =>
-                                subItem.href && isActiveLink(subItem.href)
+                              item.childItems.some(
+                                subItem =>
+                                  subItem.href && isActiveLink(subItem.href)
                               ) && 'bg-accent text-accent-foreground'
                             )}
                           >
@@ -138,10 +136,16 @@ export function AppSidebar() {
                               <SidebarMenuSubItem key={subItem.title}>
                                 <SidebarMenuSubButton
                                   asChild
-                                  isActive={subItem.href ? isActiveLink(subItem.href) : false}
+                                  isActive={
+                                    subItem.href
+                                      ? isActiveLink(subItem.href)
+                                      : false
+                                  }
                                 >
                                   <Link to={subItem.href || '#'}>
-                                    {subItem.icon && <subItem.icon className='h-4 w-4' />}
+                                    {subItem.icon && (
+                                      <subItem.icon className='h-4 w-4' />
+                                    )}
                                     <span>{subItem.title}</span>
                                   </Link>
                                 </SidebarMenuSubButton>
@@ -191,8 +195,8 @@ export function AppSidebar() {
                 : 'User'}
             </span>
             <span className='truncate text-xs text-muted-foreground block'>
-              {loggedInUser?.roles 
-                ? Array.isArray(loggedInUser.roles) 
+              {loggedInUser?.roles
+                ? Array.isArray(loggedInUser.roles)
                   ? loggedInUser.roles.map(role => role.name || role).join(', ')
                   : loggedInUser.roles
                 : 'Employee'}

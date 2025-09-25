@@ -1,37 +1,26 @@
 import { userRoleKeys, type UserRoleKey } from '@/schemas/user';
-
-/**
- * Interface for hasRoleAccess function parameters
- */
-export interface RoleAccessOptions {
-  allowedRoles?: UserRoleKey[];
-  userRoles?: UserRoleKey[];
-}
-
 /**
  * Checks if any of the allowed roles match the user's roles
  * @param options - Object containing allowedRoles and userRoles (both default to empty arrays)
  * @returns true if any allowed role matches any user role, false otherwise
  */
 export function hasRoleAccess({
-  allowedRoles,
-  userRoles,
-}: RoleAccessOptions): boolean {
-  if (allowedRoles?.length === 0) {
+  allowedRoleNames,
+  userRoleNames,
+}: {
+  allowedRoleNames?: UserRoleKey[];
+  userRoleNames?: UserRoleKey[];
+}): boolean {
+  if (allowedRoleNames?.length === 0) {
     return true; // No restrictions, allow access
-  }
-
-  if (
-    allowedRoles?.includes(userRoleKeys.ANY) &&
-    userRoles?.length &&
-    userRoles.length > 0
-  ) {
+  } else if (!userRoleNames || userRoleNames?.length === 0) {
+    return false;
+  } else if (allowedRoleNames?.includes(userRoleKeys.ANY)) {
     return true;
+  } else {
+    const isAuthorized = allowedRoleNames?.some(allowedRole =>
+      userRoleNames?.includes(allowedRole)
+    );
+    return isAuthorized ?? false;
   }
-
-  const isAuthorized = allowedRoles?.some(allowedRole =>
-    userRoles?.includes(allowedRole)
-  );
-
-  return isAuthorized ?? false;
 }

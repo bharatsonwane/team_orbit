@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { lookupSchema } from './lookup';
 
 export const userRoleKeys = {
   ANY: 'ANY',
@@ -22,7 +23,7 @@ export const userSchema = z.object({
   email: z.string().email(),
   first_name: z.string(),
   last_name: z.string(),
-  roles: userRoleSchema.array(),
+  roles: z.array(lookupSchema),
   created_at: z.string(),
   updated_at: z.string(),
 });

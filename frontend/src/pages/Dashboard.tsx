@@ -10,24 +10,26 @@ import {
 
 import { useAuthService } from '../contexts/AuthContextProvider';
 import { hasRoleAccess } from '../utils/authHelper';
-import { userRoleKeys } from '@/schemas/user';
+import { userRoleKeys, type UserRoleKey } from '@/schemas/user';
 
 export default function Dashboard() {
   const { loggedInUser, logout } = useAuthService();
   console.log("bharat-loggedInUser", loggedInUser)
 
   // Check user roles using the new authHelper
+
+  const loggedInUserRoleNames = loggedInUser?.roles?.map(role => role.name as UserRoleKey) || [];
   const isAdmin = loggedInUser
     ? hasRoleAccess({
-        allowedRoles: [userRoleKeys.PLATFORM_ADMIN, userRoleKeys.PLATFORM_SUPER_ADMIN],
-        userRoles: [loggedInUser.roles],
+        allowedRoleNames: [userRoleKeys.PLATFORM_ADMIN, userRoleKeys.PLATFORM_SUPER_ADMIN],
+        userRoleNames: loggedInUserRoleNames,
       })
     : false;
 
   const isSuper = loggedInUser
     ? hasRoleAccess({
-        allowedRoles: [userRoleKeys.PLATFORM_SUPER_ADMIN],
-        userRoles: [loggedInUser.roles],
+        allowedRoleNames: [userRoleKeys.PLATFORM_SUPER_ADMIN],
+        userRoleNames: loggedInUserRoleNames,
       })
     : false;
 
@@ -45,7 +47,7 @@ export default function Dashboard() {
           <p className='text-muted-foreground'>
             You are logged in as{' '}
             <span className='font-semibold capitalize'>
-              {loggedInUser?.role?.toLowerCase()}
+              {loggedInUserRoleNames.join(', ')}
             </span>
             . This page demonstrates role-based access and the theme system.
           </p>

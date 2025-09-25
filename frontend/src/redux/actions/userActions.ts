@@ -35,7 +35,7 @@ export const loginAction = createAsyncThunk(
         credentials
       );
 
-      return response.data;
+      return response.data as LoginResponse;
     } catch (error: unknown) {
       return rejectWithValue(getAppErrorMessage(error));
     }
