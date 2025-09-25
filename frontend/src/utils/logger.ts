@@ -1,9 +1,9 @@
 class LoggerC {
   private NODE_ENV: string;
-  public log: (...args: any[]) => void;
-  public info: (...args: any[]) => void;
-  public warn: (...args: any[]) => void;
-  public error: (...args: any[]) => void;
+  public log: (...args: unknown[]) => void;
+  public info: (...args: unknown[]) => void;
+  public warn: (...args: unknown[]) => void;
+  public error: (...args: unknown[]) => void;
 
   constructor() {
     this.NODE_ENV = process.env.NODE_ENV || 'development';
