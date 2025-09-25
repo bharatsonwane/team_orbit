@@ -33,6 +33,7 @@ export const baseUserSchema = z.object({
 // lookupTypeWithTrackingSchema
 export const userWithTrackingSchema = baseUserSchema.extend({
   id: z.number().int(),
+  hashPassword: z.string().optional(),
   isArchived: z.boolean().default(false),
   createdAt: z.string().optional(),
   updatedAt: z.string().optional(),

@@ -4,6 +4,7 @@ CREATE TABLE IF NOT EXISTS lookup_type (
     name VARCHAR(255) UNIQUE NOT NULL,  -- Internal name (e.g., 'USER_ROLE')
     label VARCHAR(255) NOT NULL,        -- Display label (e.g., 'User Role')
     "isSystem" BOOLEAN NOT NULL,        -- System values that cannot be deleted
+    "isArchived" BOOLEAN DEFAULT FALSE NOT NULL, -- Soft delete instead of hard delete
     "createdAt" TIMESTAMP DEFAULT NOW() NOT NULL,
     "updatedAt" TIMESTAMP DEFAULT NOW() NOT NULL,
     "archivedAt" TIMESTAMP DEFAULT NULL,
@@ -98,10 +99,15 @@ CREATE TABLE IF NOT EXISTS app_user (
     "hashPassword" VARCHAR(255),  -- Store hashPassword
     "lastPasswordChangedAt" TIMESTAMP DEFAULT NULL,
     bio TEXT, -- User biography
+    "isArchived" BOOLEAN DEFAULT FALSE NOT NULL,
     "statusId" INT NOT NULL, -- Use "lookupId"
     "tenantId" INT,
     "createdAt" TIMESTAMP DEFAULT NOW() NOT NULL,
     "updatedAt" TIMESTAMP DEFAULT NOW() NOT NULL,
+    "archivedAt" TIMESTAMP DEFAULT NULL,
+    "createdBy" INT DEFAULT NULL,
+    "updatedBy" INT DEFAULT NULL,
+    "archivedBy" INT DEFAULT NULL,
     CONSTRAINT fk_user_tenant FOREIGN KEY ("tenantId") REFERENCES tenant (id),
     CONSTRAINT fk_user_user_status FOREIGN KEY ("statusId") REFERENCES lookup (id)
 );

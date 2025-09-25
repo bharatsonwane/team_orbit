@@ -1,7 +1,7 @@
 import {
   createTenantSchema,
   updateTenantSchema,
-  baseTenantSchema,
+  tenantWithTrackingSchema,
 } from '../schemas/tenant.schema';
 import { idValidation } from '../schemas/common.schema';
 import {
@@ -23,7 +23,7 @@ const registrar = new RouteRegistrar({
 /**@description Create new tenant with Tenant Admin */
 registrar.post('/create', {
   requestSchema: { bodySchema: createTenantSchema },
-  responseSchemas: [{ statusCode: 201, schema: baseTenantSchema }],
+  responseSchemas: [{ statusCode: 201, schema: tenantWithTrackingSchema }],
   middleware: [
     authRoleMiddleware(
       userRoleKeys.PLATFORM_SUPER_ADMIN,
@@ -49,7 +49,7 @@ registrar.get('/list', {
 /**@description Get tenant by ID */
 registrar.get('/:id', {
   requestSchema: { paramsSchema: { id: idValidation } },
-  responseSchemas: [{ statusCode: 200, schema: baseTenantSchema }],
+  responseSchemas: [{ statusCode: 200, schema: tenantWithTrackingSchema }],
   middleware: [
     authRoleMiddleware(
       userRoleKeys.PLATFORM_SUPER_ADMIN,
@@ -66,7 +66,7 @@ registrar.put('/:id', {
     paramsSchema: { id: idValidation },
     bodySchema: updateTenantSchema,
   },
-  responseSchemas: [{ statusCode: 200, schema: baseTenantSchema }],
+  responseSchemas: [{ statusCode: 200, schema: tenantWithTrackingSchema }],
   middleware: [
     authRoleMiddleware(
       userRoleKeys.PLATFORM_SUPER_ADMIN,

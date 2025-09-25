@@ -11,7 +11,7 @@ export default class User {
   static async signupUser(
     dbClient: dbClientPool,
     userData: UserSignupServiceSchema
-  ): Promise<BaseUserSchema> {
+  ): Promise<UserWithTrackingSchema> {
     const userSignupQuery = `
         INSERT INTO app_user (
                 email,
@@ -52,14 +52,14 @@ export default class User {
         )
         RETURNING *;`;
     const results = await dbClient.mainPool.query(userSignupQuery);
-    const response = results.rows[0] as BaseUserSchema;
+    const response = results.rows[0];
     return response;
   }
 
   static async createUserInfo(
     dbClient: dbClientPool,
     userData: Partial<UserSignupServiceSchema>
-  ): Promise<BaseUserSchema> {
+  ): Promise<UserWithTrackingSchema> {
     const queryString = `
       INSERT INTO app_user (
           title,
@@ -100,8 +100,8 @@ export default class User {
   `;
 
     const results = await dbClient.mainPool.query(queryString);
-    const response = results.rows[0] as BaseUserSchema;
-    delete (response as any).hashPassword;
+    const response = results.rows[0] as UserWithTrackingSchema;
+    delete response.hashPassword;
 
     return response;
   }
@@ -113,9 +113,9 @@ export default class User {
       updateData,
     }: {
       userId: number;
-      updateData: Partial<BaseUserSchema>;
+      updateData: Partial<UserWithTrackingSchema>;
     }
-  ): Promise<BaseUserSchema> {
+  ): Promise<UserWithTrackingSchema> {
     const acceptedKeys = [
       'title',
       'firstName',
@@ -146,7 +146,7 @@ export default class User {
     const results = await dbClient.mainPool.query(queryString);
 
     delete (results.rows[0] as any).hashPassword;
-    return results.rows[0] as BaseUserSchema;
+    return results.rows[0];
   }
 
   static async updateUserPassword(
@@ -158,7 +158,7 @@ export default class User {
       userId: number;
       hashPassword: string;
     }
-  ): Promise<BaseUserSchema> {
+  ): Promise<UserWithTrackingSchema> {
     const queryString = `
       UPDATE app_user
       SET "hashPassword" = '${hashPassword}', "updatedAt" = NOW()
@@ -166,7 +166,7 @@ export default class User {
     const results = await dbClient.mainPool.query(queryString);
 
     delete (results.rows[0] as any).hashPassword;
-    return results.rows[0] as BaseUserSchema;
+    return results.rows[0];
   }
 
   static async getUserByIdOrEmailOrPhone(
@@ -250,12 +250,14 @@ export default class User {
       GROUP BY up.id, ls.name, ls.label;`;
 
     const results = await dbClient.mainPool.query(queryString);
-    const response = results.rows[0] as UserDataWithHashPasswordSchema;
+    const response = results.rows[0];
 
     return response;
   }
 
-  static async getUsers(dbClient: dbClientPool): Promise<BaseUserSchema[]> {
+  static async getUsers(
+    dbClient: dbClientPool
+  ): Promise<UserWithTrackingSchema[]> {
     const queryString = `
         SELECT 
           up.id,
@@ -283,6 +285,6 @@ export default class User {
 
     const results = await dbClient.mainPool.query(queryString);
 
-    return results.rows as BaseUserSchema[];
+    return results.rows;
   }
 }

@@ -2,6 +2,7 @@ import type {
   CreateTenantSchema,
   UpdateTenantSchema,
   BaseTenantSchema,
+  TenantWithTrackingSchema,
 } from '../schemas/tenant.schema';
 import type { dbClientPool } from '../middleware/dbClientMiddleware';
 import { getHashPassword } from '../utils/authHelper';
@@ -22,7 +23,7 @@ export default class Tenant {
   static async createTenant(
     db: dbClientPool,
     { tenantData }: { tenantData: CreateTenantSchema }
-  ): Promise<BaseTenantSchema> {
+  ): Promise<TenantWithTrackingSchema> {
     const client = db;
     const dbClient: dbClientPool = { mainPool: client.mainPool };
 
@@ -168,7 +169,7 @@ export default class Tenant {
       tenantId,
       updateData,
     }: { tenantId: number; updateData: UpdateTenantSchema }
-  ): Promise<BaseTenantSchema> {
+  ): Promise<TenantWithTrackingSchema> {
     const acceptedKeys = ['label', 'isArchived'];
 
     const updateFields = buildUpdateFields(acceptedKeys, updateData);
@@ -198,7 +199,7 @@ export default class Tenant {
     `;
 
     const results = await db.mainPool.query(queryString);
-    return results.rows[0] as BaseTenantSchema;
+    return results.rows[0] as TenantWithTrackingSchema;
   }
 
   /**
