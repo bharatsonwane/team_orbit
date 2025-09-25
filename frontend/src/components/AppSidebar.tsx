@@ -191,7 +191,11 @@ export function AppSidebar() {
                 : 'User'}
             </span>
             <span className='truncate text-xs text-muted-foreground block'>
-              {loggedInUser?.roles || 'Employee'}
+              {loggedInUser?.roles 
+                ? Array.isArray(loggedInUser.roles) 
+                  ? loggedInUser.roles.map(role => role.name || role).join(', ')
+                  : loggedInUser.roles
+                : 'Employee'}
             </span>
           </div>
         </div>
