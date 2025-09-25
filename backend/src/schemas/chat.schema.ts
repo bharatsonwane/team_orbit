@@ -1,6 +1,9 @@
 import { z } from 'zod';
 import { oasRegisterSchemas } from '../openApiSpecification/openAPIDocumentGenerator';
 
+/**
+ * @description ZOD SCHEMAS
+ */
 export const chatMessageSchema = z
   .object({
     id: z.number().int().optional(),
@@ -16,8 +19,14 @@ export const chatMessageSchema = z
   })
   .openapi('ChatMessage'); // ✅
 
+/**
+ * @description SCHEMAS TYPES
+ */
 export type ChatMessageSchema = z.infer<typeof chatMessageSchema>;
 
+/**
+ * @description OPENAPI SCHEMAS REGISTRATION
+ */
 oasRegisterSchemas([
   { schemaName: 'ChatMessageSchema', schema: chatMessageSchema },
 ]);

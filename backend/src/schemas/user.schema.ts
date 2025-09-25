@@ -8,7 +8,9 @@ import {
   marriedStatusEnum,
 } from '../utils/constants';
 
-/**@description Base user schema with common fields */
+/**
+ * @description ZOD SCHEMAS
+ */
 export const baseUserSchema = z.object({
   id: z.number().int().optional(),
   title: titleEnum.optional(),
@@ -34,17 +36,12 @@ export const baseUserSchema = z.object({
   roleIds: z.array(z.number().int()).optional(),
   roles: z.array(baseLookupSchema).optional(),
 });
-export type BaseUserSchema = z.infer<typeof baseUserSchema>;
 
-/**@description user Login schema */
 export const userLoginSchema = z.object({
   email: z.string().email('Invalid email'),
   password: z.string(),
 });
-export type UserLoginSchema = z.infer<typeof userLoginSchema>;
-// oasRegistry.register('UserLogin', userLoginSchema);
 
-/**@description user signup schema */
 export const userSignupSchema = baseUserSchema
   .omit({
     id: true,
@@ -59,8 +56,6 @@ export const userSignupSchema = baseUserSchema
       .min(6, 'Password should be at least 6 characters long'),
   });
 
-export type UserSignupSchema = z.infer<typeof userSignupSchema>;
-// oasRegistry.register('UserSignup', userSignupSchema);
 
 export const userSignupServiceSchema = baseUserSchema
   .extend({
@@ -69,14 +64,23 @@ export const userSignupServiceSchema = baseUserSchema
   .omit({
     password: true, // Remove password field since we use hashPassword instead
   });
-export type UserSignupServiceSchema = z.infer<typeof userSignupServiceSchema>;
 
-/**@description User update password schema */
 export const userUpdatePasswordSchema = z.object({
   password: z.string().min(6, 'Password should be at least 6 characters long'),
 });
+
+/**
+ * @description SCHEMAS TYPES
+ */
+export type BaseUserSchema = z.infer<typeof baseUserSchema>;
+export type UserLoginSchema = z.infer<typeof userLoginSchema>;
+export type UserSignupSchema = z.infer<typeof userSignupSchema>;
+export type UserSignupServiceSchema = z.infer<typeof userSignupServiceSchema>;
 export type UserUpdatePasswordSchema = z.infer<typeof userUpdatePasswordSchema>;
 
+/**
+ * @description OPENAPI SCHEMAS REGISTRATION
+ */
 oasRegisterSchemas([
   { schemaName: 'BaseUserSchema', schema: baseUserSchema },
   { schemaName: 'UserLoginSchema', schema: userLoginSchema },

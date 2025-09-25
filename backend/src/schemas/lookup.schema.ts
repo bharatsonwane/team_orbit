@@ -2,7 +2,7 @@ import { z } from 'zod';
 import { oasRegisterSchemas } from '../openApiSpecification/openAPIDocumentGenerator';
 
 /**
- * @description LOOKUP TYPE SCHEMAS
+ * @description ZOD SCHEMAS
  */
 export const baseLookupTypeSchema = z.object({
   name: z.string().min(1).max(255),
@@ -21,9 +21,6 @@ export const lookupTypeWithTrackingSchema = baseLookupTypeSchema.extend({
   archivedBy: z.number().int().optional(),
 });
 
-/**
- * @description LOOKUP SCHEMAS
- */
 export const baseLookupSchema = z.object({
   name: z.string().min(1).max(100),
   label: z.string().min(1).max(255),
@@ -55,15 +52,14 @@ export const lookupTypeWithLookupsSchema = z.object({
       id: z.number().int(),
       isArchived: z.boolean().default(false),
     })
-  )
+  ),
 });
 
 export const lookupListSchema = z.array(lookupTypeWithLookupsSchema);
 
 /**
- * @description LOOKUP SCHEMAS TYPES
+ * @description SCHEMAS TYPES
  */
-
 export type BaseLookupTypeSchema = z.infer<typeof baseLookupTypeSchema>;
 export type LookupTypeWithTrackingSchema = z.infer<
   typeof lookupTypeWithTrackingSchema
@@ -76,6 +72,9 @@ export type LookupTypeWithLookupsSchema = z.infer<
 
 export type LookupListSchema = z.infer<typeof lookupListSchema>;
 
+/**
+ * @description OPENAPI SCHEMAS REGISTRATION
+ */
 oasRegisterSchemas([
   { schemaName: 'BaseLookupTypeSchema', schema: baseLookupTypeSchema },
   {

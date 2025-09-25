@@ -1,6 +1,9 @@
 import { z } from 'zod';
 import { oasRegisterSchemas } from '../openApiSpecification/openAPIDocumentGenerator';
 
+/**
+ * @description ZOD SCHEMAS
+ */
 export const baseTenantSchema = z.object({
   id: z.number().optional(),
   name: z.string().min(2, 'Tenant name must be at least 2 characters').max(255),
@@ -18,9 +21,6 @@ export const baseTenantSchema = z.object({
   archivedBy: z.number().optional(),
 });
 
-export type BaseTenantSchema = z.infer<typeof baseTenantSchema>;
-
-// Tenant creation schema
 export const createTenantSchema = z.object({
   name: z.string().min(2, 'Tenant name must be at least 2 characters').max(255),
   label: z
@@ -37,16 +37,21 @@ export const createTenantSchema = z.object({
   }),
 });
 
-export type CreateTenantSchema = z.infer<typeof createTenantSchema>;
-
-// Tenant update schema
 export const updateTenantSchema = z.object({
   label: z.string().min(2).max(255).optional(),
   isArchived: z.boolean().optional(),
 });
 
+/**
+ * @description SCHEMAS TYPES
+ */
+export type BaseTenantSchema = z.infer<typeof baseTenantSchema>;
+export type CreateTenantSchema = z.infer<typeof createTenantSchema>;
 export type UpdateTenantSchema = z.infer<typeof updateTenantSchema>;
 
+/**
+ * @description OPENAPI SCHEMAS REGISTRATION
+ */
 oasRegisterSchemas([
   { schemaName: 'CreateTenantSchema', schema: createTenantSchema },
   { schemaName: 'UpdateTenantSchema', schema: updateTenantSchema },
