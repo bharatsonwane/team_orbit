@@ -1,7 +1,7 @@
 import { PoolClient } from 'pg';
 import db, { schemaNames } from '../db';
 import logger from '../../utils/logger';
-import { LookupSchema } from '../../schemas/lookup.schema';
+import { BaseLookupSchema } from '../../schemas/lookup.schema';
 import { UserSignupSchema } from '../../schemas/user.schema';
 import {
   lookupTypeKeys,
@@ -21,7 +21,7 @@ const getLookupDataByLookupTypeNameAndLookupName = async ({
   client: PoolClient;
   lookupTypeName: string;
   lookupName: string;
-}): Promise<LookupSchema> => {
+}): Promise<BaseLookupSchema> => {
   /** Get lookup data query */
   const getLookupDataQuery = `
         SELECT l.id, l.name, l.label, l."lookupTypeId", lt.name as typeName
