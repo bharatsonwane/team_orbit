@@ -1,6 +1,31 @@
 import { z } from 'zod';
 
-// Database transaction constants
+export const bloodGroupEnum = z.enum([
+  'A+',
+  'A-',
+  'B+',
+  'B-',
+  'AB+',
+  'AB-',
+  'O+',
+  'O-',
+]);
+export type BloodGroupEnum = z.infer<typeof bloodGroupEnum>;
+
+export const marriedStatusEnum = z.enum([
+  'Single',
+  'Married',
+  'Divorced',
+  'Widowed',
+]);
+export type MarriedStatusEnum = z.infer<typeof marriedStatusEnum>;
+
+export const titleEnum = z.enum(['Mr', 'Mrs', 'Ms']);
+export type TitleEnum = z.infer<typeof titleEnum>;
+
+export const genderEnum = z.enum(['Male', 'Female', 'Other']);
+export type GenderEnum = z.infer<typeof genderEnum>;
+
 export const dbTransactionKeys = {
   BEGIN: 'BEGIN',
   COMMIT: 'COMMIT',

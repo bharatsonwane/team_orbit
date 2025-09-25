@@ -1,26 +1,28 @@
 import { z } from 'zod';
 import { oasRegisterSchemas } from '../openApiSpecification/openAPIDocumentGenerator';
 import { baseLookupSchema } from './lookup.schema';
+import {
+  titleEnum,
+  genderEnum,
+  bloodGroupEnum,
+  marriedStatusEnum,
+} from '../utils/constants';
 
 /**@description Base user schema with common fields */
 export const baseUserSchema = z.object({
   id: z.number().int().optional(),
-  title: z.enum(['Mr', 'Mrs', 'Ms']).optional(),
+  title: titleEnum.optional(),
   firstName: z.string().min(2),
   lastName: z.string().min(2),
   middleName: z.string().min(2).optional(),
   maidenName: z.string().min(2).optional(),
-  gender: z.enum(['Male', 'Female', 'Other']).optional(),
+  gender: genderEnum.optional(),
   dob: z
     .string()
     .regex(/^\d{4}-\d{2}-\d{2}$/, 'Invalid date format, should be YYYY-MM-DD')
     .optional(),
-  bloodGroup: z
-    .enum(['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'])
-    .optional(),
-  marriedStatus: z
-    .enum(['Single', 'Married', 'Divorced', 'Widowed'])
-    .optional(),
+  bloodGroup: bloodGroupEnum.optional(),
+  marriedStatus: marriedStatusEnum.optional(),
   email: z.string().email('Invalid email'),
   phone: z.string().min(10),
   password: z.string().optional(),
