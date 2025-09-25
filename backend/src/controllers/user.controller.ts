@@ -8,7 +8,11 @@ import {
 import Lookup from '../services/lookup.service';
 import { UserLoginSchema, UserSignupSchema } from '../schemas/user.schema';
 import { AuthenticatedRequest } from '../middleware/authRoleMiddleware';
-import { lookupTypeKeys, userRoleKeys, userStatusKeys } from '../utils/constants';
+import {
+  lookupTypeKeys,
+  userRoleKeys,
+  userStatusKeys,
+} from '../utils/constants';
 
 export const userLogin = async (
   req: Request,
@@ -34,7 +38,8 @@ export const userLogin = async (
     if (!isValidPassword) {
       throw { statusCode: 401, message: 'Invalid email or password' };
     }
-    delete userData.hashPassword;
+
+    delete (userData as Partial<typeof userData>).hashPassword;
 
     const token = createJwtToken({
       userId: userData.id,
@@ -87,10 +92,11 @@ export const userSignup = async (
     }
 
     // Get default user status and role IDs
-    const userStatusLookupData = await Lookup.getLookupDataByLookupTypeNameAndLookupName(req.db, {
-      lookupTypeName: lookupTypeKeys.USER_STATUS,
-      lookupName: userStatusKeys.PENDING,
-    });
+    const userStatusLookupData =
+      await Lookup.getLookupDataByLookupTypeNameAndLookupName(req.db, {
+        lookupTypeName: lookupTypeKeys.USER_STATUS,
+        lookupName: userStatusKeys.PENDING,
+      });
     const userStatusId = userStatusLookupData.id;
 
     // Hash password
@@ -129,13 +135,11 @@ export const createUserProfile = async (
 ): Promise<void> => {
   try {
     const userData = req.body;
-    const userStatusLookupData = await Lookup.getLookupDataByLookupTypeNameAndLookupName(
-      req.db,
-      {
+    const userStatusLookupData =
+      await Lookup.getLookupDataByLookupTypeNameAndLookupName(req.db, {
         lookupTypeName: lookupTypeKeys.USER_STATUS,
         lookupName: userStatusKeys.PENDING,
-      }
-    );
+      });
     const userStatusId = userStatusLookupData.id;
 
     const createdUser = await User.createUserInfo(req.db, {

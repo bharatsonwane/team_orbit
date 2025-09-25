@@ -2,11 +2,12 @@ import { dbClientPool } from '../middleware/dbClientMiddleware';
 import {
   UserSignupServiceSchema,
   BaseUserSchema,
+  UserWithTrackingSchema,
+  UserDataWithHashPasswordSchema,
 } from '../schemas/user.schema';
 import { buildUpdateFields } from '../utils/queryHelper';
 
 export default class User {
-
   static async signupUser(
     dbClient: dbClientPool,
     userData: UserSignupServiceSchema
@@ -57,7 +58,7 @@ export default class User {
 
   static async createUserInfo(
     dbClient: dbClientPool,
-    userData: Partial<BaseUserSchema>
+    userData: Partial<UserSignupServiceSchema>
   ): Promise<BaseUserSchema> {
     const queryString = `
       INSERT INTO app_user (
@@ -89,7 +90,7 @@ export default class User {
       '${userData.marriedStatus}',
       '${userData.email}',
       '${userData.phone}',
-      '${userData.hashPassword || "NULL"}',
+      '${userData.hashPassword || 'NULL'}',
       '${userData.bio}',
       ${userData.statusId},
       NOW(),
@@ -181,7 +182,7 @@ export default class User {
       phone?: string;
       includePassword?: boolean;
     }
-  ): Promise<BaseUserSchema | undefined> {
+  ): Promise<UserDataWithHashPasswordSchema | undefined> {
     const whereConditions = [];
 
     // Build WHERE conditions based on provided parameters
@@ -249,7 +250,7 @@ export default class User {
       GROUP BY up.id, ls.name, ls.label;`;
 
     const results = await dbClient.mainPool.query(queryString);
-    const response = results.rows[0] as BaseUserSchema | undefined;
+    const response = results.rows[0] as UserDataWithHashPasswordSchema;
 
     return response;
   }
