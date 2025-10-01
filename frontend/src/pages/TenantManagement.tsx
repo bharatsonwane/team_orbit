@@ -136,6 +136,7 @@ export default function TenantManagement() {
         breadcrumbs={[
           { label: 'Dashboard', href: '/dashboard' },
           { label: 'Tenant Management' },
+          { label: 'List' },
         ]}
       />
       <div className='space-y-6'>

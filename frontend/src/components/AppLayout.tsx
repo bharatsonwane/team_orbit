@@ -31,7 +31,7 @@ export function HeaderLayout({
   }
 
   return (
-    <header className='flex h-10 shrink-0 items-center gap-2 border-b px-4 pl-12'>
+    <header className='flex min-h-10 shrink-0 items-center gap-2 border-b px-4 pl-12 py-2'>
       <Separator orientation='vertical' className='mr-2 h-4' />
       <Breadcrumb>
         <BreadcrumbList>
