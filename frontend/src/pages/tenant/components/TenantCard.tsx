@@ -1,5 +1,4 @@
 import { useNavigate } from 'react-router-dom';
-import { Button } from '@/components/ui/button';
 import {
   Card,
   CardContent,
@@ -13,17 +12,14 @@ import {
   Users,
   Calendar,
   Archive,
-  Edit,
-  Eye,
 } from 'lucide-react';
-import { type Tenant } from './CreateTenantDialog';
+import { type Tenant } from '@/schemas/tenant';
 
 interface TenantCardProps {
   tenant: Tenant;
-  onEdit?: (tenant: Tenant) => void;
 }
 
-export function TenantCard({ tenant, onEdit }: TenantCardProps) {
+export function TenantCard({ tenant }: TenantCardProps) {
   const navigate = useNavigate();
 
   const formatDate = (dateString: string) => {
@@ -39,18 +35,8 @@ export function TenantCard({ tenant, onEdit }: TenantCardProps) {
     navigate(`/tenant/${tenant.id}`);
   };
 
-  const handleEdit = () => {
-    // Call the onEdit callback if provided, otherwise navigate to edit page
-    if (onEdit) {
-      onEdit(tenant);
-    } else {
-      // TODO: Navigate to edit page when implemented
-      console.log('Edit tenant:', tenant);
-    }
-  };
-
   return (
-    <Card key={tenant.id} className='relative'>
+    <Card key={tenant.id} className='relative' onClick={handleView}>
       <CardHeader>
         <div className='flex items-center justify-between'>
           <div className='flex items-center space-x-2'>
@@ -87,27 +73,6 @@ export function TenantCard({ tenant, onEdit }: TenantCardProps) {
             <Calendar className='h-4 w-4 text-muted-foreground' />
             <span>{formatDate(tenant.createdAt)}</span>
           </div>
-        </div>
-
-        <div className='flex space-x-2 pt-2'>
-          <Button 
-            variant='outline' 
-            size='sm' 
-            className='flex-1'
-            onClick={handleView}
-          >
-            <Eye className='h-4 w-4 mr-1' />
-            View
-          </Button>
-          <Button 
-            variant='outline' 
-            size='sm' 
-            className='flex-1'
-            onClick={handleEdit}
-          >
-            <Edit className='h-4 w-4 mr-1' />
-            Edit
-          </Button>
         </div>
       </CardContent>
     </Card>

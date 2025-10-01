@@ -66,9 +66,9 @@ npm run dev      # Start development server
 #### Technical References  
 - **[API Documentation](./backend/docs/src/api.md)** - Complete API reference
 - **[Database](./backend/docs/src/database.md)** - Database operations & migrations
-- **[Controllers](./backend/docs/src/controllers-reference.md)** - Controller layer documentation
-- **[Services](./backend/docs/src/services-reference.md)** - Service layer documentation
-- **[Middleware](./backend/docs/src/middleware-reference.md)** - Middleware components
+- **[Controllers](./backend/docs/src/controllers.md)** - Controller layer documentation
+- **[Services](./backend/docs/src/services.md)** - Service layer documentation
+- **[Middleware](./backend/docs/src/middleware.md)** - Middleware components
 
 ## 🏗️ Architecture
 
@@ -188,9 +188,9 @@ TeamOrbit/
 │   │   └── src/                      # Technical references
 │   │       ├── api.md                # API documentation
 │   │       ├── database.md           # Database & migrations
-│   │       ├── controllers-reference.md
-│   │       ├── services-reference.md
-│   │       └── middleware-reference.md
+│   │       ├── controllers.md
+│   │       ├── services.md
+│   │       └── middleware.md
 │   └── src/                          # Backend source code
 ```
 

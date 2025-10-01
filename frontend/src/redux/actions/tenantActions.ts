@@ -1,0 +1,29 @@
+import { createAsyncThunk } from '@reduxjs/toolkit';
+import getAxios, { getAppErrorMessage } from '../../utils/axiosApi';
+import type { Tenant, TenantListResponse } from '@/schemas/tenant';
+
+/** Get tenant list action - API call only */
+export const getTenantsAction = createAsyncThunk(
+  'tenant/getTenantsAction',
+  async (_, { rejectWithValue }) => {
+    try {
+      const response = await getAxios().get<TenantListResponse>('/api/tenant/list');
+      return response.data; // Direct array response
+    } catch (error: unknown) {
+      return rejectWithValue(getAppErrorMessage(error));
+    }
+  }
+);
+
+/** Get single tenant action - API call only */
+export const getTenantAction = createAsyncThunk(
+  'tenant/getTenantAction',
+  async (tenantId: number, { rejectWithValue }) => {
+    try {
+      const response = await getAxios().get<Tenant>(`/api/tenant/${tenantId}`);
+      return response.data;
+    } catch (error: unknown) {
+      return rejectWithValue(getAppErrorMessage(error));
+    }
+  }
+);

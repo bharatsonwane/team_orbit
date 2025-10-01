@@ -15,38 +15,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Plus } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { z } from 'zod';
-
-// Tenant creation form schema
-const createTenantFormSchema = z.object({
-  name: z.string().min(2, 'Tenant name must be at least 2 characters').max(255),
-  label: z
-    .string()
-    .min(2, 'Tenant label must be at least 2 characters')
-    .max(255),
-  description: z.string().optional(),
-  adminUser: z.object({
-    email: z.string().email('Invalid email format'),
-    firstName: z.string().min(1, 'First name is required').max(100),
-    lastName: z.string().min(1, 'Last name is required').max(100),
-    phone: z.string().optional(),
-    password: z.string().min(6, 'Password must be at least 6 characters'),
-  }),
-});
-
-type CreateTenantFormData = z.infer<typeof createTenantFormSchema>;
-
-// Tenant type definition
-export interface Tenant {
-  id: number;
-  name: string;
-  label: string;
-  description: string;
-  isArchived: boolean;
-  createdAt: string;
-  updatedAt: string;
-  userCount: number;
-}
+import { createTenantFormSchema, type CreateTenantFormData, type Tenant } from '@/schemas/tenant';
 
 interface CreateTenantDialogProps {
   onTenantCreated?: (tenant: Tenant) => void;

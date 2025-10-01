@@ -10,6 +10,7 @@ export const baseTenantSchema = z.object({
     .string()
     .min(2, 'Tenant label must be at least 2 characters')
     .max(255),
+  description: z.string().optional(),
   statusId: z.number(),
   createdBy: z.number().optional(),
 });

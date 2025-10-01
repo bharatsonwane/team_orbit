@@ -586,4 +586,4 @@ npm run migrate
 **Related Documentation:**
 - [Architecture](../architecture.md) - Database architecture overview
 - [API Documentation](api.md) - API endpoints using the database
-- [Services Reference](services-reference.md) - Database access patterns
+- [Services](services.md) - Database access patterns

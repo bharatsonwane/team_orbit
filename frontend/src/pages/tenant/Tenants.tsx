@@ -1,54 +1,83 @@
-import { useState } from 'react';
+import { useEffect } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
 import { Button } from '@/components/ui/button';
-import {
-  Card,
-  CardContent,
-} from '@/components/ui/card';
-import {
-  Building2,
-  Plus,
-} from 'lucide-react';
+import { Card, CardContent } from '@/components/ui/card';
+import { Building2, Plus } from 'lucide-react';
 import { HeaderLayout } from '@/components/AppLayout';
-import { CreateTenantDialog, type Tenant } from './components/CreateTenantDialog';
+import { CreateTenantDialog } from './components/CreateTenantDialog';
 import { TenantCard } from './components/TenantCard';
-
-
-// Mock tenant data - replace with actual API calls
-const mockTenants = [
-  {
-    id: 1,
-    name: 'acme-corp',
-    label: 'ACME Corporation',
-    description: 'Leading technology company',
-    isArchived: false,
-    createdAt: '2024-01-15T10:00:00Z',
-    updatedAt: '2024-01-15T10:00:00Z',
-    userCount: 45,
-  },
-  {
-    id: 2,
-    name: 'tech-startup',
-    label: 'Tech Startup Inc',
-    description: 'Innovative startup company',
-    isArchived: false,
-    createdAt: '2024-02-01T09:30:00Z',
-    updatedAt: '2024-02-01T09:30:00Z',
-    userCount: 12,
-  },
-];
+import { getTenantsAction } from '@/redux/actions/tenantActions';
+import {
+  selectTenants,
+  selectTenantLoading,
+  selectTenantError,
+} from '@/redux/slices/tenantSlice';
+import { type Tenant } from '@/schemas/tenant';
+import type { AppDispatch } from '@/redux/store';
 
 export default function Tenants() {
-  const [tenants, setTenants] = useState(mockTenants);
+  const dispatch = useDispatch<AppDispatch>();
+  const tenants = useSelector(selectTenants);
+  const isLoading = useSelector(selectTenantLoading);
+  const error = useSelector(selectTenantError);
+
+  // Fetch tenants on component mount
+  useEffect(() => {
+    dispatch(getTenantsAction());
+  }, [dispatch]);
 
   const handleTenantCreated = (newTenant: Tenant) => {
-    setTenants(prev => [newTenant, ...prev]);
+    // TODO: Dispatch addTenant action to Redux store
+    console.log('Tenant created:', newTenant);
   };
 
-  const handleEditTenant = (tenant: Tenant) => {
-    // TODO: Open edit modal or navigate to edit page
-    console.log('Edit tenant:', tenant);
-  };
+  // Show loading state
+  if (isLoading) {
+    return (
+      <>
+        <HeaderLayout
+          breadcrumbs={[
+            { label: 'Dashboard', href: '/dashboard' },
+            { label: 'Tenants' },
+            { label: 'List' },
+          ]}
+        />
+        <div className='flex items-center justify-center py-12'>
+          <div className='text-center'>
+            <div className='animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4'></div>
+            <p className='text-muted-foreground'>Loading tenants...</p>
+          </div>
+        </div>
+      </>
+    );
+  }
 
+  // Show error state
+  if (error) {
+    return (
+      <>
+        <HeaderLayout
+          breadcrumbs={[
+            { label: 'Dashboard', href: '/dashboard' },
+            { label: 'Tenants' },
+            { label: 'List' },
+          ]}
+        />
+        <div className='flex items-center justify-center py-12'>
+          <div className='text-center'>
+            <Building2 className='h-12 w-12 text-muted-foreground mx-auto mb-4' />
+            <h2 className='text-2xl font-semibold mb-2'>
+              Error Loading Tenants
+            </h2>
+            <p className='text-muted-foreground mb-4'>{error}</p>
+            <Button onClick={() => dispatch(getTenantsAction())}>
+              Try Again
+            </Button>
+          </div>
+        </div>
+      </>
+    );
+  }
 
   return (
     <>
@@ -63,9 +92,7 @@ export default function Tenants() {
         {/* Header */}
         <div className='flex items-center justify-between'>
           <div>
-            <h1 className='text-3xl font-bold text-foreground'>
-              Tenants
-            </h1>
+            <h1 className='text-3xl font-bold text-foreground'>Tenants</h1>
             <p className='text-muted-foreground'>
               Manage organizations and their administrative users
             </p>
@@ -77,11 +104,7 @@ export default function Tenants() {
         {/* Tenants Grid */}
         <div className='grid gap-6 md:grid-cols-2 lg:grid-cols-3'>
           {tenants.map(tenant => (
-            <TenantCard
-              key={tenant.id}
-              tenant={tenant}
-              onEdit={handleEditTenant}
-            />
+            <TenantCard key={tenant.id} tenant={tenant} />
           ))}
         </div>
 
@@ -93,7 +116,7 @@ export default function Tenants() {
               <p className='text-muted-foreground text-center mb-4'>
                 Get started by creating your first tenant organization.
               </p>
-              <CreateTenantDialog 
+              <CreateTenantDialog
                 onTenantCreated={handleTenantCreated}
                 triggerButton={
                   <Button>

@@ -50,14 +50,15 @@ export default class Tenant {
       const activeTenantStatusId = statusResult.rows[0].id;
 
       const tenantQuery = `
-        INSERT INTO tenant (name, label, "statusId", "isArchived", "createdAt", "updatedAt")
-        VALUES ($1, $2, $3, FALSE, NOW(), NOW())
-        RETURNING id, name, label, "statusId", "isArchived", "createdAt", "updatedAt", "archivedAt"
+        INSERT INTO tenant (name, label, description, "statusId", "isArchived", "createdAt", "updatedAt")
+        VALUES ($1, $2, $3, $4, FALSE, NOW(), NOW())
+        RETURNING id, name, label, description, "statusId", "isArchived", "createdAt", "updatedAt", "archivedAt"
       `;
 
       const tenantResult = await dbClient.mainPool.query(tenantQuery, [
         tenantData.name,
         tenantData.label,
+        tenantData.description,
         activeTenantStatusId,
       ]);
 
@@ -113,6 +114,7 @@ export default class Tenant {
         id: tenant.id,
         name: tenant.name,
         label: tenant.label,
+        description: tenant.description,
         statusId: tenant.statusId,
         isArchived: tenant.isArchived,
         createdAt: tenant.createdAt,
@@ -134,7 +136,7 @@ export default class Tenant {
     { includeArchived = false }: { includeArchived?: boolean } = {}
   ): Promise<BaseTenantSchema[]> {
     const query = `
-      SELECT id, name, label, "statusId", "isArchived", "createdAt", "updatedAt", "archivedAt"
+      SELECT id, name, label, description, "statusId", "isArchived", "createdAt", "updatedAt", "archivedAt"
       FROM tenant
       ${includeArchived ? '' : 'WHERE "isArchived" = FALSE'}
       ORDER BY "createdAt" DESC
@@ -152,7 +154,7 @@ export default class Tenant {
     { tenantId }: { tenantId: number }
   ): Promise<BaseTenantSchema | null> {
     const query = `
-      SELECT id, name, label, "statusId", "isArchived", "createdAt", "updatedAt", "archivedAt"
+      SELECT id, name, label, description, "statusId", "isArchived", "createdAt", "updatedAt", "archivedAt"
       FROM tenant
       WHERE id = $1
     `;
@@ -196,7 +198,7 @@ export default class Tenant {
       UPDATE tenant
       SET ${setQueryString}, "updatedAt" = NOW()
       WHERE id = ${tenantId}
-      RETURNING id, name, label, "statusId", "isArchived", "createdAt", "updatedAt", "archivedAt"
+      RETURNING id, name, label, description, "statusId", "isArchived", "createdAt", "updatedAt", "archivedAt"
     `;
 
     const results = await db.mainPool.query(queryString);

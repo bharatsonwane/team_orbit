@@ -66,6 +66,7 @@ async function main(): Promise<void> {
     const tenantData = {
       name: 'iConnect',
       label: 'iConnect',
+      description: 'We are a company that provides a software solutions for businesses',
     };
     const tenantResult = await pool.query(
       `INSERT INTO tenant (name, label, "statusId") 
