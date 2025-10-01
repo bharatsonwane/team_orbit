@@ -194,14 +194,6 @@ export default function TenantDetail() {
         {/* Header */}
         <div className='flex items-center justify-between'>
           <div className='flex items-center space-x-4'>
-            <Button
-              variant='outline'
-              size='sm'
-              onClick={() => navigate('/tenant-list')}
-            >
-              <ArrowLeft className='h-4 w-4 mr-2' />
-              Back
-            </Button>
             <div>
               <h1 className='text-3xl font-bold flex items-center gap-3'>
                 <Building2 className='h-8 w-8 text-primary' />

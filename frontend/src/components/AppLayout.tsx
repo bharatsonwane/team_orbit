@@ -14,6 +14,8 @@ import {
   BreadcrumbPage,
   BreadcrumbSeparator,
 } from '@/components/ui/breadcrumb';
+import { ArrowLeft } from 'lucide-react';
+import { Button } from './ui/button';
 
 export interface BreadcrumbLayoutProps {
   label: string;
@@ -32,6 +34,10 @@ export function HeaderLayout({
 
   return (
     <header className='flex min-h-10 shrink-0 items-center gap-2 border-b px-4 pl-12 py-2'>
+      <Separator orientation='vertical' className='h-4' />
+      <Button variant='outline' size='sm'>
+        <ArrowLeft className='h-4 w-4 m-1' />
+      </Button>
       <Separator orientation='vertical' className='mr-2 h-4' />
       <Breadcrumb>
         <BreadcrumbList>
@@ -61,7 +67,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
       <AppSidebar />
       <SidebarInset className='relative'>
         {/* Sidebar trigger - floating above content */}
-        <div className='absolute top-5 left-4 z-10'>
+        <div className='absolute top-6 left-4 z-10'>
           <SidebarTrigger className='bg-background/80 backdrop-blur-sm border shadow-sm hover:bg-background' />
         </div>
 
