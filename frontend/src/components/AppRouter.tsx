@@ -35,6 +35,7 @@ import SuperAdmin from '../pages/SuperAdmin';
 import TenantManagement from '../pages/TenantManagement';
 import { ComingSoon } from './ComingSoon';
 import { AppLayout } from '@/components/AppLayout';
+import type { BreadcrumbLayoutProps } from '@/components/AppLayout';
 
 export interface AuthRoute {
   title: string;
@@ -53,6 +54,7 @@ export interface SidebarRouteWithChildren {
   element?: ReactNode;
   childItems?: SidebarRouteWithChildren[]; // recursive
   icon?: LucideIcon; // or React.ComponentType<any> if not fixed to Lucide
+  breadcrumbs?: BreadcrumbLayoutProps[];
 }
 
 interface RouteGuardRendererProps {
@@ -199,6 +201,10 @@ export const sidebarNavigationItems: SidebarRouteWithChildren[] = [
           userRoleKeys.PLATFORM_ADMIN,
         ],
         element: <TenantManagement />,
+        breadcrumbs: [
+          { label: 'Dashboard', href: '/dashboard' },
+          { label: 'Tenant Management' },
+        ],
       },
     ],
   },

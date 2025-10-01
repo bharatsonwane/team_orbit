@@ -1,5 +1,4 @@
 import { useState, useEffect } from 'react';
-import { AppLayout } from '@/components/AppLayout';
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -21,10 +20,10 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
-import { 
-  Building2, 
-  Plus, 
-  Users, 
+import {
+  Building2,
+  Plus,
+  Users,
   Calendar,
   Archive,
   Edit,
@@ -33,11 +32,15 @@ import {
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
+import { HeaderLayout } from '@/components/AppLayout';
 
 // Tenant creation form schema
 const createTenantFormSchema = z.object({
   name: z.string().min(2, 'Tenant name must be at least 2 characters').max(255),
-  label: z.string().min(2, 'Tenant label must be at least 2 characters').max(255),
+  label: z
+    .string()
+    .min(2, 'Tenant label must be at least 2 characters')
+    .max(255),
   description: z.string().optional(),
   adminUser: z.object({
     email: z.string().email('Invalid email format'),
@@ -93,10 +96,10 @@ export default function TenantManagement() {
     try {
       // TODO: Replace with actual API call
       console.log('Creating tenant:', data);
-      
+
       // Simulate API call
       await new Promise(resolve => setTimeout(resolve, 1000));
-      
+
       // Mock response
       const newTenant = {
         id: tenants.length + 1,
@@ -128,158 +131,186 @@ export default function TenantManagement() {
   };
 
   return (
-    <AppLayout
-      breadcrumbs={[
-        { label: 'Dashboard', href: '/dashboard' },
-        { label: 'Tenant Management' },
-      ]}
-    >
-      <div className="space-y-6">
+    <>
+      <HeaderLayout
+        breadcrumbs={[
+          { label: 'Dashboard', href: '/dashboard' },
+          { label: 'Tenant Management' },
+        ]}
+      />
+      <div className='space-y-6'>
         {/* Header */}
-        <div className="flex items-center justify-between">
+        <div className='flex items-center justify-between'>
           <div>
-            <h1 className="text-3xl font-bold text-foreground">Tenant Management</h1>
-            <p className="text-muted-foreground">
+            <h1 className='text-3xl font-bold text-foreground'>
+              Tenant Management
+            </h1>
+            <p className='text-muted-foreground'>
               Manage organizations and their administrative users
             </p>
           </div>
-          
-          <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
+
+          <Dialog
+            open={isCreateDialogOpen}
+            onOpenChange={setIsCreateDialogOpen}
+          >
             <DialogTrigger asChild>
               <Button>
-                <Plus className="h-4 w-4 mr-2" />
+                <Plus className='h-4 w-4 mr-2' />
                 Create Tenant
               </Button>
             </DialogTrigger>
-            <DialogContent className="max-w-2xl">
+            <DialogContent className='max-w-2xl'>
               <DialogHeader>
                 <DialogTitle>Create New Tenant</DialogTitle>
                 <DialogDescription>
                   Create a new organization and its administrative user account.
                 </DialogDescription>
               </DialogHeader>
-              
+
               <form onSubmit={handleSubmit(onSubmitCreateTenant)}>
-                <div className="space-y-6">
+                <div className='space-y-6'>
                   {/* Tenant Information */}
-                  <div className="space-y-4">
-                    <h3 className="text-lg font-semibold">Tenant Information</h3>
-                    
-                    <div className="grid grid-cols-2 gap-4">
-                      <div className="space-y-2">
-                        <Label htmlFor="name">Tenant Name *</Label>
+                  <div className='space-y-4'>
+                    <h3 className='text-lg font-semibold'>
+                      Tenant Information
+                    </h3>
+
+                    <div className='grid grid-cols-2 gap-4'>
+                      <div className='space-y-2'>
+                        <Label htmlFor='name'>Tenant Name *</Label>
                         <Input
-                          id="name"
-                          placeholder="acme-corp"
+                          id='name'
+                          placeholder='acme-corp'
                           {...register('name')}
                         />
                         {errors.name && (
-                          <p className="text-sm text-destructive">{errors.name.message}</p>
+                          <p className='text-sm text-destructive'>
+                            {errors.name.message}
+                          </p>
                         )}
                       </div>
-                      
-                      <div className="space-y-2">
-                        <Label htmlFor="label">Display Label *</Label>
+
+                      <div className='space-y-2'>
+                        <Label htmlFor='label'>Display Label *</Label>
                         <Input
-                          id="label"
-                          placeholder="ACME Corporation"
+                          id='label'
+                          placeholder='ACME Corporation'
                           {...register('label')}
                         />
                         {errors.label && (
-                          <p className="text-sm text-destructive">{errors.label.message}</p>
+                          <p className='text-sm text-destructive'>
+                            {errors.label.message}
+                          </p>
                         )}
                       </div>
                     </div>
-                    
-                    <div className="space-y-2">
-                      <Label htmlFor="description">Description</Label>
+
+                    <div className='space-y-2'>
+                      <Label htmlFor='description'>Description</Label>
                       <Textarea
-                        id="description"
-                        placeholder="Brief description of the organization"
+                        id='description'
+                        placeholder='Brief description of the organization'
                         {...register('description')}
                       />
                       {errors.description && (
-                        <p className="text-sm text-destructive">{errors.description.message}</p>
+                        <p className='text-sm text-destructive'>
+                          {errors.description.message}
+                        </p>
                       )}
                     </div>
                   </div>
 
                   {/* Admin User Information */}
-                  <div className="space-y-4">
-                    <h3 className="text-lg font-semibold">Tenant Administrator</h3>
-                    
-                    <div className="grid grid-cols-2 gap-4">
-                      <div className="space-y-2">
-                        <Label htmlFor="adminUser.firstName">First Name *</Label>
+                  <div className='space-y-4'>
+                    <h3 className='text-lg font-semibold'>
+                      Tenant Administrator
+                    </h3>
+
+                    <div className='grid grid-cols-2 gap-4'>
+                      <div className='space-y-2'>
+                        <Label htmlFor='adminUser.firstName'>
+                          First Name *
+                        </Label>
                         <Input
-                          id="adminUser.firstName"
-                          placeholder="John"
+                          id='adminUser.firstName'
+                          placeholder='John'
                           {...register('adminUser.firstName')}
                         />
                         {errors.adminUser?.firstName && (
-                          <p className="text-sm text-destructive">{errors.adminUser.firstName.message}</p>
+                          <p className='text-sm text-destructive'>
+                            {errors.adminUser.firstName.message}
+                          </p>
                         )}
                       </div>
-                      
-                      <div className="space-y-2">
-                        <Label htmlFor="adminUser.lastName">Last Name *</Label>
+
+                      <div className='space-y-2'>
+                        <Label htmlFor='adminUser.lastName'>Last Name *</Label>
                         <Input
-                          id="adminUser.lastName"
-                          placeholder="Doe"
+                          id='adminUser.lastName'
+                          placeholder='Doe'
                           {...register('adminUser.lastName')}
                         />
                         {errors.adminUser?.lastName && (
-                          <p className="text-sm text-destructive">{errors.adminUser.lastName.message}</p>
+                          <p className='text-sm text-destructive'>
+                            {errors.adminUser.lastName.message}
+                          </p>
                         )}
                       </div>
                     </div>
-                    
-                    <div className="space-y-2">
-                      <Label htmlFor="adminUser.email">Email *</Label>
+
+                    <div className='space-y-2'>
+                      <Label htmlFor='adminUser.email'>Email *</Label>
                       <Input
-                        id="adminUser.email"
-                        type="email"
-                        placeholder="admin@acme-corp.com"
+                        id='adminUser.email'
+                        type='email'
+                        placeholder='admin@acme-corp.com'
                         {...register('adminUser.email')}
                       />
                       {errors.adminUser?.email && (
-                        <p className="text-sm text-destructive">{errors.adminUser.email.message}</p>
+                        <p className='text-sm text-destructive'>
+                          {errors.adminUser.email.message}
+                        </p>
                       )}
                     </div>
-                    
-                    <div className="grid grid-cols-2 gap-4">
-                      <div className="space-y-2">
-                        <Label htmlFor="adminUser.phone">Phone</Label>
+
+                    <div className='grid grid-cols-2 gap-4'>
+                      <div className='space-y-2'>
+                        <Label htmlFor='adminUser.phone'>Phone</Label>
                         <Input
-                          id="adminUser.phone"
-                          placeholder="+1234567890"
+                          id='adminUser.phone'
+                          placeholder='+1234567890'
                           {...register('adminUser.phone')}
                         />
                         {errors.adminUser?.phone && (
-                          <p className="text-sm text-destructive">{errors.adminUser.phone.message}</p>
+                          <p className='text-sm text-destructive'>
+                            {errors.adminUser.phone.message}
+                          </p>
                         )}
                       </div>
-                      
-                      <div className="space-y-2">
-                        <Label htmlFor="adminUser.password">Password *</Label>
+
+                      <div className='space-y-2'>
+                        <Label htmlFor='adminUser.password'>Password *</Label>
                         <Input
-                          id="adminUser.password"
-                          type="password"
-                          placeholder="Secure password"
+                          id='adminUser.password'
+                          type='password'
+                          placeholder='Secure password'
                           {...register('adminUser.password')}
                         />
                         {errors.adminUser?.password && (
-                          <p className="text-sm text-destructive">{errors.adminUser.password.message}</p>
+                          <p className='text-sm text-destructive'>
+                            {errors.adminUser.password.message}
+                          </p>
                         )}
                       </div>
                     </div>
                   </div>
                 </div>
 
-                <DialogFooter className="mt-6">
+                <DialogFooter className='mt-6'>
                   <Button
-                    type="button"
-                    variant="outline"
+                    type='button'
+                    variant='outline'
                     onClick={() => {
                       setIsCreateDialogOpen(false);
                       reset();
@@ -287,7 +318,7 @@ export default function TenantManagement() {
                   >
                     Cancel
                   </Button>
-                  <Button type="submit" disabled={isLoading}>
+                  <Button type='submit' disabled={isLoading}>
                     {isLoading ? 'Creating...' : 'Create Tenant'}
                   </Button>
                 </DialogFooter>
@@ -297,54 +328,54 @@ export default function TenantManagement() {
         </div>
 
         {/* Tenants Grid */}
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-          {tenants.map((tenant) => (
-            <Card key={tenant.id} className="relative">
+        <div className='grid gap-6 md:grid-cols-2 lg:grid-cols-3'>
+          {tenants.map(tenant => (
+            <Card key={tenant.id} className='relative'>
               <CardHeader>
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center space-x-2">
-                    <Building2 className="h-5 w-5 text-primary" />
-                    <CardTitle className="text-lg">{tenant.label}</CardTitle>
+                <div className='flex items-center justify-between'>
+                  <div className='flex items-center space-x-2'>
+                    <Building2 className='h-5 w-5 text-primary' />
+                    <CardTitle className='text-lg'>{tenant.label}</CardTitle>
                   </div>
                   {tenant.isArchived && (
-                    <Badge variant="secondary">
-                      <Archive className="h-3 w-3 mr-1" />
+                    <Badge variant='secondary'>
+                      <Archive className='h-3 w-3 mr-1' />
                       Archived
                     </Badge>
                   )}
                 </div>
                 <CardDescription>
-                  <code className="text-xs bg-muted px-1 py-0.5 rounded">
+                  <code className='text-xs bg-muted px-1 py-0.5 rounded'>
                     {tenant.name}
                   </code>
                 </CardDescription>
               </CardHeader>
-              
-              <CardContent className="space-y-4">
+
+              <CardContent className='space-y-4'>
                 {tenant.description && (
-                  <p className="text-sm text-muted-foreground">
+                  <p className='text-sm text-muted-foreground'>
                     {tenant.description}
                   </p>
                 )}
-                
-                <div className="flex items-center justify-between text-sm">
-                  <div className="flex items-center space-x-1">
-                    <Users className="h-4 w-4 text-muted-foreground" />
+
+                <div className='flex items-center justify-between text-sm'>
+                  <div className='flex items-center space-x-1'>
+                    <Users className='h-4 w-4 text-muted-foreground' />
                     <span>{tenant.userCount} users</span>
                   </div>
-                  <div className="flex items-center space-x-1">
-                    <Calendar className="h-4 w-4 text-muted-foreground" />
+                  <div className='flex items-center space-x-1'>
+                    <Calendar className='h-4 w-4 text-muted-foreground' />
                     <span>{formatDate(tenant.createdAt)}</span>
                   </div>
                 </div>
-                
-                <div className="flex space-x-2 pt-2">
-                  <Button variant="outline" size="sm" className="flex-1">
-                    <Eye className="h-4 w-4 mr-1" />
+
+                <div className='flex space-x-2 pt-2'>
+                  <Button variant='outline' size='sm' className='flex-1'>
+                    <Eye className='h-4 w-4 mr-1' />
                     View
                   </Button>
-                  <Button variant="outline" size="sm" className="flex-1">
-                    <Edit className="h-4 w-4 mr-1" />
+                  <Button variant='outline' size='sm' className='flex-1'>
+                    <Edit className='h-4 w-4 mr-1' />
                     Edit
                   </Button>
                 </div>
@@ -355,20 +386,20 @@ export default function TenantManagement() {
 
         {tenants.length === 0 && (
           <Card>
-            <CardContent className="flex flex-col items-center justify-center py-12">
-              <Building2 className="h-12 w-12 text-muted-foreground mb-4" />
-              <h3 className="text-lg font-semibold mb-2">No Tenants Found</h3>
-              <p className="text-muted-foreground text-center mb-4">
+            <CardContent className='flex flex-col items-center justify-center py-12'>
+              <Building2 className='h-12 w-12 text-muted-foreground mb-4' />
+              <h3 className='text-lg font-semibold mb-2'>No Tenants Found</h3>
+              <p className='text-muted-foreground text-center mb-4'>
                 Get started by creating your first tenant organization.
               </p>
               <Button onClick={() => setIsCreateDialogOpen(true)}>
-                <Plus className="h-4 w-4 mr-2" />
+                <Plus className='h-4 w-4 mr-2' />
                 Create First Tenant
               </Button>
             </CardContent>
           </Card>
         )}
       </div>
-    </AppLayout>
+    </>
   );
 }
