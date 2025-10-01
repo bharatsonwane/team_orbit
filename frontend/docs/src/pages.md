@@ -14,7 +14,7 @@ Pages are organized into logical folders based on their functionality:
 - **`dashboard/`** - Main dashboard pages (Home, Dashboard)  
 - **`admin/`** - Admin management pages (Admin, SuperAdmin)
 - **`profile/`** - User profile pages (Profile)
-- **`tenantManagement/`** - Tenant management module with components
+- **`tenant/`** - Tanant module with components
 
 ## 📁 Page Structure
 
@@ -31,8 +31,8 @@ src/pages/
 │   └── SuperAdmin.tsx   # Super admin panel
 ├── profile/             # User profile pages
 │   └── Profile.tsx      # User profile
-└── tenantManagement/    # Tenant management module
-    ├── TenantManagement.tsx # Main tenant management page
+└── tenant/              # Tanant module
+    ├── Tenants.tsx      # Main tenant list page
     ├── TenantDetail.tsx # Tenant detail and user management page
     └── components/      # Page-specific components
         ├── CreateTenantDialog.tsx # Tenant creation dialog
@@ -376,7 +376,7 @@ export default function Admin() {
 **Purpose**: Platform-level administration
 
 ### Features
-- Tenant management
+- Tanant
 - Platform settings
 - Global user management
 - System-wide controls
@@ -388,10 +388,10 @@ allowedRoles: [userRoleKeys.PLATFORM_SUPER_ADMIN]
 
 ---
 
-## 🏢 TenantManagement.tsx
+## 🏢 Tenants.tsx
 
-**Location**: `src/pages/tenantManagement/TenantManagement.tsx`  
-**Route**: `/tenant-management`  
+**Location**: `src/pages/tenant/Tenants.tsx`  
+**Route**: `/tenant-list`  
 **Access**: Protected (Admin roles)  
 **Purpose**: Manage tenant organizations
 
@@ -407,7 +407,7 @@ allowedRoles: [userRoleKeys.PLATFORM_SUPER_ADMIN]
 ### Component Structure
 ```typescript
 // Main page component
-export default function TenantManagement() {
+export default function Tenants() {
   const [tenants, setTenants] = useState<Tenant[]>(mockTenants);
 
   const handleTenantCreated = (newTenant: Tenant) => {
@@ -427,13 +427,13 @@ export default function TenantManagement() {
       <HeaderLayout
         breadcrumbs={[
           { label: 'Dashboard', href: '/dashboard' },
-          { label: 'Tenant Management' },
+          { label: 'Tenants' },
         ]}
       />
       <div className="space-y-6">
         <div className="flex justify-between items-center">
           <div>
-            <h1 className="text-3xl font-bold">Tenant Management</h1>
+            <h1 className="text-3xl font-bold">Tenants</h1>
             <p className="text-muted-foreground">
               Manage organizations and their administrative users
             </p>
@@ -477,8 +477,8 @@ export default function TenantManagement() {
 
 ## 🏢 TenantDetail.tsx
 
-**Location**: `src/pages/tenantManagement/TenantDetail.tsx`  
-**Route**: `/tenant-management/:id`  
+**Location**: `src/pages/tenant/TenantDetail.tsx`  
+**Route**: `/tenant/:id`  
 **Access**: Protected (Admin roles)  
 **Purpose**: View tenant details and manage tenant users
 
@@ -515,7 +515,7 @@ export default function TenantDetail() {
       <HeaderLayout
         breadcrumbs={[
           { label: 'Dashboard', href: '/dashboard' },
-          { label: 'Tenant Management', href: '/tenant-management' },
+          { label: 'Tenants', href: '/tenant-list' },
           { label: tenant?.label || 'Loading...' },
         ]}
       />
@@ -545,6 +545,7 @@ export default function TenantDetail() {
 - Breadcrumb navigation
 - Direct navigation from TenantCard
 - Route parameter handling (`:id`)
+- Updated route path (`/tenant/:id`)
 
 ### Data Structure
 ```typescript

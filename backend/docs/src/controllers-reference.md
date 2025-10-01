@@ -7,7 +7,7 @@ Controllers handle HTTP requests and responses in the TeamOrbit backend. They ac
 ```
 src/controllers/
 ├── user.controller.ts      # User management endpoints
-├── tenant.controller.ts    # Tenant management endpoints
+├── tenant.controller.ts    # Tanant endpoints
 ├── lookup.controller.ts    # Reference data endpoints
 └── chat.controller.ts      # Chat messaging endpoints
 ```

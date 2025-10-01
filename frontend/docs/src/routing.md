@@ -148,7 +148,7 @@ export const sidebarNavigationItems: SidebarRouteWithChildren[] = [
     ],
     childItems: [
       {
-        title: 'Tenant Management',
+        title: 'Tenants',
         href: '/tenant-management',
         path: '/tenant-management',
         icon: Home,
@@ -156,7 +156,7 @@ export const sidebarNavigationItems: SidebarRouteWithChildren[] = [
           userRoleKeys.PLATFORM_SUPER_ADMIN,
           userRoleKeys.PLATFORM_ADMIN,
         ],
-        element: <TenantManagement />,
+        element: <Tenants />,
       },
     ],
   },
@@ -423,7 +423,7 @@ export function AppSidebar() {
 - `/dashboard` - Main dashboard (ALL)
 
 #### Platform Management
-- `/tenant-management` - Tenant management (PLATFORM_ADMIN, PLATFORM_SUPER_ADMIN)
+- `/tenant-management` - Tanant (PLATFORM_ADMIN, PLATFORM_SUPER_ADMIN)
 
 #### Multi-Tenant
 - `/workspace/settings` - Workspace settings (PLATFORM_ADMIN, PLATFORM_SUPER_ADMIN)
@@ -496,7 +496,7 @@ Platform Level:
 
 Tenant Level:
 ├─ TENANT_ADMIN          # Full tenant control
-├─ TENANT_MANAGER        # Tenant management
+├─ TENANT_MANAGER        # Tanant
 └─ TENANT_USER           # Basic tenant access
 
 Special:

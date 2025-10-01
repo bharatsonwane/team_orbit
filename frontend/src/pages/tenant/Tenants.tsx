@@ -37,7 +37,7 @@ const mockTenants = [
   },
 ];
 
-export default function TenantManagement() {
+export default function Tenants() {
   const [tenants, setTenants] = useState(mockTenants);
 
   const handleTenantCreated = (newTenant: Tenant) => {
@@ -55,7 +55,7 @@ export default function TenantManagement() {
       <HeaderLayout
         breadcrumbs={[
           { label: 'Dashboard', href: '/dashboard' },
-          { label: 'Tenant Management' },
+          { label: 'Tenants' },
           { label: 'List' },
         ]}
       />
@@ -64,7 +64,7 @@ export default function TenantManagement() {
         <div className='flex items-center justify-between'>
           <div>
             <h1 className='text-3xl font-bold text-foreground'>
-              Tenant Management
+              Tenants
             </h1>
             <p className='text-muted-foreground'>
               Manage organizations and their administrative users

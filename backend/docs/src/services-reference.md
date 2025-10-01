@@ -7,7 +7,7 @@ Services contain business logic and data processing in the TeamOrbit backend. Th
 ```
 src/services/
 ├── user.service.ts         # User business logic
-├── tenant.service.ts       # Tenant management logic
+├── tenant.service.ts       # Tanant logic
 ├── lookup.service.ts       # Reference data logic
 └── chat.service.ts         # Chat messaging logic
 ```

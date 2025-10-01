@@ -98,7 +98,7 @@ For detailed information about all endpoints, request/response formats, and exam
 
 ### Quick Access
 - **Authentication & Users** - User registration, login, profile management
-- **Tenant Management** - Multi-tenant organization management
+- **Tenants** - Multi-tenant organization management
 - **Lookup Data** - Reference data and system constants
 - **Chat** - Real-time messaging (ready for implementation)
 - **System** - Health checks and monitoring

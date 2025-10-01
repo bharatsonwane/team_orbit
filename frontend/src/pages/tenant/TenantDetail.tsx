@@ -140,7 +140,7 @@ export default function TenantDetail() {
         <HeaderLayout
           breadcrumbs={[
             { label: 'Dashboard', href: '/dashboard' },
-            { label: 'Tenant Management', href: '/tenant-management' },
+            { label: 'Tenants', href: '/tenant-list' },
             { label: 'Loading...' },
           ]}
         />
@@ -160,7 +160,7 @@ export default function TenantDetail() {
         <HeaderLayout
           breadcrumbs={[
             { label: 'Dashboard', href: '/dashboard' },
-            { label: 'Tenant Management', href: '/tenant-management' },
+            { label: 'Tenants', href: '/tenant-list' },
             { label: 'Not Found' },
           ]}
         />
@@ -171,7 +171,7 @@ export default function TenantDetail() {
             <p className='text-muted-foreground mb-4'>
               The requested tenant could not be found.
             </p>
-            <Button onClick={() => navigate('/tenant-management')}>
+            <Button onClick={() => navigate('/tenant-list')}>
               <ArrowLeft className='h-4 w-4 mr-2' />
               Back to Tenants
             </Button>
@@ -186,7 +186,7 @@ export default function TenantDetail() {
       <HeaderLayout
         breadcrumbs={[
           { label: 'Dashboard', href: '/dashboard' },
-          { label: 'Tenant Management', href: '/tenant-management' },
+          { label: 'Tenants', href: '/tenant-list' },
           { label: tenant.label },
         ]}
       />
@@ -197,7 +197,7 @@ export default function TenantDetail() {
             <Button
               variant='outline'
               size='sm'
-              onClick={() => navigate('/tenant-management')}
+              onClick={() => navigate('/tenant-list')}
             >
               <ArrowLeft className='h-4 w-4 mr-2' />
               Back

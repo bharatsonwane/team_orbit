@@ -36,7 +36,7 @@ export function TenantCard({ tenant, onEdit }: TenantCardProps) {
 
   const handleView = () => {
     // Navigate to tenant detail page
-    navigate(`/tenant-management/${tenant.id}`);
+    navigate(`/tenant/${tenant.id}`);
   };
 
   const handleEdit = () => {

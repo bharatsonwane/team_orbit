@@ -29,11 +29,11 @@ src/pages/
 ├── dashboard/              # Main dashboard pages
 ├── admin/                  # Admin management pages
 ├── profile/                # User profile pages
-└── tenantManagement/       # Tenant management module
+└── tenant/                 # Tanant module
     ├── components/
     │   ├── CreateTenantDialog.tsx  # Tenant creation dialog with form
     │   └── TenantCard.tsx          # Individual tenant display card
-    ├── TenantManagement.tsx        # Main tenant management page
+    ├── Tenants.tsx                 # Main tenant list page
     └── TenantDetail.tsx            # Tenant detail page
 ```
 
@@ -1035,7 +1035,7 @@ function CreateUserDialog() {
 
 **Purpose**: Comprehensive dialog for creating new tenant organizations with admin user setup.
 
-**Location**: `src/pages/tenantManagement/components/CreateTenantDialog.tsx`
+**Location**: `src/pages/tenant/components/CreateTenantDialog.tsx`
 
 #### Props
 
@@ -1086,7 +1086,7 @@ const createTenantFormSchema = z.object({
 
 **Purpose**: Individual tenant display card with actions and status information.
 
-**Location**: `src/pages/tenantManagement/components/TenantCard.tsx`
+**Location**: `src/pages/tenant/components/TenantCard.tsx`
 
 #### Props
 
@@ -1117,7 +1117,7 @@ interface TenantCardProps {
 ```
 
 #### Navigation Behavior
-- **View Button**: Automatically navigates to `/tenant-management/{tenant.id}`
+- **View Button**: Automatically navigates to `/tenant/{tenant.id}`
 - **Edit Button**: Calls the `onEdit` callback if provided
 - **Direct Navigation**: Uses `useNavigate()` hook for seamless routing
 

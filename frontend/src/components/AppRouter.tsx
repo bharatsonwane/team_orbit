@@ -32,8 +32,8 @@ import Dashboard from '../pages/dashboard/Dashboard';
 import Profile from '../pages/profile/Profile';
 import Admin from '../pages/admin/Admin';
 import SuperAdmin from '../pages/admin/SuperAdmin';
-import TenantManagement from '../pages/tenantManagement/TenantManagement';
-import TenantDetail from '../pages/tenantManagement/TenantDetail';
+import Tenants from '../pages/tenant/Tenants';
+import TenantDetail from '../pages/tenant/TenantDetail';
 import { ComingSoon } from './ComingSoon';
 import { AppLayout } from '@/components/AppLayout';
 import type { BreadcrumbLayoutProps } from '@/components/AppLayout';
@@ -193,18 +193,18 @@ export const sidebarNavigationItems: SidebarRouteWithChildren[] = [
     ],
     childItems: [
       {
-        title: 'Tenant Management',
-        href: '/tenant-management',
-        path: '/tenant-management',
+        title: 'Tenants',
+        href: '/tenant-list',
+        path: '/tenant-list',
         icon: Home,
         allowedRoles: [
           userRoleKeys.PLATFORM_SUPER_ADMIN,
           userRoleKeys.PLATFORM_ADMIN,
         ],
-        element: <TenantManagement />,
+        element: <Tenants />,
         breadcrumbs: [
           { label: 'Dashboard', href: '/dashboard' },
-          { label: 'Tenant Management' },
+          { label: 'Tenants' },
         ],
       },
     ],
@@ -668,7 +668,7 @@ export const otherProtectedRouteList: AuthRoute[] = [
     description: 'Super admin dashboard',
   },
   {
-    path: '/tenant-management/:id',
+    path: '/tenant/:id',
     element: <TenantDetail />,
     allowedRoles: [
       userRoleKeys.PLATFORM_ADMIN,
