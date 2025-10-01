@@ -155,11 +155,13 @@ async function main(): Promise<void> {
           phone,
           "hashPassword",
           bio,
+          "tenantId",
           "statusId",
-            "createdAt",
-            "updatedAt")
+          "createdAt",
+          "updatedAt"
+            )
           VALUES (
-              $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, NOW(), NOW()
+              $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, NOW(), NOW()
           )
           RETURNING id, email, "firstName", "lastName";
         `;
@@ -179,6 +181,7 @@ async function main(): Promise<void> {
           userData.phone,
           hashPassword,
           userData.bio,
+          userData.tenantId,
           userData.statusId,
         ])
       ).rows;
