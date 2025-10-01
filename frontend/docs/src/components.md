@@ -29,7 +29,7 @@ src/pages/
 ├── dashboard/              # Main dashboard pages
 ├── admin/                  # Admin management pages
 ├── profile/                # User profile pages
-└── tenant/                 # Tanant module
+└── tenant/                 # Tenant module
     ├── components/
     │   ├── CreateTenantDialog.tsx  # Tenant creation dialog with form
     │   └── TenantCard.tsx          # Individual tenant display card

@@ -14,7 +14,7 @@ Pages are organized into logical folders based on their functionality:
 - **`dashboard/`** - Main dashboard pages (Home, Dashboard)  
 - **`admin/`** - Admin management pages (Admin, SuperAdmin)
 - **`profile/`** - User profile pages (Profile)
-- **`tenant/`** - Tanant module with components
+- **`tenant/`** - Tenant module with components
 
 ## 📁 Page Structure
 
@@ -31,7 +31,7 @@ src/pages/
 │   └── SuperAdmin.tsx   # Super admin panel
 ├── profile/             # User profile pages
 │   └── Profile.tsx      # User profile
-└── tenant/              # Tanant module
+└── tenant/              # Tenant module
     ├── Tenants.tsx      # Main tenant list page
     ├── TenantDetail.tsx # Tenant detail and user management page
     └── components/      # Page-specific components
@@ -376,7 +376,7 @@ export default function Admin() {
 **Purpose**: Platform-level administration
 
 ### Features
-- Tanant
+- Tenant
 - Platform settings
 - Global user management
 - System-wide controls

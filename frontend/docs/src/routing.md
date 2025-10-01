@@ -423,7 +423,7 @@ export function AppSidebar() {
 - `/dashboard` - Main dashboard (ALL)
 
 #### Platform Management
-- `/tenant-management` - Tanant (PLATFORM_ADMIN, PLATFORM_SUPER_ADMIN)
+- `/tenant-management` - Tenant (PLATFORM_ADMIN, PLATFORM_SUPER_ADMIN)
 
 #### Multi-Tenant
 - `/workspace/settings` - Workspace settings (PLATFORM_ADMIN, PLATFORM_SUPER_ADMIN)
@@ -496,7 +496,7 @@ Platform Level:
 
 Tenant Level:
 ├─ TENANT_ADMIN          # Full tenant control
-├─ TENANT_MANAGER        # Tanant
+├─ TENANT_MANAGER        # Tenant
 └─ TENANT_USER           # Basic tenant access
 
 Special:

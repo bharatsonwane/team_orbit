@@ -92,7 +92,7 @@ frontend/
 │   │   ├── Profile.tsx        # User profile
 │   │   ├── Admin.tsx          # Admin dashboard
 │   │   ├── SuperAdmin.tsx     # Super admin panel
-│   │   └── Tenants.tsx # Tanant
+│   │   └── Tenants.tsx        # Tanant
 │   │
 │   ├── contexts/               # React Context providers
 │   │   └── AuthContextProvider.tsx # Authentication context

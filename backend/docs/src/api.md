@@ -571,7 +571,7 @@ Rate limiting is not currently implemented but is planned for production deploym
 ### Version 1.0.0 (Current)
 - Initial API implementation
 - User authentication and management
-- Tanant
+- Tenant
 - Lookup data system
 - Chat endpoints (basic implementation)
 

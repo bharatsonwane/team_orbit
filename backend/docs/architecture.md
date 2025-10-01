@@ -91,12 +91,12 @@ backend/src/
 ├── controllers/               # HTTP request handlers
 │   ├── chat.controller.ts     # Chat message endpoints
 │   ├── lookup.controller.ts   # Reference data endpoints
-│   ├── tenant.controller.ts   # Tenant management endpoints
+│   ├── tenant.controller.ts   # Tanant endpoints
 │   └── user.controller.ts     # User management endpoints
 ├── services/                  # Business logic layer
 │   ├── chat.service.ts        # Chat business logic
 │   ├── lookup.service.ts      # Lookup data management
-│   ├── tenant.service.ts      # Tenant management logic
+│   ├── tenant.service.ts      # Tanant logic
 │   └── user.service.ts        # User business logic
 ├── middleware/                # Express middleware stack
 │   ├── authRoleMiddleware.ts  # JWT authentication & authorization
