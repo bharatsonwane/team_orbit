@@ -1,12 +1,12 @@
-import { ThemeToggle } from '../components/theme-toggle';
+import { ThemeToggle } from '@/components/theme-toggle';
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-} from '../components/ui/card';
-import { Button } from '../components/ui/button';
+} from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
 
 export default function SuperAdmin() {
   return (

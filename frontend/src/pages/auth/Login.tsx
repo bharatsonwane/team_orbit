@@ -13,7 +13,7 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { ThemeToggle } from '@/components/theme-toggle';
-import { loginSchema, type LoginFormData } from '../schemas/validation';
+import { loginSchema, type LoginFormData } from '@/schemas/validation';
 import { useAuthService } from '@/contexts/AuthContextProvider';
 
 

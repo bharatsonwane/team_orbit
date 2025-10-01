@@ -23,6 +23,18 @@ src/components/
 ├── ComingSoon.tsx          # Placeholder for unimplemented features
 ├── theme-provider.tsx      # Theme context provider
 └── theme-toggle.tsx        # Theme switcher component
+
+src/pages/
+├── auth/                   # Authentication pages
+├── dashboard/              # Main dashboard pages
+├── admin/                  # Admin management pages
+├── profile/                # User profile pages
+└── tenantManagement/       # Tenant management module
+    ├── components/
+    │   ├── CreateTenantDialog.tsx  # Tenant creation dialog with form
+    │   └── TenantCard.tsx          # Individual tenant display card
+    ├── TenantManagement.tsx        # Main tenant management page
+    └── TenantDetail.tsx            # Tenant detail page
 ```
 
 ---
@@ -1013,6 +1025,128 @@ function CreateUserDialog() {
     </Dialog>
   );
 }
+```
+
+---
+
+## 🏢 Page-Specific Components
+
+### CreateTenantDialog
+
+**Purpose**: Comprehensive dialog for creating new tenant organizations with admin user setup.
+
+**Location**: `src/pages/tenantManagement/components/CreateTenantDialog.tsx`
+
+#### Props
+
+```typescript
+interface CreateTenantDialogProps {
+  onTenantCreated?: (tenant: Tenant) => void;
+  triggerButton?: React.ReactNode;
+}
+```
+
+#### Features
+- Multi-section form (Tenant Info + Admin User)
+- Zod validation schema
+- Loading states and error handling
+- Customizable trigger button
+- Auto-close on success
+- Form reset functionality
+
+#### Usage Example
+
+```typescript
+<CreateTenantDialog 
+  onTenantCreated={(newTenant) => {
+    setTenants(prev => [newTenant, ...prev]);
+  }}
+  triggerButton={<Button>Create New Tenant</Button>}
+/>
+```
+
+#### Form Schema
+
+```typescript
+const createTenantFormSchema = z.object({
+  name: z.string().min(2).max(255),
+  label: z.string().min(2).max(255),
+  description: z.string().optional(),
+  adminUser: z.object({
+    email: z.string().email(),
+    firstName: z.string().min(1).max(100),
+    lastName: z.string().min(1).max(100),
+    phone: z.string().optional(),
+    password: z.string().min(6),
+  }),
+});
+```
+
+### TenantCard
+
+**Purpose**: Individual tenant display card with actions and status information.
+
+**Location**: `src/pages/tenantManagement/components/TenantCard.tsx`
+
+#### Props
+
+```typescript
+interface TenantCardProps {
+  tenant: Tenant;
+  onEdit?: (tenant: Tenant) => void;
+}
+```
+
+#### Features
+- Tenant information display
+- Archive status badge
+- User count and creation date
+- View button (navigates to TenantDetail page)
+- Edit action button with callback
+- Responsive design
+- Icon integration
+- Built-in navigation using React Router
+
+#### Usage Example
+
+```typescript
+<TenantCard
+  tenant={tenant}
+  onEdit={(tenant) => openEditModal(tenant)}
+/>
+```
+
+#### Navigation Behavior
+- **View Button**: Automatically navigates to `/tenant-management/{tenant.id}`
+- **Edit Button**: Calls the `onEdit` callback if provided
+- **Direct Navigation**: Uses `useNavigate()` hook for seamless routing
+
+#### Tenant Type
+
+```typescript
+interface Tenant {
+  id: number;
+  name: string;
+  label: string;
+  description: string;
+  isArchived: boolean;
+  createdAt: string;
+  updatedAt: string;
+  userCount: number;
+}
+```
+
+#### Card Structure
+
+```typescript
+<Card>
+  <CardHeader>
+    {/* Tenant name, archive badge */}
+  </CardHeader>
+  <CardContent>
+    {/* Description, stats, action buttons */}
+  </CardContent>
+</Card>
 ```
 
 ---

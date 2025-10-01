@@ -1,13 +1,13 @@
 import { useAuthService } from '@/contexts/AuthContextProvider';
-import { ThemeToggle } from '../components/theme-toggle';
+import { ThemeToggle } from '@/components/theme-toggle';
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-} from '../components/ui/card';
-import { Button } from '../components/ui/button';
+} from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
 
 export default function Profile() {
   const { loggedInUser, logout } = useAuthService();
@@ -55,7 +55,7 @@ export default function Profile() {
                       Role
                     </label>
                     <p className='text-lg capitalize'>
-                      {loggedInUser.role.toLowerCase()}
+                      {loggedInUser.roles[0].name.toLowerCase()}
                     </p>
                   </div>
 

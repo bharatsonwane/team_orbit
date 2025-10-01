@@ -6,24 +6,44 @@ Complete documentation for all page components in the TeamOrbit frontend.
 
 Pages are route-level components that serve as entry points for different sections of the application. Each page component corresponds to a specific route in the application.
 
+## 📂 Folder Organization
+
+Pages are organized into logical folders based on their functionality:
+
+- **`auth/`** - Authentication related pages (Login, Signup)
+- **`dashboard/`** - Main dashboard pages (Home, Dashboard)  
+- **`admin/`** - Admin management pages (Admin, SuperAdmin)
+- **`profile/`** - User profile pages (Profile)
+- **`tenantManagement/`** - Tenant management module with components
+
 ## 📁 Page Structure
 
 ```
 src/pages/
-├── Home.tsx              # Landing page
-├── Login.tsx            # User login
-├── Signup.tsx           # User registration
-├── Dashboard.tsx        # Main dashboard
-├── Profile.tsx          # User profile
-├── Admin.tsx            # Admin dashboard
-├── SuperAdmin.tsx       # Super admin panel
-└── TenantManagement.tsx # Tenant management
+├── auth/                 # Authentication pages
+│   ├── Login.tsx        # User login
+│   └── Signup.tsx       # User registration
+├── dashboard/           # Main dashboard pages
+│   ├── Home.tsx         # Landing page
+│   └── Dashboard.tsx    # Main dashboard
+├── admin/               # Admin management pages
+│   ├── Admin.tsx        # Admin dashboard
+│   └── SuperAdmin.tsx   # Super admin panel
+├── profile/             # User profile pages
+│   └── Profile.tsx      # User profile
+└── tenantManagement/    # Tenant management module
+    ├── TenantManagement.tsx # Main tenant management page
+    ├── TenantDetail.tsx # Tenant detail and user management page
+    └── components/      # Page-specific components
+        ├── CreateTenantDialog.tsx # Tenant creation dialog
+        └── TenantCard.tsx # Individual tenant card display
 ```
 
 ---
 
 ## 🏠 Home.tsx
 
+**Location**: `src/pages/dashboard/Home.tsx`  
 **Route**: `/`  
 **Access**: Public  
 **Purpose**: Application landing page
@@ -60,6 +80,7 @@ export default function Home() {
 
 ## 🔐 Login.tsx
 
+**Location**: `src/pages/auth/Login.tsx`  
 **Route**: `/login`  
 **Access**: Public (redirects to dashboard if authenticated)  
 **Purpose**: User authentication
@@ -122,6 +143,7 @@ const loginSchema = z.object({
 
 ## 📝 Signup.tsx
 
+**Location**: `src/pages/auth/Signup.tsx`  
 **Route**: `/signup`  
 **Access**: Public (redirects to dashboard if authenticated)  
 **Purpose**: New user registration
@@ -199,6 +221,7 @@ const signupSchema = z.object({
 
 ## 📊 Dashboard.tsx
 
+**Location**: `src/pages/dashboard/Dashboard.tsx`  
 **Route**: `/dashboard`  
 **Access**: Protected (requires authentication)  
 **Purpose**: Main application dashboard
@@ -252,6 +275,7 @@ export default function Dashboard() {
 
 ## 👤 Profile.tsx
 
+**Location**: `src/pages/profile/Profile.tsx`  
 **Route**: `/profile`  
 **Access**: Protected  
 **Purpose**: User profile management
@@ -292,6 +316,7 @@ export default function Profile() {
 
 ## 👨‍💼 Admin.tsx
 
+**Location**: `src/pages/admin/Admin.tsx`  
 **Route**: `/admin`  
 **Access**: Protected (Admin roles only)  
 **Purpose**: Admin dashboard and controls
@@ -345,6 +370,7 @@ export default function Admin() {
 
 ## 👑 SuperAdmin.tsx
 
+**Location**: `src/pages/admin/SuperAdmin.tsx`  
 **Route**: `/superadmin`  
 **Access**: Protected (Super Admin only)  
 **Purpose**: Platform-level administration
@@ -364,51 +390,182 @@ allowedRoles: [userRoleKeys.PLATFORM_SUPER_ADMIN]
 
 ## 🏢 TenantManagement.tsx
 
+**Location**: `src/pages/tenantManagement/TenantManagement.tsx`  
 **Route**: `/tenant-management`  
 **Access**: Protected (Admin roles)  
 **Purpose**: Manage tenant organizations
 
 ### Features
-- Create new tenants
-- List all tenants
-- Edit tenant details
+- Create new tenants with comprehensive form
+- List all tenants in responsive grid
+- View tenant details
+- Edit tenant information
 - Tenant user management
-- Tenant status management
+- Tenant status management (archived/active)
+- Modular component architecture
 
-### Implementation
+### Component Structure
 ```typescript
+// Main page component
 export default function TenantManagement() {
-  const [tenants, setTenants] = useState<Tenant[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [tenants, setTenants] = useState<Tenant[]>(mockTenants);
 
-  useEffect(() => {
-    fetchTenants();
-  }, []);
+  const handleTenantCreated = (newTenant: Tenant) => {
+    setTenants(prev => [newTenant, ...prev]);
+  };
 
-  const fetchTenants = async () => {
-    const response = await getAxios().get('/api/tenant/list');
-    setTenants(response.data.data);
-    setLoading(false);
+  const handleViewTenant = (tenant: Tenant) => {
+    // TODO: Navigate to tenant details
+  };
+
+  const handleEditTenant = (tenant: Tenant) => {
+    // TODO: Open edit modal
   };
 
   return (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <h1 className="text-3xl font-bold">Tenant Management</h1>
-        <Button onClick={() => setShowCreateDialog(true)}>
-          Create Tenant
-        </Button>
-      </div>
+    <>
+      <HeaderLayout
+        breadcrumbs={[
+          { label: 'Dashboard', href: '/dashboard' },
+          { label: 'Tenant Management' },
+        ]}
+      />
+      <div className="space-y-6">
+        <div className="flex justify-between items-center">
+          <div>
+            <h1 className="text-3xl font-bold">Tenant Management</h1>
+            <p className="text-muted-foreground">
+              Manage organizations and their administrative users
+            </p>
+          </div>
+          <CreateTenantDialog onTenantCreated={handleTenantCreated} />
+        </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {tenants.map(tenant => (
-          <TenantCard key={tenant.id} tenant={tenant} />
-        ))}
+        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+          {tenants.map(tenant => (
+            <TenantCard
+              key={tenant.id}
+              tenant={tenant}
+              onView={handleViewTenant}
+              onEdit={handleEditTenant}
+            />
+          ))}
+        </div>
       </div>
-    </div>
+    </>
   );
 }
 ```
+
+### Sub-Components
+
+#### CreateTenantDialog
+- Comprehensive tenant creation form
+- Admin user account setup
+- Form validation with Zod
+- Loading states and error handling
+- Customizable trigger button
+
+#### TenantCard
+- Displays tenant information
+- Archive status badge
+- User count and creation date
+- View and Edit action buttons
+- Responsive design
+
+---
+
+## 🏢 TenantDetail.tsx
+
+**Location**: `src/pages/tenantManagement/TenantDetail.tsx`  
+**Route**: `/tenant-management/:id`  
+**Access**: Protected (Admin roles)  
+**Purpose**: View tenant details and manage tenant users
+
+### Features
+- Comprehensive tenant information display
+- Tenant users table with management actions
+- Navigation breadcrumbs
+- Edit tenant functionality (placeholder)
+- Add/Edit user functionality (placeholder)
+- Loading and error states
+- Responsive design
+
+### Implementation
+```typescript
+export default function TenantDetail() {
+  const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
+  const [tenant, setTenant] = useState<Tenant | null>(null);
+  const [users, setUsers] = useState(mockTenantUsers);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchTenantData = async () => {
+      // TODO: Replace with actual API call
+      setTenant(mockTenantData);
+      setUsers(mockTenantUsers);
+      setLoading(false);
+    };
+    fetchTenantData();
+  }, [id]);
+
+  return (
+    <>
+      <HeaderLayout
+        breadcrumbs={[
+          { label: 'Dashboard', href: '/dashboard' },
+          { label: 'Tenant Management', href: '/tenant-management' },
+          { label: tenant?.label || 'Loading...' },
+        ]}
+      />
+      {/* Tenant details and users table */}
+    </>
+  );
+}
+```
+
+### Tenant Information Section
+- Organization name and tenant ID
+- Creation and update dates
+- Description
+- Archive status badge
+- Edit tenant button
+
+### Users Table Section
+- User list with comprehensive information
+- User roles and status badges
+- Contact information (email, phone)
+- Creation dates
+- Edit user actions
+- Add user functionality
+
+### Navigation Features
+- Back button to tenant list
+- Breadcrumb navigation
+- Direct navigation from TenantCard
+- Route parameter handling (`:id`)
+
+### Data Structure
+```typescript
+interface TenantUser {
+  id: number;
+  firstName: string;
+  lastName: string;
+  email: string;
+  phone: string;
+  title: string;
+  role: string;
+  isActive: boolean;
+  createdAt: string;
+}
+```
+
+### State Management
+- Loading states for data fetching
+- Error handling for missing tenants
+- Local state for tenant and user data
+- Navigation state management
 
 ---
 

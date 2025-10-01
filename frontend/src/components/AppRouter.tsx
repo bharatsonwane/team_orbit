@@ -25,14 +25,15 @@ import {
 } from 'lucide-react';
 
 // Import pages
-import HomeScreen from '../pages/Home';
-import Login from '../pages/Login';
-import Signup from '../pages/Signup';
-import Dashboard from '../pages/Dashboard';
-import Profile from '../pages/Profile';
-import Admin from '../pages/Admin';
-import SuperAdmin from '../pages/SuperAdmin';
-import TenantManagement from '../pages/TenantManagement';
+import HomeScreen from '../pages/dashboard/Home';
+import Login from '../pages/auth/Login';
+import Signup from '../pages/auth/Signup';
+import Dashboard from '../pages/dashboard/Dashboard';
+import Profile from '../pages/profile/Profile';
+import Admin from '../pages/admin/Admin';
+import SuperAdmin from '../pages/admin/SuperAdmin';
+import TenantManagement from '../pages/tenantManagement/TenantManagement';
+import TenantDetail from '../pages/tenantManagement/TenantDetail';
 import { ComingSoon } from './ComingSoon';
 import { AppLayout } from '@/components/AppLayout';
 import type { BreadcrumbLayoutProps } from '@/components/AppLayout';
@@ -665,6 +666,16 @@ export const otherProtectedRouteList: AuthRoute[] = [
     allowedRoles: [userRoleKeys.PLATFORM_SUPER_ADMIN],
     title: 'Super Admin',
     description: 'Super admin dashboard',
+  },
+  {
+    path: '/tenant-management/:id',
+    element: <TenantDetail />,
+    allowedRoles: [
+      userRoleKeys.PLATFORM_ADMIN,
+      userRoleKeys.PLATFORM_SUPER_ADMIN,
+    ],
+    title: 'Tenant Detail',
+    description: 'View tenant details and manage users',
   },
 ];
 

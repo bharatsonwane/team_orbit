@@ -15,7 +15,7 @@ import {
 } from '@/components/ui/card';
 import { ThemeToggle } from '@/components/theme-toggle';
 import { useAuthService } from '@/contexts/AuthContextProvider';
-import { signupSchema, type SignupFormData } from '../schemas/validation';
+import { signupSchema, type SignupFormData } from '@/schemas/validation';
 
 export default function Signup() {
   const {

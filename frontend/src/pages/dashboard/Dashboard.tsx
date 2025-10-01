@@ -8,8 +8,8 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 
-import { useAuthService } from '../contexts/AuthContextProvider';
-import { hasRoleAccess } from '../utils/authHelper';
+import { useAuthService } from '@/contexts/AuthContextProvider';
+import { hasRoleAccess } from '@/utils/authHelper';
 import { userRoleKeys, type UserRoleName } from '@/utils/constants';
 
 
