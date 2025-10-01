@@ -1,4 +1,5 @@
 import { type ReactNode } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   SidebarProvider,
   SidebarInset,
@@ -22,23 +23,43 @@ export interface BreadcrumbLayoutProps {
   href?: string;
 }
 
+export interface HeaderLayoutProps {
+  breadcrumbs: BreadcrumbLayoutProps[];
+  showBackButton?: boolean;
+  handleNavigate?: () => void;
+}
+
 export function HeaderLayout({
   breadcrumbs,
-}: {
-  breadcrumbs: BreadcrumbLayoutProps[];
-}) {
+  showBackButton = true,
+  handleNavigate,
+}: HeaderLayoutProps) {
+  const navigate = useNavigate();
+
   // Only render header if there are breadcrumbs
   if (!breadcrumbs || breadcrumbs.length === 0) {
     return null;
   }
 
+  const handleBackClick = () => {
+    if (handleNavigate) {
+      handleNavigate();
+    } else {
+      navigate(-1); // Go back to previous page in browser history
+    }
+  };
+
   return (
     <header className='flex min-h-10 shrink-0 items-center gap-2 border-b px-4 pl-12 py-2'>
       <Separator orientation='vertical' className='h-4' />
-      <Button variant='outline' size='sm'>
-        <ArrowLeft className='h-4 w-4 m-1' />
-      </Button>
-      <Separator orientation='vertical' className='mr-2 h-4' />
+      {showBackButton && (
+        <>
+          <Button variant='outline' size='sm' onClick={handleBackClick}>
+            <ArrowLeft className='h-4 w-4 m-1' />
+          </Button>
+          <Separator orientation='vertical' className='mr-2 h-4' />
+        </>
+      )}
       <Breadcrumb>
         <BreadcrumbList>
           {breadcrumbs.map((breadcrumb, index) => (
