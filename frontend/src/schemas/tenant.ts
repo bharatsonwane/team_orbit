@@ -5,6 +5,7 @@ export const tenantSchema = z.object({
   id: z.number(),
   name: z.string(),
   label: z.string(),
+  description: z.string().optional(),
   statusId: z.number(),
   isArchived: z.boolean(),
   createdAt: z.string(),
@@ -58,3 +59,33 @@ export type CreateTenantRequest = z.infer<typeof createTenantRequestSchema>;
 export const createTenantResponseSchema = tenantSchema;
 
 export type CreateTenantResponse = z.infer<typeof createTenantResponseSchema>;
+
+// Tenant User Role schema
+export const tenantUserRoleSchema = z.object({
+  id: z.number(),
+  name: z.string(),
+  label: z.string(),
+  lookupTypeId: z.number(),
+});
+
+export type TenantUserRole = z.infer<typeof tenantUserRoleSchema>;
+
+// Tenant User schema
+export const tenantUserSchema = z.object({
+  id: z.number(),
+  email: z.string(),
+  firstName: z.string(),
+  lastName: z.string(),
+  phone: z.string(),
+  tenantId: z.number(),
+  createdAt: z.string(),
+  updatedAt: z.string(),
+  userRoles: z.array(tenantUserRoleSchema),
+});
+
+export type TenantUser = z.infer<typeof tenantUserSchema>;
+
+// Tenant Users response schema - direct array response
+export const tenantUsersResponseSchema = z.array(tenantUserSchema);
+
+export type TenantUsersResponse = z.infer<typeof tenantUsersResponseSchema>;

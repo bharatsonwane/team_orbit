@@ -1,11 +1,12 @@
 import { createSlice } from '@reduxjs/toolkit';
-import type { Tenant } from '../../schemas/tenant';
-import { getTenantsAction, getTenantAction } from '../actions/tenantActions';
+import type { Tenant, TenantUser } from '../../schemas/tenant';
+import { getTenantsAction, getTenantAction, getTenantUsersAction } from '../actions/tenantActions';
 
 // Tenant state interface
 interface TenantState {
   tenants: Tenant[];
   currentTenant: Tenant | null;
+  tenantUsers: TenantUser[];
   isLoading: boolean;
   error: string | null;
 }
@@ -14,6 +15,7 @@ interface TenantState {
 const initialState: TenantState = {
   tenants: [],
   currentTenant: null,
+  tenantUsers: [],
   isLoading: false,
   error: null,
 };
@@ -28,6 +30,7 @@ const tenantSlice = createSlice({
     },
     clearCurrentTenant: state => {
       state.currentTenant = null;
+      state.tenantUsers = [];
     },
     addTenant: (state, action) => {
       state.tenants.unshift(action.payload);
@@ -68,6 +71,20 @@ const tenantSlice = createSlice({
       .addCase(getTenantAction.rejected, (state, action) => {
         state.isLoading = false;
         state.error = action.payload as string;
+      })
+      // Get tenant users actions
+      .addCase(getTenantUsersAction.pending, state => {
+        state.isLoading = true;
+        state.error = null;
+      })
+      .addCase(getTenantUsersAction.fulfilled, (state, action) => {
+        state.isLoading = false;
+        state.tenantUsers = action.payload || [];
+        state.error = null;
+      })
+      .addCase(getTenantUsersAction.rejected, (state, action) => {
+        state.isLoading = false;
+        state.error = action.payload as string;
       });
   },
 });
@@ -81,5 +98,6 @@ export default tenantSlice;
 // Selectors
 export const selectTenants = (state: { tenant: TenantState }) => state.tenant.tenants;
 export const selectCurrentTenant = (state: { tenant: TenantState }) => state.tenant.currentTenant;
+export const selectTenantUsers = (state: { tenant: TenantState }) => state.tenant.tenantUsers;
 export const selectTenantLoading = (state: { tenant: TenantState }) => state.tenant.isLoading;
 export const selectTenantError = (state: { tenant: TenantState }) => state.tenant.error;

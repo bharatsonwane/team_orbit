@@ -1,5 +1,6 @@
-import { useState, useEffect } from 'react';
+import { useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { useDispatch, useSelector } from 'react-redux';
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -31,83 +32,27 @@ import {
   User,
 } from 'lucide-react';
 import { HeaderLayout } from '@/components/AppLayout';
-import { type Tenant } from './components/CreateTenantDialog';
-
-// Mock tenant user data - replace with actual API calls
-const mockTenantUsers = [
-  {
-    id: 1,
-    firstName: 'John',
-    lastName: 'Doe',
-    email: 'john.doe@acme-corp.com',
-    phone: '+1234567890',
-    title: 'Mr',
-    role: 'Admin',
-    isActive: true,
-    createdAt: '2024-01-15T10:00:00Z',
-  },
-  {
-    id: 2,
-    firstName: 'Jane',
-    lastName: 'Smith',
-    email: 'jane.smith@acme-corp.com',
-    phone: '+1234567891',
-    title: 'Ms',
-    role: 'User',
-    isActive: true,
-    createdAt: '2024-01-20T14:30:00Z',
-  },
-  {
-    id: 3,
-    firstName: 'Mike',
-    lastName: 'Johnson',
-    email: 'mike.johnson@acme-corp.com',
-    phone: '+1234567892',
-    title: 'Dr',
-    role: 'Manager',
-    isActive: false,
-    createdAt: '2024-02-01T09:15:00Z',
-  },
-];
-
-// Mock tenant data - replace with actual API call
-const mockTenantData: Tenant = {
-  id: 1,
-  name: 'acme-corp',
-  label: 'ACME Corporation',
-  description: 'Leading technology company specializing in innovative solutions',
-  isArchived: false,
-  createdAt: '2024-01-15T10:00:00Z',
-  updatedAt: '2024-01-15T10:00:00Z',
-  userCount: 3,
-};
+import { getTenantAction, getTenantUsersAction } from '@/redux/actions/tenantActions';
+import { selectCurrentTenant, selectTenantUsers, selectTenantLoading, selectTenantError } from '@/redux/slices/tenantSlice';
+import type { AppDispatch } from '@/redux/store';
 
 export default function TenantDetail() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const [tenant, setTenant] = useState<Tenant | null>(null);
-  const [users, setUsers] = useState(mockTenantUsers);
-  const [loading, setLoading] = useState(true);
+  const dispatch = useDispatch<AppDispatch>();
+  const tenant = useSelector(selectCurrentTenant);
+  const users = useSelector(selectTenantUsers);
+  const isLoading = useSelector(selectTenantLoading);
+  const error = useSelector(selectTenantError);
 
   useEffect(() => {
-    // TODO: Replace with actual API call
-    const fetchTenantData = async () => {
-      try {
-        // Simulate API call
-        await new Promise(resolve => setTimeout(resolve, 500));
-        
-        // Mock data - in real app, fetch by ID from params
-        setTenant(mockTenantData);
-        setUsers(mockTenantUsers);
-      } catch (error) {
-        console.error('Error fetching tenant data:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchTenantData();
-  }, [id]);
+    if (id) {
+      const tenantId = parseInt(id);
+      // Fetch tenant details and users
+      dispatch(getTenantAction(tenantId));
+      dispatch(getTenantUsersAction(tenantId));
+    }
+  }, [dispatch, id]);
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('en-US', {
@@ -134,7 +79,7 @@ export default function TenantDetail() {
     console.log('Edit user:', userId);
   };
 
-  if (loading) {
+  if (isLoading) {
     return (
       <>
         <HeaderLayout
@@ -148,6 +93,32 @@ export default function TenantDetail() {
           <div className='text-center'>
             <div className='animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4'></div>
             <p className='text-muted-foreground'>Loading tenant details...</p>
+          </div>
+        </div>
+      </>
+    );
+  }
+
+  // Show error state
+  if (error) {
+    return (
+      <>
+        <HeaderLayout
+          breadcrumbs={[
+            { label: 'Dashboard', href: '/dashboard' },
+            { label: 'Tenants', href: '/tenant-list' },
+            { label: 'Error' },
+          ]}
+        />
+        <div className='flex items-center justify-center py-12'>
+          <div className='text-center'>
+            <Building2 className='h-12 w-12 text-muted-foreground mx-auto mb-4' />
+            <h2 className='text-2xl font-semibold mb-2'>Error Loading Tenant</h2>
+            <p className='text-muted-foreground mb-4'>{error}</p>
+            <Button onClick={() => navigate('/tenant-list')}>
+              <ArrowLeft className='h-4 w-4 mr-2' />
+              Back to Tenants
+            </Button>
           </div>
         </div>
       </>
@@ -307,7 +278,7 @@ export default function TenantDetail() {
                         <User className='h-4 w-4 text-muted-foreground' />
                         <div>
                           <p className='font-medium'>
-                            {user.title} {user.firstName} {user.lastName}
+                            {user.firstName} {user.lastName}
                           </p>
                         </div>
                       </div>
@@ -325,13 +296,17 @@ export default function TenantDetail() {
                       </div>
                     </TableCell>
                     <TableCell>
-                      <Badge variant={user.role === 'Admin' ? 'default' : 'secondary'}>
-                        {user.role}
-                      </Badge>
+                      <div className='flex flex-wrap gap-1'>
+                        {user.userRoles.map(role => (
+                          <Badge key={role.id} variant={role.name === 'TENANT_ADMIN' ? 'default' : 'secondary'}>
+                            {role.label}
+                          </Badge>
+                        ))}
+                      </div>
                     </TableCell>
                     <TableCell>
-                      <Badge variant={user.isActive ? 'default' : 'secondary'}>
-                        {user.isActive ? 'Active' : 'Inactive'}
+                      <Badge variant='default'>
+                        Active
                       </Badge>
                     </TableCell>
                     <TableCell>
