@@ -1,6 +1,6 @@
 import { createSlice } from '@reduxjs/toolkit';
 import type { Tenant, TenantUser } from '../../schemas/tenant';
-import { getTenantsAction, getTenantAction, getTenantUsersAction } from '../actions/tenantActions';
+import { getTenantsAction, getTenantAction, getTenantUsersAction, updateTenantAction } from '../actions/tenantActions';
 
 // Tenant state interface
 interface TenantState {
@@ -83,6 +83,25 @@ const tenantSlice = createSlice({
         state.error = null;
       })
       .addCase(getTenantUsersAction.rejected, (state, action) => {
+        state.isLoading = false;
+        state.error = action.payload as string;
+      })
+      // Update tenant actions
+      .addCase(updateTenantAction.pending, state => {
+        state.isLoading = true;
+        state.error = null;
+      })
+      .addCase(updateTenantAction.fulfilled, (state, action) => {
+        state.isLoading = false;
+        state.currentTenant = action.payload;
+        // Update tenant in the list as well
+        const index = state.tenants.findIndex(tenant => tenant.id === action.payload.id);
+        if (index !== -1) {
+          state.tenants[index] = action.payload;
+        }
+        state.error = null;
+      })
+      .addCase(updateTenantAction.rejected, (state, action) => {
         state.isLoading = false;
         state.error = action.payload as string;
       });

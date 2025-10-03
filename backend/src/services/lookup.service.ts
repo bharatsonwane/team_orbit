@@ -131,4 +131,48 @@ export default class Lookup {
     }
     return response[0];
   }
+
+  static async getLookupTypeByName(
+    dbClient: dbClientPool,
+    lookupTypeName: string
+  ): Promise<LookupTypeWithLookupsSchema> {
+    const queryString = `
+      SELECT 
+        lt.id,
+        lt.name,
+        lt.label,
+        lt."isSystem",
+        lt."createdAt",
+        COALESCE(
+          JSON_AGG(
+            JSON_BUILD_OBJECT(
+              'id', l.id,
+              'name', l.name,
+              'label', l.label,
+              'description', l.description,
+              'isSystem', l."isSystem",
+              'sortOrder', l."sortOrder",
+              'createdBy', l."createdBy",
+              'lookupTypeId', l."lookupTypeId"
+            )
+            ORDER BY l."sortOrder", l.label
+          ) FILTER (WHERE l.id IS NOT NULL),
+          '[]'::json
+        ) AS lookups
+      FROM lookup_type lt
+      LEFT JOIN lookup l ON lt.id = l."lookupTypeId" AND l."isArchived" = FALSE
+      WHERE lt.name = '${lookupTypeName}' AND lt."archivedAt" IS NULL
+      GROUP BY lt.id, lt.name;
+    `;
+
+    // Execute the queryString
+    const results = await dbClient.mainPool.query(queryString);
+    const response = results.rows;
+
+    if (response.length === 0) {
+      throw new HttpError(`Lookup Type '${lookupTypeName}' not found`, 404);
+    }
+
+    return response[0];
+  }
 }

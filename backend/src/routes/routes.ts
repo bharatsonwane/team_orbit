@@ -7,9 +7,10 @@ import ChatRoutes from './chat.routes';
 const routes = express.Router();
 
 routes.use('/lookup', lookupRoutes.router);
-routes.use('/tenant', tenantRoutes.router);
-routes.use('/user', userRoutes.router);
 
-routes.use('/chat', ChatRoutes.router);
+// routes.use('/tenant', tenantRoutes.router);
+// routes.use('/user', userRoutes.router);
+
+// routes.use('/chat', ChatRoutes.router);
 
 export default routes;

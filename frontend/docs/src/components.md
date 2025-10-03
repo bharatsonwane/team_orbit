@@ -32,6 +32,7 @@ src/pages/
 └── tenant/                 # Tenant module
     ├── components/
     │   ├── CreateTenantDialog.tsx  # Tenant creation dialog with form
+    │   ├── EditTenantDialog.tsx    # Tenant edit dialog with form
     │   └── TenantCard.tsx          # Individual tenant display card
     ├── Tenants.tsx                 # Main tenant list page
     └── TenantDetail.tsx            # Tenant detail page
@@ -1153,6 +1154,64 @@ const createTenantFormSchema = z.object({
   }),
 });
 ```
+
+### EditTenantDialog
+
+**Purpose**: Modal dialog for editing existing tenant information with form validation and save/cancel actions.
+
+**Location**: `src/pages/tenant/components/EditTenantDialog.tsx`
+
+#### Props
+
+```typescript
+interface EditTenantDialogProps {
+  tenant: Tenant | null;
+  isOpen: boolean;
+  onClose: () => void;
+  onSave: (data: EditTenantFormData) => Promise<void>;
+}
+```
+
+#### Features
+- Pre-populated form fields with existing tenant data
+- Zod validation schema for form validation
+- Loading states during save operation
+- Archive status toggle (Switch component)
+- Save and Cancel buttons with proper states
+- Auto-close on successful save
+- Form reset functionality
+
+#### Usage Example
+
+```typescript
+<EditTenantDialog
+  tenant={selectedTenant}
+  isOpen={isEditModalOpen}
+  onClose={() => setIsEditModalOpen(false)}
+  onSave={async (data) => {
+    await dispatch(updateTenantAction({
+      tenantId: tenant.id,
+      updateData: data
+    })).unwrap();
+  }}
+/>
+```
+
+#### Form Schema
+
+```typescript
+const editTenantFormSchema = z.object({
+  label: z.string().min(2).max(255),
+  description: z.string().optional(),
+  isArchived: z.boolean(),
+});
+```
+
+#### Form Fields
+- **Tenant Name**: Read-only display field (cannot be changed)
+- **Display Label**: Required text input with validation  
+- **Description**: Optional textarea for additional details
+- **Archive Status**: Switch toggle for archiving/unarchiving
 
 ### TenantCard
 

@@ -81,6 +81,36 @@ http://localhost:5100/docs
 ### Lookup Data
 - **GET** `/api/lookup/list` - Get all lookup data (public)
 - **GET** `/api/lookup/type/:id` - Get lookup type by ID (public)
+- **GET** `/api/lookup/type-by-name/:name` - Get lookup type by name (public)
+
+#### Lookup Endpoints Details
+
+**GET** `/api/lookup/type-by-name/:name`
+*Retrieve a lookup type and all its associated lookups by the lookup type name.* <br>
+**Parameters:**
+- `name` (path) - The name of the lookup type (e.g., "USER_ROLE", "STATUS") <br>
+**Sample Response:**
+```json
+{
+  "id": 1,
+  "name": "USER_ROLE",
+  "label": "User Roles",
+  "isSystem": true,
+  "createdAt": "2025-01-01T00:00:00.000Z",
+  "lookups": [
+    {
+      "id": 1,
+      "name": "PLATFORM_ADMIN",
+      "label": "Platform Administrator",
+      "description": "Full platform access",
+      "isSystem": true,
+      "sortOrder": 1,
+      "createdBy": 1,
+      "lookupTypeId": 1
+    }
+  ]
+}
+```
 
 ### Chat
 - **GET** `/api/chat/chat/:senderId/:receiverId` - Get messages
@@ -155,6 +185,15 @@ curl http://localhost:5100/api/user/profile \
 
 # Get lookup data
 curl http://localhost:5100/api/lookup/list
+
+# Get lookup type by name
+curl http://localhost:5100/api/lookup/type-by-name/USER_ROLE
+
+# Get status lookup type
+curl http://localhost:5100/api/lookup/type-by-name/STATUS
+
+# Get department lookup type
+curl http://localhost:5100/api/lookup/type-by-name/DEPARTMENT
 ```
 
 ### Using Postman

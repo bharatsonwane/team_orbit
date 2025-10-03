@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { Button } from '@/components/ui/button';
@@ -32,9 +32,10 @@ import {
   User,
 } from 'lucide-react';
 import { HeaderLayout } from '@/components/AppLayout';
-import { getTenantAction, getTenantUsersAction } from '@/redux/actions/tenantActions';
+import { getTenantAction, getTenantUsersAction, updateTenantAction } from '@/redux/actions/tenantActions';
 import { selectCurrentTenant, selectTenantUsers, selectTenantLoading, selectTenantError } from '@/redux/slices/tenantSlice';
 import type { AppDispatch } from '@/redux/store';
+import { EditTenantDialog, type EditTenantFormData } from './components/EditTenantDialog';
 
 export default function TenantDetail() {
   const { id } = useParams<{ id: string }>();
@@ -44,6 +45,9 @@ export default function TenantDetail() {
   const users = useSelector(selectTenantUsers);
   const isLoading = useSelector(selectTenantLoading);
   const error = useSelector(selectTenantError);
+  
+  // Edit modal state
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
 
   useEffect(() => {
     if (id) {
@@ -65,8 +69,20 @@ export default function TenantDetail() {
   };
 
   const handleEditTenant = () => {
-    // TODO: Navigate to edit page or open edit modal
-    console.log('Edit tenant:', tenant);
+    setIsEditModalOpen(true);
+  };
+
+  const handleSaveTenant = async (data: EditTenantFormData) => {
+    if (!tenant) return;
+    
+    await dispatch(updateTenantAction({
+      tenantId: tenant.id,
+      updateData: {
+        label: data.label,
+        description: data.description,
+        isArchived: data.isArchived,
+      }
+    })).unwrap();
   };
 
   const handleAddUser = () => {
@@ -334,6 +350,14 @@ export default function TenantDetail() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Edit Tenant Modal */}
+      <EditTenantDialog
+        tenant={tenant}
+        isOpen={isEditModalOpen}
+        onClose={() => setIsEditModalOpen(false)}
+        onSave={handleSaveTenant}
+      />
     </>
   );
 }

@@ -1,13 +1,18 @@
 import { createAsyncThunk } from '@reduxjs/toolkit';
 import getAxios, { getAppErrorMessage } from '../../utils/axiosApi';
-import type { Tenant, TenantListResponse, TenantUsersResponse } from '@/schemas/tenant';
+import type {
+  Tenant,
+  TenantListResponse,
+  TenantUsersResponse,
+} from '@/schemas/tenant';
 
 /** Get tenant list action - API call only */
 export const getTenantsAction = createAsyncThunk(
   'tenant/getTenantsAction',
   async (_, { rejectWithValue }) => {
     try {
-      const response = await getAxios().get<TenantListResponse>('/api/tenant/list');
+      const response =
+        await getAxios().get<TenantListResponse>('/api/tenant/list');
       return response.data; // Direct array response
     } catch (error: unknown) {
       return rejectWithValue(getAppErrorMessage(error));
@@ -33,8 +38,29 @@ export const getTenantUsersAction = createAsyncThunk(
   'tenant/getTenantUsersAction',
   async (tenantId: number, { rejectWithValue }) => {
     try {
-      const response = await getAxios().get<TenantUsersResponse>(`/api/tenant/${tenantId}/users`);
+      const response = await getAxios().get<TenantUsersResponse>(
+        `/api/tenant/${tenantId}/users`
+      );
       return response.data; // Direct array response
+    } catch (error: unknown) {
+      return rejectWithValue(getAppErrorMessage(error));
+    }
+  }
+);
+
+/** Update tenant action - API call only */
+export const updateTenantAction = createAsyncThunk(
+  'tenant/updateTenantAction',
+  async (
+    { tenantId, updateData }: { tenantId: number; updateData: Partial<Tenant> },
+    { rejectWithValue }
+  ) => {
+    try {
+      const response = await getAxios().put<Tenant>(
+        `/api/tenant/${tenantId}`,
+        updateData
+      );
+      return response.data;
     } catch (error: unknown) {
       return rejectWithValue(getAppErrorMessage(error));
     }

@@ -35,6 +35,7 @@ export const createTenantSchema = baseTenantSchema.extend({
 
 export const updateTenantSchema = z.object({
   label: z.string().min(2).max(255).optional(),
+  description: z.string().optional(),
   isArchived: z.boolean().optional(),
 });
 

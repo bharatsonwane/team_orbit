@@ -173,7 +173,7 @@ export default class Tenant {
       updateData,
     }: { tenantId: number; updateData: UpdateTenantSchema }
   ): Promise<TenantWithTrackingSchema> {
-    const acceptedKeys = ['label', 'isArchived'];
+    const acceptedKeys = ['label', 'description', 'isArchived'];
 
     const updateFields = buildUpdateFields(acceptedKeys, updateData);
 

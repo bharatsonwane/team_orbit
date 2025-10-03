@@ -27,3 +27,17 @@ export const getLookupTypeById = async (
     next(error);
   }
 };
+
+export const getLookupTypeByName = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  try {
+    const { name } = req.params;
+    const data = await Lookup.getLookupTypeByName(req.db, name);
+    res.status(200).send(data);
+  } catch (error) {
+    next(error);
+  }
+};

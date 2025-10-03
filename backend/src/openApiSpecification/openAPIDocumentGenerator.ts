@@ -96,11 +96,31 @@ export const commonDocCreator = ({
   responseSchemas = [],
   security,
 }: CommonDocCreatorConfig): void => {
-  const paramsSchema = requestSchema?.paramsSchema;
+  let paramsSchema = requestSchema?.paramsSchema;
   const bodySchema = requestSchema?.bodySchema;
   const querySchema = requestSchema?.querySchema;
   const description = requestSchema?.description || 'common document creator';
 
+  // Auto-generate missing parameter schemas from route path
+  // Extract parameter names from route path like '/api/lookup/type-by-name/{name1}'
+  const paramMatches = routePath.match(/\{([a-zA-Z_][a-zA-Z0-9_]*)\}/g);
+  if (paramMatches && paramMatches.length > 0) {
+    // Initialize paramsSchema if it doesn't exist
+    if (!paramsSchema) {
+      paramsSchema = {};
+    }
+
+    // Add missing parameter schemas
+    paramMatches.forEach(match => {
+      const paramName = match.slice(1, -1); // Remove { and }
+      if (paramsSchema && !paramsSchema[paramName]) {
+        paramsSchema[paramName] = z
+          .string()
+          .min(1, 'Parameter cannot be empty')
+          .max(255, 'Parameter cannot exceed 255 characters');
+      }
+    });
+  }
   const config: any = {
     method: method,
     path: routePath,

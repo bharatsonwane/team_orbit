@@ -55,8 +55,8 @@ class RouteRegistrar {
     }: RouteOptions
   ): void {
     const fullRoutePath = `${this.basePath}${path}`;
-
-    const docFullPath = fullRoutePath.replace(/:\w+/g, '{id}');
+    // Convert Express route parameters to OpenAPI format: :param -> {param}
+    const docFullPath = fullRoutePath.replace(/:([a-zA-Z_][a-zA-Z0-9_]*)/g, '{$1}');
     const middlewares: RequestHandler[] = [];
 
     const openApiDocConfig: OpenApiDocConfig = {
@@ -66,7 +66,6 @@ class RouteRegistrar {
       requestSchema,
       responseSchemas,
     };
-
     if (middleware?.length > 0) {
       openApiDocConfig.security = [{ [bearerAuth.name]: [] }];
     }

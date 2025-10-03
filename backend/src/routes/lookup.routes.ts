@@ -1,11 +1,14 @@
-
 import {
   retrieveLookupList,
   getLookupTypeById,
+  getLookupTypeByName,
 } from '../controllers/lookup.controller';
 import RouteRegistrar from '../middleware/RouteRegistrar';
-import { lookupListSchema, lookupTypeWithLookupsSchema } from '../schemas/lookup.schema';
-import { idValidation } from '../schemas/common.schema';
+import {
+  lookupListSchema,
+  lookupTypeWithLookupsSchema,
+} from '../schemas/lookup.schema';
+import { idValidation, nameValidation } from '../schemas/common.schema';
 
 const registrar = new RouteRegistrar({
   basePath: '/api/lookup',
@@ -23,6 +26,11 @@ registrar.get('/type/:id', {
   },
   responseSchemas: [{ statusCode: 200, schema: lookupTypeWithLookupsSchema }],
   controller: getLookupTypeById,
+});
+
+registrar.get('/type-by-name/:name', {
+  responseSchemas: [{ statusCode: 200, schema: lookupTypeWithLookupsSchema }],
+  controller: getLookupTypeByName,
 });
 
 export default registrar;
