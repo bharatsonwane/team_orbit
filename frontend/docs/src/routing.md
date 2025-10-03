@@ -24,7 +24,7 @@ TeamOrbit uses React Router v7 with a role-based access control system, unified 
 │              AppRouter.tsx                              │
 │         Centralized route configuration                 │
 │         • publicRouteList (Login, Signup)               │
-│         • sidebarNavigationItems (Hierarchy)            │
+│         • tenantSidebarNavigationItems (Hierarchy)            │
 │         • protectedRouteList (All protected routes)     │
 │         • RouteGuardRenderer (Access control)           │
 └─────────────────────────────────────────────────────────┘
@@ -89,8 +89,9 @@ export interface AuthRoute {
   element: ReactNode;
 }
 
-// Navigation item with nested children
+// Navigation item with nested children and sidebar visibility control
 export interface SidebarRouteWithChildren {
+  isShownInSidebar: boolean; // Controls sidebar visibility
   title: string;
   allowedRoles: UserRoleName[];
   path?: string;
@@ -99,6 +100,7 @@ export interface SidebarRouteWithChildren {
   element?: ReactNode;
   childItems?: SidebarRouteWithChildren[];
   icon?: LucideIcon;
+  breadcrumbs?: BreadcrumbLayoutProps[];
 }
 ```
 
@@ -127,19 +129,19 @@ export const publicRouteList: AuthRoute[] = [
 
 ### Sidebar Navigation Items
 
-Hierarchical navigation structure with role-based access:
+Hierarchical navigation structure with role-based access and sidebar visibility control:
 
 ```typescript
-export const sidebarNavigationItems: SidebarRouteWithChildren[] = [
+export const tenantSidebarNavigationItems: SidebarRouteWithChildren[] = [
   {
-    title: 'Dashboard',
-    icon: Home,
-    href: '/dashboard',
-    path: '/dashboard',
+    isShownInSidebar: true,
+    title: 'Home',
+    path: '/home',
+    element: <HomeScreen />,
     allowedRoles: [userRoleKeys.ANY],
-    element: <Dashboard />,
   },
   {
+    isShownInSidebar: true,
     title: 'Platform Management',
     icon: Home,
     allowedRoles: [
@@ -148,9 +150,10 @@ export const sidebarNavigationItems: SidebarRouteWithChildren[] = [
     ],
     childItems: [
       {
+        isShownInSidebar: true,
         title: 'Tenants',
-        href: '/tenant-management',
-        path: '/tenant-management',
+        href: '/tenant-list',
+        path: '/tenant-list',
         icon: Home,
         allowedRoles: [
           userRoleKeys.PLATFORM_SUPER_ADMIN,
@@ -160,36 +163,20 @@ export const sidebarNavigationItems: SidebarRouteWithChildren[] = [
       },
     ],
   },
-  // ... more navigation items
-];
-```
-
-### Protected Routes
-
-Routes requiring authentication and authorization:
-
-```typescript
-export const otherProtectedRouteList: AuthRoute[] = [
+  // Route-only item (not shown in sidebar)
   {
-    path: '/profile',
-    element: <Profile />,
-    allowedRoles: [userRoleKeys.ANY],
-    title: 'Profile',
-    description: 'User profile management',
-  },
-  {
-    path: '/admin',
-    element: <Admin />,
+    isShownInSidebar: false,
+    title: 'Tenant Detail',
+    path: '/tenant/:id',
+    element: <TenantDetail />,
     allowedRoles: [
       userRoleKeys.PLATFORM_ADMIN,
       userRoleKeys.PLATFORM_SUPER_ADMIN,
     ],
-    title: 'Admin',
-    description: 'Admin dashboard',
   },
+  // ... more navigation items
 ];
 ```
-
 ### Main Route List
 
 Complete route configuration:
@@ -302,7 +289,7 @@ export function hasRoleAccess({
 
 ## 🧭 Navigation System (AppSidebar)
 
-### Dynamic Sidebar Rendering
+### Dynamic Sidebar Rendering with Visibility Control
 
 ```typescript
 export function AppSidebar() {
@@ -316,50 +303,79 @@ export function AppSidebar() {
     );
   };
 
-  // Filter navigation items based on user role
-  const filterNavigationItems = (
-    items: SidebarRouteWithChildren[]
-  ): SidebarRouteWithChildren[] => {
-    const filteredItems: SidebarRouteWithChildren[] = [];
-
-    for (const item of items) {
-      const isAuthorized = hasRoleAccess({
-        allowedRoleNames: item.allowedRoles,
-        userRoles: loggedInUser?.roles || [],
-      });
-
-      if (!isAuthorized) {
-        continue;
-      }
-
-      // Recursively filter child items
-      let filteredChildItems: SidebarRouteWithChildren[] = [];
-      if (item.childItems && item.childItems.length > 0) {
-        filteredChildItems = filterNavigationItems(item.childItems);
-      }
-
-      const filteredItem: SidebarRouteWithChildren = {
-        ...item,
-        childItems: filteredChildItems,
-      };
-      filteredItems.push(filteredItem);
+  // Filter navigation items based on user role and sidebar visibility
+  const filteredSidebarItems = (() => {
+    if (!loggedInUser) {
+      return [];
     }
 
-    return filteredItems;
-  };
+    let sidebarNavigationItems = tenantSidebarNavigationItems;
 
-  const filteredNavigationItems = filterNavigationItems(sidebarNavigationItems);
+    // Check if current route matches platform routes
+    platformNavigationRoutes.forEach(route => {
+      if (matchRoutePattern(route.path, location.pathname)) {
+        sidebarNavigationItems = platformSidebarNavigationItems;
+      }
+    });
 
-  return <Sidebar>{/* Render filtered items */}</Sidebar>;
+    // Filter by role permissions
+    const items = filterNavigationItems({
+      loggedInUser: loggedInUser,
+      items: sidebarNavigationItems,
+    });
+    return items;
+  })();
+
+  return (
+    <Sidebar>
+      <SidebarContent>
+        <SidebarMenu>
+          {filteredSidebarItems.map(item => (
+            <React.Fragment key={`sidebar_item_${item.title}_${item.isShownInSidebar}`}>
+              {/* Only render if isShownInSidebar is true */}
+              {item.isShownInSidebar && (
+                // Render sidebar item based on structure...
+              )}
+            </React.Fragment>
+          ))}
+        </SidebarMenu>
+      </SidebarContent>
+    </Sidebar>
+  );
 }
 ```
 
-### Collapsible Navigation
+### Sidebar Visibility Control
+
+The `isShownInSidebar` flag provides granular control over sidebar visibility:
 
 ```typescript
-{filteredNavigationItems.map(item => {
-  if (item.childItems) {
-    return (
+// Show in sidebar (default behavior)
+{
+  isShownInSidebar: true,
+  title: 'Dashboard',
+  href: '/dashboard',
+  path: '/dashboard',
+  element: <Dashboard />,
+  allowedRoles: [userRoleKeys.ANY],
+}
+
+// Hide from sidebar but keep accessible via routing
+{
+  isShownInSidebar: false,
+  title: 'Tenant Detail',
+  path: '/tenant/:id',
+  element: <TenantDetail />,
+  allowedRoles: [userRoleKeys.PLATFORM_ADMIN],
+}
+```
+
+### Collapsible Navigation with Visibility Control
+
+```typescript
+{filteredSidebarItems.map(item => (
+  <React.Fragment key={`sidebar_item_${item.title}_${item.isShownInSidebar}`}>
+    {item.childItems && item.childItems.length > 0 && item.isShownInSidebar ? (
       <Collapsible key={item.title} asChild className='group/collapsible'>
         <SidebarMenuItem>
           <CollapsibleTrigger asChild>
@@ -388,24 +404,22 @@ export function AppSidebar() {
           </CollapsibleContent>
         </SidebarMenuItem>
       </Collapsible>
-    );
-  }
-
-  return (
-    <SidebarMenuItem key={item.title}>
-      <SidebarMenuButton
-        asChild
-        tooltip={item.title}
-        isActive={item.href ? isActiveLink(item.href) : false}
-      >
-        <Link to={item.href || '#'}>
-          {item.icon && <item.icon className='h-4 w-4' />}
-          <span>{item.title}</span>
-        </Link>
-      </SidebarMenuButton>
-    </SidebarMenuItem>
-  );
-})}
+    ) : item.isShownInSidebar ? (
+      <SidebarMenuItem key={item.title}>
+        <SidebarMenuButton
+          asChild
+          tooltip={item.title}
+          isActive={item.href ? isActiveLink(item.href) : false}
+        >
+          <Link to={item.href || '#'}>
+            {item.icon && <item.icon className='h-4 w-4' />}
+            <span>{item.title}</span>
+          </Link>
+        </SidebarMenuButton>
+      </SidebarMenuItem>
+    ) : null}
+  </React.Fragment>
+))}
 ```
 
 ---
@@ -554,7 +568,7 @@ AppSidebar renders
 Get user from AuthContext
     │
     ▼
-Filter sidebarNavigationItems
+Filter tenantSidebarNavigationItems
     │
     ├─> For each item:
     │   ├─> Check user role access
@@ -592,9 +606,10 @@ export default function NewFeature() {
 // src/components/AppRouter.tsx
 import NewFeature from '@/pages/NewFeature';
 
-export const sidebarNavigationItems: SidebarRouteWithChildren[] = [
+export const tenantSidebarNavigationItems: SidebarRouteWithChildren[] = [
   // ... existing items
   {
+    isShownInSidebar: true, // Show in sidebar
     title: 'New Feature',
     icon: Star,
     href: '/new-feature',
@@ -602,30 +617,22 @@ export const sidebarNavigationItems: SidebarRouteWithChildren[] = [
     allowedRoles: [userRoleKeys.ANY],
     element: <NewFeature />,
   },
-];
-```
-
-### Step 3: (Optional) Add to Other Protected Routes
-
-If the route should not appear in the sidebar:
-
-```typescript
-export const otherProtectedRouteList: AuthRoute[] = [
-  // ... existing routes
+  // Or for route-only access:
   {
-    path: '/new-feature',
-    element: <NewFeature />,
-    allowedRoles: [userRoleKeys.ANY],
-    title: 'New Feature',
-    description: 'New feature description',
+    isShownInSidebar: false, // Hide from sidebar
+    title: 'Hidden Feature',
+    path: '/hidden-feature',
+    allowedRoles: [userRoleKeys.PLATFORM_ADMIN],
+    element: <HiddenFeature />,
   },
 ];
 ```
 
-### Step 4: Test
+### Step 3: Test
 
 - Navigate to `/new-feature`
-- Check sidebar visibility
+- Check sidebar visibility (should appear if `isShownInSidebar: true`)
+- Test direct URL access for hidden routes
 - Verify role-based access
 
 ---
@@ -715,11 +722,13 @@ function MyComponent() {
 ### Pattern 4: Nested Navigation
 ```typescript
 {
+  isShownInSidebar: true,
   title: 'Parent Menu',
   icon: Folder,
   allowedRoles: [userRoleKeys.ANY],
   childItems: [
     {
+      isShownInSidebar: true,
       title: 'Child Page',
       href: '/parent/child',
       path: '/parent/child',
@@ -728,6 +737,17 @@ function MyComponent() {
       element: <ChildPage />,
     },
   ],
+}
+```
+
+### Pattern 5: Route-Only Navigation
+```typescript
+{
+  isShownInSidebar: false, // Hidden from sidebar
+  title: 'Hidden Page',
+  path: '/hidden-page',
+  allowedRoles: [userRoleKeys.PLATFORM_ADMIN],
+  element: <HiddenPage />,
 }
 ```
 

@@ -8,10 +8,11 @@ import type {
   AuthResponse,
 } from '../schemas/user';
 import { envVariable } from '../config/envVariable';
-import { publicRouteList } from '../components/AppRouter';
+import { publicRouteList } from '../components/routing/AppRouter';
 import getAxios from '../utils/axiosApi';
 import { loginAction } from '../redux/actions/userActions';
 import { store } from '../redux/store';
+import { platformRoleList } from '@/utils/constants';
 
 // Auth context type
 export interface AuthContextType {
@@ -73,9 +74,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       if (!loggedInUser) {
         try {
           // Call API to get user details using the token
-          const response = await getAxios().get<User>(
-            '/api/user/profile'
-          );
+          const response = await getAxios().get<User>('/api/user/profile');
 
           if (response.data && response.data) {
             setLoggedInUser(response.data);
@@ -84,7 +83,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
           // Token might be invalid/expired, remove it
           Cookies.remove(envVariable.JWT_STORAGE_KEY);
           setLoggedInUser(null);
-          console.error('Failed to restore user session:', error);
+          console.error('Failed to restore user session:  ', error);
         } finally {
           setIsLoading(false);
         }
@@ -92,7 +91,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
         loggedInUser &&
         (location.pathname === '/' || publicRoutes.includes(location.pathname))
       ) {
-        navigate('/dashboard', { replace: true });
+        if (
+          // @ts-ignore
+          loggedInUser.roles.some(role => platformRoleList.includes(role.name))
+        ) {
+          navigate('/dashboard', { replace: true });
+        } else {
+          navigate('/home', { replace: true });
+        }
       }
     } else {
       if (

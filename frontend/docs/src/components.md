@@ -96,12 +96,13 @@ function MyPage() {
 
 ### AppSidebar
 
-**Purpose**: Dynamic navigation sidebar with role-based filtering.
+**Purpose**: Dynamic navigation sidebar with role-based filtering and sidebar visibility control.
 
 **Location**: `src/components/AppSidebar.tsx`
 
 #### Features
 - **Role-Based Filtering**: Shows only authorized navigation items
+- **Sidebar Visibility Control**: Uses `isShownInSidebar` flag to control item display
 - **Active State**: Highlights current route
 - **Collapsible Menus**: Nested navigation with expand/collapse
 - **User Profile**: Displays user info in footer
@@ -123,18 +124,81 @@ export function AppSidebar() {
     );
   };
 
-  // Filter navigation based on user role
-  const filteredNavigationItems = filterNavigationItems(
-    sidebarNavigationItems
-  );
+  // Filter navigation based on user role and sidebar visibility
+  const filteredSidebarItems = (() => {
+    let sidebarNavigationItems = tenantSidebarNavigationItems;
+
+    // Check if current route matches platform routes
+    platformNavigationRoutes.forEach(route => {
+      if (matchRoutePattern(route.path, location.pathname)) {
+        sidebarNavigationItems = platformSidebarNavigationItems;
+      }
+    });
+
+    // Filter by role permissions
+    const items = filterNavigationItems({
+      loggedInUser: loggedInUser,
+      items: sidebarNavigationItems,
+    });
+    return items;
+  })();
 
   return (
     <Sidebar>
       <SidebarHeader>{/* Company branding */}</SidebarHeader>
-      <SidebarContent>{/* Navigation menu */}</SidebarContent>
+      <SidebarContent>
+        <SidebarMenu>
+          {filteredSidebarItems.map(item => (
+            <React.Fragment key={`sidebar_item_${item.title}_${item.isShownInSidebar}`}>
+              {/* Only render if isShownInSidebar is true */}
+              {item.isShownInSidebar && (
+                // Render sidebar item...
+              )}
+            </React.Fragment>
+          ))}
+        </SidebarMenu>
+      </SidebarContent>
       <SidebarFooter>{/* User profile */}</SidebarFooter>
     </Sidebar>
   );
+}
+```
+
+#### Sidebar Visibility Control
+
+**`isShownInSidebar` Flag**: Controls whether navigation items appear in the sidebar
+```typescript
+// SidebarRouteWithChildren interface
+export interface SidebarRouteWithChildren {
+  isShownInSidebar: boolean; // Controls sidebar visibility
+  title: string;
+  allowedRoles: UserRoleName[];
+  path?: string;
+  href?: string;
+  element?: ReactNode;
+  childItems?: SidebarRouteWithChildren[];
+  icon?: LucideIcon;
+  breadcrumbs?: BreadcrumbLayoutProps[];
+}
+```
+
+**Usage Examples**:
+```typescript
+// Show in sidebar (default behavior)
+{
+  isShownInSidebar: true,
+  title: 'Dashboard',
+  href: '/dashboard',
+  path: '/dashboard',
+  element: <Dashboard />,
+}
+
+// Hide from sidebar but keep accessible via routing
+{
+  isShownInSidebar: false,
+  title: 'Tenant Detail',
+  path: '/tenant/:id',
+  element: <TenantDetail />,
 }
 ```
 
@@ -148,6 +212,14 @@ const filterNavigationItems = (
   // Checks hasRoleAccess for each item
   // Recursively filters child items
   // Returns only authorized items
+};
+```
+
+**`matchRoutePattern()`**: Determines if current route matches platform navigation patterns
+```typescript
+const matchRoutePattern = (pattern: string, currentPath: string) => {
+  // Matches route patterns like '/tenant/:id' with actual paths
+  // Used to determine which navigation set to show
 };
 ```
 

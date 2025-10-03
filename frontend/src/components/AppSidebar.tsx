@@ -1,3 +1,4 @@
+import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Building2, ChevronRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -31,10 +32,15 @@ const companyInfo = {
 };
 
 import {
-  sidebarNavigationItems,
+  platformSidebarNavigationItems,
+  tenantSidebarNavigationItems,
+  platformNavigationRoutes,
   type SidebarRouteWithChildren,
-} from './AppRouter';
-import { hasRoleAccess } from '@/utils/authHelper';
+} from './routing/AppRouter';
+import {
+  filterNavigationItems,
+  matchRoutePattern,
+} from '@/utils/sidebarHelper';
 
 export function AppSidebar() {
   const location = useLocation();
@@ -46,42 +52,26 @@ export function AppSidebar() {
     );
   };
 
-  // Recursive function to filter navigation items based on user role
-  const filterNavigationItems = (
-    items: SidebarRouteWithChildren[]
-  ): SidebarRouteWithChildren[] => {
-    const filteredItems: SidebarRouteWithChildren[] = [];
-
-    // Step 1: Iterate through each navigation item
-    for (const item of items) {
-      // Step 2: Check if user has access to the main item
-      const isAuthorized = hasRoleAccess({
-        allowedRoleNames: item.allowedRoles,
-        userRoles: loggedInUser?.roles || [],
-      });
-
-      if (!isAuthorized) {
-        continue;
-      }
-
-      // Step 3: Handle child items recursively
-      let filteredChildItems: SidebarRouteWithChildren[] = [];
-      if (item.childItems && item.childItems.length > 0) {
-        filteredChildItems = filterNavigationItems(item.childItems);
-      }
-
-      const filteredItem: SidebarRouteWithChildren = {
-        ...item,
-        childItems: filteredChildItems,
-      };
-      filteredItems.push(filteredItem);
+  const filteredSidebarItems: SidebarRouteWithChildren[] = (() => {
+    if (!loggedInUser) {
+      return [];
     }
 
-    // Step 6: Return the filtered items
-    return filteredItems;
-  };
+    let sidebarNavigationItems: SidebarRouteWithChildren[] =
+      tenantSidebarNavigationItems;
 
-  const filteredNavigationItems = filterNavigationItems(sidebarNavigationItems);
+    platformNavigationRoutes.forEach(route => {
+      if (matchRoutePattern(route.path, location.pathname)) {
+        sidebarNavigationItems = platformSidebarNavigationItems;
+      }
+    });
+
+    const items = filterNavigationItems({
+      loggedInUser: loggedInUser,
+      items: sidebarNavigationItems,
+    });
+    return items;
+  })();
 
   return (
     <Sidebar className='border-r'>
@@ -104,9 +94,13 @@ export function AppSidebar() {
         <SidebarGroup>
           <SidebarGroupContent>
             <SidebarMenu>
-              {filteredNavigationItems.map(item => {
-                if (item.childItems) {
-                  return (
+              {filteredSidebarItems.map(item => (
+                <React.Fragment
+                  key={`sidebar_item_${item.title}_${item.isShownInSidebar}`}
+                >
+                  {item.childItems &&
+                  item.childItems.length > 0 &&
+                  item.isShownInSidebar ? (
                     <Collapsible
                       key={item.title}
                       asChild
@@ -154,24 +148,22 @@ export function AppSidebar() {
                         </CollapsibleContent>
                       </SidebarMenuItem>
                     </Collapsible>
-                  );
-                }
-
-                return (
-                  <SidebarMenuItem key={item.title}>
-                    <SidebarMenuButton
-                      asChild
-                      tooltip={item.title}
-                      isActive={item.href ? isActiveLink(item.href) : false}
-                    >
-                      <Link to={item.href || '#'}>
-                        {item.icon && <item.icon className='h-4 w-4' />}
-                        <span>{item.title}</span>
-                      </Link>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                );
-              })}
+                  ) : item.isShownInSidebar ? (
+                    <SidebarMenuItem key={item.title}>
+                      <SidebarMenuButton
+                        asChild
+                        tooltip={item.title}
+                        isActive={item.href ? isActiveLink(item.href) : false}
+                      >
+                        <Link to={item.href || '#'}>
+                          {item.icon && <item.icon className='h-4 w-4' />}
+                          <span>{item.title}</span>
+                        </Link>
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+                  ) : null}
+                </React.Fragment>
+              ))}
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>

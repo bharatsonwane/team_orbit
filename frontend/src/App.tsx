@@ -1,5 +1,6 @@
 import { Routes, Route, Navigate } from 'react-router-dom';
-import { RouteGuardRenderer, mainRouteList} from './components/AppRouter';
+import { mainRouteList } from './components/routing/AppRouter';
+import { RouteGuardRenderer } from './components/routing/RouteGuardRenderer';
 import { userRoleKeys } from './utils/constants';
 
 function App() {
@@ -10,19 +11,22 @@ function App() {
           key={route.path}
           path={route.path}
           element={
-            <RouteGuardRenderer key={route.path} allowedRoles={route.allowedRoles}>
+            <RouteGuardRenderer
+              key={route.path}
+              allowedRoles={route.allowedRoles}
+            >
               {route.element}
             </RouteGuardRenderer>
           }
         />
       ))}
-      
+
       {/* Catch-all route for undefined routes - Redirect to Dashboard */}
       <Route
-        path="*"
+        path='*'
         element={
           <RouteGuardRenderer allowedRoles={[userRoleKeys.ANY]}>
-            <Navigate to="/dashboard" replace />
+            <Navigate to='/dashboard' replace />
           </RouteGuardRenderer>
         }
       />

@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { lookupSchema } from './lookup';
+import { userRoleName } from '@/utils/constants';
 
 // User schema
 export const userSchema = z.object({
@@ -7,7 +8,11 @@ export const userSchema = z.object({
   email: z.string().email(),
   first_name: z.string(),
   last_name: z.string(),
-  roles: z.array(lookupSchema),
+  roles: z.array(
+    lookupSchema.extend({
+      name: userRoleName,
+    })
+  ),
   created_at: z.string(),
   updated_at: z.string(),
 });

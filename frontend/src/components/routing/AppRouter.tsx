@@ -1,9 +1,4 @@
 import React, { type ReactNode } from 'react';
-import { Routes, Route, Navigate } from 'react-router-dom';
-import { useAuthService } from '@/contexts/AuthContextProvider';
-import { hasRoleAccess } from '../utils/authHelper';
-import { userRoleKeys, type UserRoleName } from '@/utils/constants';
-
 import {
   Building2,
   Users,
@@ -23,30 +18,25 @@ import {
   Shield,
   type LucideIcon,
 } from 'lucide-react';
+import { type AuthRoute, RouteGuardRenderer } from './RouteGuardRenderer';
+import { userRoleKeys, type UserRoleName } from '@/utils/constants';
 
 // Import pages
-import HomeScreen from '../pages/dashboard/Home';
-import Login from '../pages/auth/Login';
-import Signup from '../pages/auth/Signup';
-import Dashboard from '../pages/dashboard/Dashboard';
-import Profile from '../pages/profile/Profile';
-import Admin from '../pages/admin/Admin';
-import SuperAdmin from '../pages/admin/SuperAdmin';
-import Tenants from '../pages/tenant/Tenants';
-import TenantDetail from '../pages/tenant/TenantDetail';
-import { ComingSoon } from './ComingSoon';
+import HomeScreen from '../../pages/dashboard/Home';
+import Login from '../../pages/auth/Login';
+import Signup from '../../pages/auth/Signup';
+import Dashboard from '../../pages/dashboard/Dashboard';
+import Profile from '../../pages/profile/Profile';
+import Admin from '../../pages/admin/Admin';
+import SuperAdmin from '../../pages/admin/SuperAdmin';
+import Tenants from '../../pages/tenant/Tenants';
+import TenantDetail from '../../pages/tenant/TenantDetail';
+import { ComingSoon } from '../ComingSoon';
 import { AppLayout } from '@/components/AppLayout';
 import type { BreadcrumbLayoutProps } from '@/components/AppLayout';
 
-export interface AuthRoute {
-  title: string;
-  allowedRoles: UserRoleName[]; // adjust to (keyof typeof roleKeys)[] if roleKeys is an enum/object
-  path: string; // Made optional for parent navigation items
-  description?: string;
-  element: ReactNode;
-}
-
 export interface SidebarRouteWithChildren {
+  isShownInSidebar: boolean; // default to false
   title: string;
   allowedRoles: UserRoleName[]; // adjust to (keyof typeof roleKeys)[] if roleKeys is an enum/object
   path?: string; // Made optional for parent navigation items
@@ -57,77 +47,6 @@ export interface SidebarRouteWithChildren {
   icon?: LucideIcon; // or React.ComponentType<any> if not fixed to Lucide
   breadcrumbs?: BreadcrumbLayoutProps[];
 }
-
-interface RouteGuardRendererProps {
-  children?: React.ReactNode;
-  allowedRoles?: UserRoleName[];
-  routes?: AuthRoute[];
-}
-
-export const RouteGuardRenderer: React.FC<RouteGuardRendererProps> = ({
-  children,
-  allowedRoles = [],
-  routes = [],
-}) => {
-  const { loggedInUser } = useAuthService();
-
-  const isAuthorized = hasRoleAccess({
-    allowedRoleNames: allowedRoles,
-    userRoles: loggedInUser?.roles || [],
-  });
-
-  if (!isAuthorized) {
-    return (
-      <div className='min-h-screen flex items-center justify-center bg-background'>
-        <div className='text-center'>
-          <h1 className='text-2xl font-bold text-foreground mb-4'>
-            Access Denied
-          </h1>
-          <p className='text-muted-foreground mb-6'>
-            You are not authorized to access this page.
-          </p>
-          <div className='space-x-4'>
-            <a
-              href='/'
-              className='inline-flex items-center px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90'
-            >
-              Go Home
-            </a>
-            <a
-              href='/login'
-              className='inline-flex items-center px-4 py-2 border border-border rounded-md hover:bg-accent'
-            >
-              Login
-            </a>
-          </div>
-        </div>
-      </div>
-    );
-  } else if (routes.length > 0) {
-    return (
-      <Routes>
-        {routes.map(route => (
-          <Route
-            key={route.path}
-            path={route.path}
-            element={
-              <RouteGuardRenderer
-                key={route.path}
-                allowedRoles={route.allowedRoles}
-              >
-                {route.element}
-              </RouteGuardRenderer>
-            }
-          />
-        ))}
-        {/* Catch-all for undefined routes - redirect to dashboard */}
-        <Route path='*' element={<Navigate to='/dashboard' replace />} />
-      </Routes>
-    );
-  }
-
-  return <>{children}</>;
-};
 
 // Helper function to flatten navigation items and extract routes
 const flattenNavigationItems = (
@@ -175,8 +94,9 @@ export const publicRouteList: AuthRoute[] = [
   },
 ];
 
-export const sidebarNavigationItems: SidebarRouteWithChildren[] = [
+export const platformSidebarNavigationItems: SidebarRouteWithChildren[] = [
   {
+    isShownInSidebar: true,
     title: 'Dashboard',
     icon: Home,
     href: '/dashboard',
@@ -185,6 +105,7 @@ export const sidebarNavigationItems: SidebarRouteWithChildren[] = [
     element: <Dashboard />,
   },
   {
+    isShownInSidebar: true,
     title: 'Platform Management',
     icon: Home,
     allowedRoles: [
@@ -193,6 +114,7 @@ export const sidebarNavigationItems: SidebarRouteWithChildren[] = [
     ],
     childItems: [
       {
+        isShownInSidebar: true,
         title: 'Tenants',
         href: '/tenant-list',
         path: '/tenant-list',
@@ -210,6 +132,7 @@ export const sidebarNavigationItems: SidebarRouteWithChildren[] = [
     ],
   },
   {
+    isShownInSidebar: true,
     title: 'Multi-Tenant',
     icon: Building2,
     allowedRoles: [
@@ -218,6 +141,7 @@ export const sidebarNavigationItems: SidebarRouteWithChildren[] = [
     ],
     childItems: [
       {
+        isShownInSidebar: true,
         title: 'Workspace Settings',
         href: '/workspace/settings',
         path: '/workspace/settings',
@@ -234,6 +158,7 @@ export const sidebarNavigationItems: SidebarRouteWithChildren[] = [
         ),
       },
       {
+        isShownInSidebar: true,
         title: 'Branding',
         href: '/workspace/branding',
         path: '/workspace/branding',
@@ -252,6 +177,7 @@ export const sidebarNavigationItems: SidebarRouteWithChildren[] = [
         ),
       },
       {
+        isShownInSidebar: true,
         title: 'Domain Config',
         href: '/workspace/domain',
         path: '/workspace/domain',
@@ -267,11 +193,62 @@ export const sidebarNavigationItems: SidebarRouteWithChildren[] = [
     ],
   },
   {
+    isShownInSidebar: true,
+    path: '/profile',
+    element: <Profile />,
+    allowedRoles: [userRoleKeys.ANY],
+    title: 'Profile',
+    description: 'User profile management',
+  },
+  {
+    isShownInSidebar: true,
+    path: '/admin',
+    element: <Admin />,
+    allowedRoles: [
+      userRoleKeys.PLATFORM_ADMIN,
+      userRoleKeys.PLATFORM_SUPER_ADMIN,
+    ],
+    title: 'Admin',
+    description: 'Admin dashboard',
+  },
+  {
+    isShownInSidebar: true,
+    path: '/super-admin',
+    element: <SuperAdmin />,
+    allowedRoles: [userRoleKeys.PLATFORM_SUPER_ADMIN],
+    title: 'Super Admin',
+    description: 'Super admin dashboard',
+  },
+  {
+    isShownInSidebar: true,
+    path: '/tenant/:id',
+    element: <TenantDetail />,
+    allowedRoles: [
+      userRoleKeys.PLATFORM_ADMIN,
+      userRoleKeys.PLATFORM_SUPER_ADMIN,
+    ],
+    title: 'Tenant Detail',
+    description: 'View tenant details and manage users',
+  },
+];
+
+export const tenantSidebarNavigationItems: SidebarRouteWithChildren[] = [
+  {
+    isShownInSidebar: true,
+    path: '/home',
+    element: <HomeScreen />,
+    allowedRoles: [userRoleKeys.ANY],
+    title: 'Home',
+    description: 'Application home page',
+  },
+  {
+    isShownInSidebar: true,
     title: 'Employee Management',
     icon: Users,
     allowedRoles: [userRoleKeys.ANY],
     childItems: [
       {
+        isShownInSidebar: true,
         title: 'Employee Directory',
         href: '/employees',
         path: '/employees',
@@ -285,6 +262,7 @@ export const sidebarNavigationItems: SidebarRouteWithChildren[] = [
         ),
       },
       {
+        isShownInSidebar: true,
         title: 'Onboarding',
         href: '/employees/onboarding',
         path: '/employees/onboarding',
@@ -303,6 +281,7 @@ export const sidebarNavigationItems: SidebarRouteWithChildren[] = [
         ),
       },
       {
+        isShownInSidebar: true,
         title: 'Departments',
         href: '/departments',
         path: '/departments',
@@ -321,6 +300,7 @@ export const sidebarNavigationItems: SidebarRouteWithChildren[] = [
         ),
       },
       {
+        isShownInSidebar: true,
         title: 'Teams',
         href: '/teams',
         path: '/teams',
@@ -336,11 +316,13 @@ export const sidebarNavigationItems: SidebarRouteWithChildren[] = [
     ],
   },
   {
+    isShownInSidebar: true,
     title: 'Attendance & Leave',
     icon: Clock,
     allowedRoles: [userRoleKeys.ANY],
     childItems: [
       {
+        isShownInSidebar: true,
         title: 'Check In/Out',
         href: '/attendance/checkin',
         path: '/attendance/checkin',
@@ -354,6 +336,7 @@ export const sidebarNavigationItems: SidebarRouteWithChildren[] = [
         ),
       },
       {
+        isShownInSidebar: true,
         title: 'Attendance Logs',
         href: '/attendance/logs',
         path: '/attendance/logs',
@@ -367,6 +350,7 @@ export const sidebarNavigationItems: SidebarRouteWithChildren[] = [
         ),
       },
       {
+        isShownInSidebar: true,
         title: 'Leave Requests',
         href: '/leave/requests',
         path: '/leave/requests',
@@ -380,6 +364,7 @@ export const sidebarNavigationItems: SidebarRouteWithChildren[] = [
         ),
       },
       {
+        isShownInSidebar: true,
         title: 'Leave Approvals',
         href: '/leave/approvals',
         path: '/leave/approvals',
@@ -398,6 +383,7 @@ export const sidebarNavigationItems: SidebarRouteWithChildren[] = [
         ),
       },
       {
+        isShownInSidebar: true,
         title: 'Analytics',
         href: '/attendance/analytics',
         path: '/attendance/analytics',
@@ -418,11 +404,13 @@ export const sidebarNavigationItems: SidebarRouteWithChildren[] = [
     ],
   },
   {
+    isShownInSidebar: true,
     title: 'Training & Learning',
     icon: GraduationCap,
     allowedRoles: [userRoleKeys.ANY],
     childItems: [
       {
+        isShownInSidebar: true,
         title: 'Training Programs',
         href: '/training/programs',
         path: '/training/programs',
@@ -441,6 +429,7 @@ export const sidebarNavigationItems: SidebarRouteWithChildren[] = [
         ),
       },
       {
+        isShownInSidebar: true,
         title: 'My Learning',
         href: '/training/my-learning',
         path: '/training/my-learning',
@@ -454,6 +443,7 @@ export const sidebarNavigationItems: SidebarRouteWithChildren[] = [
         ),
       },
       {
+        isShownInSidebar: true,
         title: 'Assessments',
         href: '/training/assessments',
         path: '/training/assessments',
@@ -467,6 +457,7 @@ export const sidebarNavigationItems: SidebarRouteWithChildren[] = [
         ),
       },
       {
+        isShownInSidebar: true,
         title: 'Certificates',
         href: '/training/certificates',
         path: '/training/certificates',
@@ -480,6 +471,7 @@ export const sidebarNavigationItems: SidebarRouteWithChildren[] = [
         ),
       },
       {
+        isShownInSidebar: true,
         title: 'Progress Tracking',
         href: '/training/progress',
         path: '/training/progress',
@@ -500,11 +492,13 @@ export const sidebarNavigationItems: SidebarRouteWithChildren[] = [
     ],
   },
   {
+    isShownInSidebar: true,
     title: 'Social Network',
     icon: Hash,
     allowedRoles: [userRoleKeys.ANY],
     childItems: [
       {
+        isShownInSidebar: true,
         title: 'Newsfeed',
         href: '/social/feed',
         path: '/social/feed',
@@ -518,6 +512,7 @@ export const sidebarNavigationItems: SidebarRouteWithChildren[] = [
         ),
       },
       {
+        isShownInSidebar: true,
         title: 'Announcements',
         href: '/social/announcements',
         path: '/social/announcements',
@@ -536,6 +531,7 @@ export const sidebarNavigationItems: SidebarRouteWithChildren[] = [
         ),
       },
       {
+        isShownInSidebar: true,
         title: 'Polls & Surveys',
         href: '/social/polls',
         path: '/social/polls',
@@ -549,6 +545,7 @@ export const sidebarNavigationItems: SidebarRouteWithChildren[] = [
         ),
       },
       {
+        isShownInSidebar: true,
         title: 'Company Updates',
         href: '/social/updates',
         path: '/social/updates',
@@ -569,11 +566,13 @@ export const sidebarNavigationItems: SidebarRouteWithChildren[] = [
     ],
   },
   {
+    isShownInSidebar: true,
     title: 'Team Chat',
     icon: MessageSquare,
     allowedRoles: [userRoleKeys.ANY],
     childItems: [
       {
+        isShownInSidebar: true,
         title: 'Messages',
         href: '/chat/messages',
         path: '/chat/messages',
@@ -587,6 +586,7 @@ export const sidebarNavigationItems: SidebarRouteWithChildren[] = [
         ),
       },
       {
+        isShownInSidebar: true,
         title: 'Team Channels',
         href: '/chat/channels',
         path: '/chat/channels',
@@ -600,6 +600,7 @@ export const sidebarNavigationItems: SidebarRouteWithChildren[] = [
         ),
       },
       {
+        isShownInSidebar: true,
         title: 'File Sharing',
         href: '/chat/files',
         path: '/chat/files',
@@ -615,6 +616,7 @@ export const sidebarNavigationItems: SidebarRouteWithChildren[] = [
     ],
   },
   {
+    isShownInSidebar: true,
     title: 'Notifications',
     icon: Bell,
     href: '/notifications',
@@ -628,6 +630,7 @@ export const sidebarNavigationItems: SidebarRouteWithChildren[] = [
     ),
   },
   {
+    isShownInSidebar: true,
     title: 'Settings',
     icon: Settings,
     href: '/settings',
@@ -640,60 +643,28 @@ export const sidebarNavigationItems: SidebarRouteWithChildren[] = [
       />
     ),
   },
-];
-
-export const otherProtectedRouteList: AuthRoute[] = [
   {
-    path: '/profile',
+    isShownInSidebar: false,
+    path: 'tenant/profile',
     element: <Profile />,
     allowedRoles: [userRoleKeys.ANY],
-    title: 'Profile',
+    title: 'Tenant Profile',
     description: 'User profile management',
-  },
-  {
-    path: '/admin',
-    element: <Admin />,
-    allowedRoles: [
-      userRoleKeys.PLATFORM_ADMIN,
-      userRoleKeys.PLATFORM_SUPER_ADMIN,
-    ],
-    title: 'Admin',
-    description: 'Admin dashboard',
-  },
-  {
-    path: '/super-admin',
-    element: <SuperAdmin />,
-    allowedRoles: [userRoleKeys.PLATFORM_SUPER_ADMIN],
-    title: 'Super Admin',
-    description: 'Super admin dashboard',
-  },
-  {
-    path: '/tenant/:id',
-    element: <TenantDetail />,
-    allowedRoles: [
-      userRoleKeys.PLATFORM_ADMIN,
-      userRoleKeys.PLATFORM_SUPER_ADMIN,
-    ],
-    title: 'Tenant Detail',
-    description: 'View tenant details and manage users',
   },
 ];
 
 // Extract routes from navigation items
-const navigationRoutes: AuthRoute[] = flattenNavigationItems(
-  sidebarNavigationItems
+export const platformNavigationRoutes: AuthRoute[] = flattenNavigationItems(
+  platformSidebarNavigationItems
 );
 
-export const protectedRouteList: AuthRoute[] = [
-  ...navigationRoutes,
-  ...otherProtectedRouteList,
-  {
-    path: '/',
-    element: <HomeScreen />,
-    allowedRoles: [userRoleKeys.ANY],
-    title: 'Home',
-    description: 'Application home page',
-  },
+export const tenantNavigationRoutes: AuthRoute[] = flattenNavigationItems(
+  tenantSidebarNavigationItems
+);
+
+const protectedRouteList: AuthRoute[] = [
+  ...platformNavigationRoutes,
+  ...tenantNavigationRoutes,
 ];
 
 /**@description Main route list with nested routes */

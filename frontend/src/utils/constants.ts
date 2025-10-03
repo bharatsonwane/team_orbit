@@ -56,6 +56,12 @@ export const userRoleName = z.enum(Object.values(userRoleKeys));
 /*export type UserRoleName = (typeof userRoleKeys)[keyof typeof userRoleKeys];*/
 export type UserRoleName = z.infer<typeof userRoleName>;
 
+export const platformRoleList = [
+  userRoleKeys.PLATFORM_SUPER_ADMIN,
+  userRoleKeys.PLATFORM_ADMIN,
+  userRoleKeys.PLATFORM_USER,
+];
+
 export const userStatusKeys = {
   PENDING: 'PENDING',
   ACTIVE: 'ACTIVE',

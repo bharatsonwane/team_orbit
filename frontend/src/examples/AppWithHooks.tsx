@@ -1,7 +1,7 @@
 // Example: App.tsx with routing hooks
 import { Routes, Route, useLocation, useNavigate } from 'react-router-dom';
 import { useEffect } from 'react';
-import RouteGuardRenderer from '../components/AppRouter';
+import RouteGuardRenderer from '../components/routing/AppRouter';
 import { mainRouteList } from '../utils/route/routes';
 
 function App() {
