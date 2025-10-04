@@ -78,6 +78,35 @@ http://localhost:5100/docs
 - **PUT** `/api/tenant/:id` - Update tenant (requires auth)
 - **GET** `/api/tenant/:id/users` - Get tenant users (requires auth)
 
+#### Tenant Endpoints Details
+
+**POST** `/api/tenant/create`
+*Create a new tenant organization.* <br>
+**Headers:** `Authorization: Bearer <token>` <br>
+**Sample Request Body:**
+```json
+{
+  "name": "acme_corp",
+  "label": "ACME Corporation",
+  "description": "Software development company",
+  "statusId": 12
+}
+```
+**Sample Response:**
+```json
+{
+  "id": 1,
+  "name": "acme_corp",
+  "label": "ACME Corporation", 
+  "description": "Software development company",
+  "statusId": 12,
+  "isArchived": false,
+  "createdAt": "2025-01-01T00:00:00.000Z",
+  "updatedAt": "2025-01-01T00:00:00.000Z",
+  "archivedAt": null
+}
+```
+
 ### Lookup Data
 - **GET** `/api/lookup/list` - Get all lookup data (public)
 - **GET** `/api/lookup/type/:id` - Get lookup type by ID (public)

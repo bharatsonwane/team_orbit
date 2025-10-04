@@ -3,8 +3,7 @@ import { Link } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
+import { InputWithLabel } from '@/components/ui/input-with-label';
 import {
   Card,
   CardContent,
@@ -16,6 +15,7 @@ import {
 import { ThemeToggle } from '@/components/theme-toggle';
 import { useAuthService } from '@/contexts/AuthContextProvider';
 import { signupSchema, type SignupFormData } from '@/schemas/validation';
+import { LoadingSpinner } from '@/components/ui/loading-indicator';
 
 export default function Signup() {
   const {
@@ -78,76 +78,57 @@ export default function Signup() {
             )}
 
             <div className='grid grid-cols-2 gap-4'>
-              <div className='space-y-2'>
-                <Label htmlFor='firstName'>First Name</Label>
-                <Input
-                  id='firstName'
-                  placeholder='John'
-                  {...register('firstName')}
-                />
-                {errors.firstName && (
-                  <p className='text-sm text-destructive'>
-                    {errors.firstName.message}
-                  </p>
-                )}
-              </div>
-              <div className='space-y-2'>
-                <Label htmlFor='lastName'>Last Name</Label>
-                <Input
-                  id='lastName'
-                  placeholder='Doe'
-                  {...register('lastName')}
-                />
-                {errors.lastName && (
-                  <p className='text-sm text-destructive'>
-                    {errors.lastName.message}
-                  </p>
-                )}
-              </div>
-            </div>
-
-            <div className='space-y-2'>
-              <Label htmlFor='email'>Email</Label>
-              <Input
-                id='email'
-                type='email'
-                placeholder='m@example.com'
-                {...register('email')}
+              <InputWithLabel
+                id='firstName'
+                label='First Name'
+                placeholder='John'
+                register={register}
+                error={errors.firstName?.message}
               />
-              {errors.email && (
-                <p className='text-sm text-destructive'>
-                  {errors.email.message}
-                </p>
-              )}
-            </div>
-
-            <div className='space-y-2'>
-              <Label htmlFor='password'>Password</Label>
-              <Input id='password' type='password' {...register('password')} />
-              {errors.password && (
-                <p className='text-sm text-destructive'>
-                  {errors.password.message}
-                </p>
-              )}
-            </div>
-
-            <div className='space-y-2'>
-              <Label htmlFor='confirmPassword'>Confirm Password</Label>
-              <Input
-                id='confirmPassword'
-                type='password'
-                {...register('confirmPassword')}
+              <InputWithLabel
+                id='lastName'
+                label='Last Name'
+                placeholder='Doe'
+                register={register}
+                error={errors.lastName?.message}
               />
-              {errors.confirmPassword && (
-                <p className='text-sm text-destructive'>
-                  {errors.confirmPassword.message}
-                </p>
-              )}
             </div>
+
+            <InputWithLabel
+              id='email'
+              label='Email'
+              type='email'
+              placeholder='m@example.com'
+              register={register}
+              error={errors.email?.message}
+            />
+
+            <InputWithLabel
+              id='password'
+              label='Password'
+              type='password'
+              register={register}
+              error={errors.password?.message}
+            />
+
+            <InputWithLabel
+              id='confirmPassword'
+              label='Confirm Password'
+              type='password'
+              register={register}
+              error={errors.confirmPassword?.message}
+            />
           </CardContent>
           <CardFooter className='flex flex-col space-y-4'>
             <Button type='submit' className='w-full' disabled={isLoading}>
-              {isLoading ? 'Creating account...' : 'Create account'}
+              {isLoading ? (
+                <>
+                  <LoadingSpinner size='sm' className='mr-2' />
+                  Creating account...
+                </>
+              ) : (
+                'Create account'
+              )}
             </Button>
             <div className='text-center text-sm text-muted-foreground'>
               Already have an account?{' '}

@@ -9,13 +9,17 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
+import { InputWithLabel, SelectWithLabel } from '@/components/ui/input-with-label';
 import { Plus } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { useSelector, useDispatch } from 'react-redux';
 import { createTenantFormSchema, type CreateTenantFormData, type Tenant } from '@/schemas/tenant';
+import { selectLookupTypeByName } from '@/redux/slices/lookupSlice';
+import { createTenantAction } from '@/redux/actions/tenantActions';
+import { LoadingSpinner } from '@/components/ui/loading-indicator';
+import type { RootState, AppDispatch } from '@/redux/store';
+
 
 interface CreateTenantDialogProps {
   onTenantCreated?: (tenant: Tenant) => void;
@@ -28,6 +32,12 @@ export function CreateTenantDialog({
 }: CreateTenantDialogProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const dispatch = useDispatch<AppDispatch>();
+
+  // Get tenant status lookup data
+  const tenantStatusType = useSelector((state: RootState) => 
+    selectLookupTypeByName(state, 'TENANT_STATUS')
+  );
 
   const {
     register,
@@ -41,32 +51,30 @@ export function CreateTenantDialog({
   const onSubmitCreateTenant = async (data: CreateTenantFormData) => {
     setIsLoading(true);
     try {
-      // TODO: Replace with actual API call
-      console.log('Creating tenant:', data);
+      // Find statusId from lookup data
+      const selectedStatus = tenantStatusType?.lookups.find(item => item.name === data.status);
+      const statusId = selectedStatus?.id || 12; // Default to ACTIVE status
 
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
-
-      // Mock response
-      const newTenant = {
-        id: Date.now(), // Using timestamp as mock ID
+      // Prepare API request data
+      const createTenantData = {
         name: data.name,
         label: data.label,
         description: data.description || '',
-        isArchived: false,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-        userCount: 1, // Just the admin user
+        statusId: statusId,
       };
 
+      // Dispatch create tenant action
+      const result = await dispatch(createTenantAction(createTenantData)).unwrap();
+
       // Call the callback if provided
-      onTenantCreated?.(newTenant);
+      onTenantCreated?.(result);
 
       // Close dialog and reset form
       setIsOpen(false);
       reset();
     } catch (error) {
       console.error('Error creating tenant:', error);
+      // TODO: Show toast notification for error
     } finally {
       setIsLoading(false);
     }
@@ -87,145 +95,63 @@ export function CreateTenantDialog({
           </Button>
         )}
       </DialogTrigger>
-      <DialogContent className='max-w-2xl'>
+      <DialogContent className='max-w-lg'>
         <DialogHeader>
           <DialogTitle>Create New Tenant</DialogTitle>
           <DialogDescription>
-            Create a new organization and its administrative user account.
+            Create a new organization with basic information.
           </DialogDescription>
         </DialogHeader>
 
         <form onSubmit={handleSubmit(onSubmitCreateTenant)}>
-          <div className='space-y-6'>
-            {/* Tenant Information */}
-            <div className='space-y-4'>
-              <h3 className='text-lg font-semibold'>Tenant Information</h3>
+          <div className='space-y-4'>
+            {/* Tenant Name */}
+            <InputWithLabel
+              id='name'
+              label='Tenant Name'
+              placeholder='acme_corp'
+              required
+              register={register}
+              error={errors.name?.message}
+              helperText='Only letters, numbers, and underscores allowed'
+            />
 
-              <div className='grid grid-cols-2 gap-4'>
-                <div className='space-y-2'>
-                  <Label htmlFor='name'>Tenant Name *</Label>
-                  <Input
-                    id='name'
-                    placeholder='acme-corp'
-                    {...register('name')}
-                  />
-                  {errors.name && (
-                    <p className='text-sm text-destructive'>
-                      {errors.name.message}
-                    </p>
-                  )}
-                </div>
+            {/* Label */}
+            <InputWithLabel
+              id='label'
+              label='Label'
+              placeholder='ACME Corporation'
+              maxLength={50}
+              required
+              register={register}
+              error={errors.label?.message}
+            />
 
-                <div className='space-y-2'>
-                  <Label htmlFor='label'>Display Label *</Label>
-                  <Input
-                    id='label'
-                    placeholder='ACME Corporation'
-                    {...register('label')}
-                  />
-                  {errors.label && (
-                    <p className='text-sm text-destructive'>
-                      {errors.label.message}
-                    </p>
-                  )}
-                </div>
-              </div>
+            {/* Description */}
+            <InputWithLabel
+              id='description'
+              label='Description'
+              placeholder='Brief description of the organization'
+              variant='textarea'
+              register={register}
+              error={errors.description?.message}
+            />
 
-              <div className='space-y-2'>
-                <Label htmlFor='description'>Description</Label>
-                <Textarea
-                  id='description'
-                  placeholder='Brief description of the organization'
-                  {...register('description')}
-                />
-                {errors.description && (
-                  <p className='text-sm text-destructive'>
-                    {errors.description.message}
-                  </p>
-                )}
-              </div>
-            </div>
-
-            {/* Admin User Information */}
-            <div className='space-y-4'>
-              <h3 className='text-lg font-semibold'>Tenant Administrator</h3>
-
-              <div className='grid grid-cols-2 gap-4'>
-                <div className='space-y-2'>
-                  <Label htmlFor='adminUser.firstName'>First Name *</Label>
-                  <Input
-                    id='adminUser.firstName'
-                    placeholder='John'
-                    {...register('adminUser.firstName')}
-                  />
-                  {errors.adminUser?.firstName && (
-                    <p className='text-sm text-destructive'>
-                      {errors.adminUser.firstName.message}
-                    </p>
-                  )}
-                </div>
-
-                <div className='space-y-2'>
-                  <Label htmlFor='adminUser.lastName'>Last Name *</Label>
-                  <Input
-                    id='adminUser.lastName'
-                    placeholder='Doe'
-                    {...register('adminUser.lastName')}
-                  />
-                  {errors.adminUser?.lastName && (
-                    <p className='text-sm text-destructive'>
-                      {errors.adminUser.lastName.message}
-                    </p>
-                  )}
-                </div>
-              </div>
-
-              <div className='space-y-2'>
-                <Label htmlFor='adminUser.email'>Email *</Label>
-                <Input
-                  id='adminUser.email'
-                  type='email'
-                  placeholder='admin@acme-corp.com'
-                  {...register('adminUser.email')}
-                />
-                {errors.adminUser?.email && (
-                  <p className='text-sm text-destructive'>
-                    {errors.adminUser.email.message}
-                  </p>
-                )}
-              </div>
-
-              <div className='grid grid-cols-2 gap-4'>
-                <div className='space-y-2'>
-                  <Label htmlFor='adminUser.phone'>Phone</Label>
-                  <Input
-                    id='adminUser.phone'
-                    placeholder='+1234567890'
-                    {...register('adminUser.phone')}
-                  />
-                  {errors.adminUser?.phone && (
-                    <p className='text-sm text-destructive'>
-                      {errors.adminUser.phone.message}
-                    </p>
-                  )}
-                </div>
-
-                <div className='space-y-2'>
-                  <Label htmlFor='adminUser.password'>Password *</Label>
-                  <Input
-                    id='adminUser.password'
-                    type='password'
-                    placeholder='Secure password'
-                    {...register('adminUser.password')}
-                  />
-                  {errors.adminUser?.password && (
-                    <p className='text-sm text-destructive'>
-                      {errors.adminUser.password.message}
-                    </p>
-                  )}
-                </div>
-              </div>
-            </div>
+            {/* Status */}
+            <SelectWithLabel
+              id='status'
+              label='Status'
+              required
+              register={register}
+              error={errors.status?.message}
+            >
+              <option value=''>Select a status</option>
+              {tenantStatusType?.lookups.map((item) => (
+                <option key={item.id} value={item.name}>
+                  {item.label}
+                </option>
+              ))}
+            </SelectWithLabel>
           </div>
 
           <DialogFooter className='mt-6'>
@@ -233,7 +159,14 @@ export function CreateTenantDialog({
               Cancel
             </Button>
             <Button type='submit' disabled={isLoading}>
-              {isLoading ? 'Creating...' : 'Create Tenant'}
+              {isLoading ? (
+                <>
+                  <LoadingSpinner size='sm' className='mr-2' />
+                  Creating...
+                </>
+              ) : (
+                'Create Tenant'
+              )}
             </Button>
           </DialogFooter>
         </form>

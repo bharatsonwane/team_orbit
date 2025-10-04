@@ -23,15 +23,7 @@ export const tenantWithTrackingSchema = baseTenantSchema.extend({
   archivedAt: z.string().nullable().optional(),
 });
 
-export const createTenantSchema = baseTenantSchema.extend({
-  adminUser: z.object({
-    email: z.string().email('Invalid email format'),
-    firstName: z.string().min(1, 'First name is required').max(100),
-    lastName: z.string().min(1, 'Last name is required').max(100),
-    phone: z.string().optional(),
-    password: z.string().min(6, 'Password must be at least 6 characters'),
-  }),
-});
+export const createTenantSchema = baseTenantSchema;
 
 export const updateTenantSchema = z.object({
   label: z.string().min(2).max(255).optional(),

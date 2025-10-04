@@ -1,15 +1,31 @@
-import z from 'zod';
+import { z } from 'zod';
 
-export const lookupSchema = z.object({
-    id: z.number().int(),
-    name: z.string().min(1).max(100),
-    label: z.string().min(1).max(255),
-    description: z.string().optional(),
-    isSystem: z.boolean(),
-    sortOrder: z.number().int().default(0),
-    createdBy: z.number().int().optional(),
-    lookupTypeId: z.number().int(),
-  });
-  
+// Individual lookup item schema
+export const lookupItemSchema = z.object({
+  id: z.number(),
+  name: z.string(),
+  label: z.string(),
+  description: z.string().nullable(),
+  isSystem: z.boolean(),
+  sortOrder: z.number(),
+  createdBy: z.number().nullable(),
+  lookupTypeId: z.number(),
+});
 
-export type Lookup = z.infer<typeof lookupSchema>;
+// Lookup type schema (contains array of lookups)
+export const lookupTypeSchema = z.object({
+  id: z.number(),
+  name: z.string(),
+  label: z.string(),
+  isSystem: z.boolean(),
+  createdAt: z.string(),
+  lookups: z.array(lookupItemSchema),
+});
+
+// Lookup list response schema (array of lookup types)
+export const lookupListResponseSchema = z.array(lookupTypeSchema);
+
+// TypeScript types
+export type LookupItem = z.infer<typeof lookupItemSchema>;
+export type LookupType = z.infer<typeof lookupTypeSchema>;
+export type LookupListResponse = z.infer<typeof lookupListResponseSchema>;

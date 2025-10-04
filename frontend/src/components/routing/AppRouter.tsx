@@ -220,7 +220,7 @@ export const platformSidebarNavigationItems: SidebarRouteWithChildren[] = [
     description: 'Super admin dashboard',
   },
   {
-    isShownInSidebar: true,
+    isShownInSidebar: false,
     path: '/tenant/:id',
     element: <TenantDetail />,
     allowedRoles: [

@@ -2,8 +2,7 @@ import { useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
+import { InputWithLabel } from '@/components/ui/input-with-label';
 import {
   Card,
   CardContent,
@@ -15,6 +14,7 @@ import {
 import { ThemeToggle } from '@/components/theme-toggle';
 import { loginSchema, type LoginFormData } from '@/schemas/validation';
 import { useAuthService } from '@/contexts/AuthContextProvider';
+import { LoadingSpinner } from '@/components/ui/loading-indicator';
 
 
 export default function Login() {
@@ -65,33 +65,33 @@ export default function Login() {
                 {error}
               </div>
             )}
-            <div className='space-y-2'>
-              <Label htmlFor='email'>Email</Label>
-              <Input
-                id='email'
-                type='email'
-                placeholder='m@example.com'
-                {...register('email')}
-              />
-              {errors.email && (
-                <p className='text-sm text-destructive'>
-                  {errors.email.message}
-                </p>
-              )}
-            </div>
-            <div className='space-y-2'>
-              <Label htmlFor='password'>Password</Label>
-              <Input id='password' type='password' {...register('password')} />
-              {errors.password && (
-                <p className='text-sm text-destructive'>
-                  {errors.password.message}
-                </p>
-              )}
-            </div>
+            <InputWithLabel
+              id='email'
+              label='Email'
+              type='email'
+              placeholder='m@example.com'
+              register={register}
+              error={errors.email?.message}
+            />
+
+            <InputWithLabel
+              id='password'
+              label='Password'
+              type='password'
+              register={register}
+              error={errors.password?.message}
+            />
           </CardContent>
           <CardFooter className='flex flex-col space-y-4'>
             <Button type='submit' className='w-full' disabled={isLoading}>
-              {isLoading ? 'Signing in...' : 'Sign in'}
+              {isLoading ? (
+                <>
+                  <LoadingSpinner size='sm' className='mr-2' />
+                  Signing in...
+                </>
+              ) : (
+                'Sign in'
+              )}
             </Button>
           </CardFooter>
         </form>

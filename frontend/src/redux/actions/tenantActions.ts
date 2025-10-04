@@ -4,6 +4,7 @@ import type {
   Tenant,
   TenantListResponse,
   TenantUsersResponse,
+  CreateTenantRequest,
 } from '@/schemas/tenant';
 
 /** Get tenant list action - API call only */
@@ -42,6 +43,22 @@ export const getTenantUsersAction = createAsyncThunk(
         `/api/tenant/${tenantId}/users`
       );
       return response.data; // Direct array response
+    } catch (error: unknown) {
+      return rejectWithValue(getAppErrorMessage(error));
+    }
+  }
+);
+
+/** Create tenant action - API call only */
+export const createTenantAction = createAsyncThunk(
+  'tenant/createTenantAction',
+  async (tenantData: CreateTenantRequest, { rejectWithValue }) => {
+    try {
+      const response = await getAxios().post<Tenant>(
+        '/api/tenant/create',
+        tenantData
+      );
+      return response.data;
     } catch (error: unknown) {
       return rejectWithValue(getAppErrorMessage(error));
     }

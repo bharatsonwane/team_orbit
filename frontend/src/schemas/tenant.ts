@@ -22,19 +22,17 @@ export type TenantListResponse = z.infer<typeof tenantListResponseSchema>;
 
 // Create tenant form schema (for CreateTenantDialog)
 export const createTenantFormSchema = z.object({
-  name: z.string().min(2, 'Tenant name must be at least 2 characters').max(255),
+  name: z
+    .string()
+    .min(1, 'Tenant name is required')
+    .max(255)
+    .regex(/^[a-zA-Z0-9_]*$/, 'Tenant name can only contain letters, numbers, and underscores'),
   label: z
     .string()
-    .min(2, 'Tenant label must be at least 2 characters')
-    .max(255),
+    .min(1, 'Label is required')
+    .max(50, 'Label cannot exceed 50 characters'),
   description: z.string().optional(),
-  adminUser: z.object({
-    email: z.string().email('Invalid email format'),
-    firstName: z.string().min(1, 'First name is required').max(100),
-    lastName: z.string().min(1, 'Last name is required').max(100),
-    phone: z.string().optional(),
-    password: z.string().min(6, 'Password must be at least 6 characters'),
-  }),
+  status: z.string().min(1, 'Status is required'),
 });
 
 export type CreateTenantFormData = z.infer<typeof createTenantFormSchema>;
@@ -44,13 +42,7 @@ export const createTenantRequestSchema = z.object({
   name: z.string(),
   label: z.string(),
   description: z.string().optional(),
-  adminUser: z.object({
-    email: z.string().email(),
-    firstName: z.string(),
-    lastName: z.string(),
-    phone: z.string().optional(),
-    password: z.string(),
-  }),
+  statusId: z.number(),
 });
 
 export type CreateTenantRequest = z.infer<typeof createTenantRequestSchema>;

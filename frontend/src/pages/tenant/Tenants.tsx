@@ -6,6 +6,7 @@ import { Building2, Plus } from 'lucide-react';
 import { HeaderLayout } from '@/components/AppLayout';
 import { CreateTenantDialog } from './components/CreateTenantDialog';
 import { TenantCard } from './components/TenantCard';
+import { LoadingIndicator } from '@/components/ui/loading-indicator';
 import { getTenantsAction } from '@/redux/actions/tenantActions';
 import {
   selectTenants,
@@ -24,10 +25,10 @@ export default function Tenants() {
   // Fetch tenants on component mount
   useEffect(() => {
     dispatch(getTenantsAction());
-  }, [dispatch]);
+  }, []);
 
   const handleTenantCreated = (newTenant: Tenant) => {
-    // TODO: Dispatch addTenant action to Redux store
+    // Tenant is automatically added to Redux store via createTenantAction
     console.log('Tenant created:', newTenant);
   };
 
@@ -42,12 +43,7 @@ export default function Tenants() {
             { label: 'List' },
           ]}
         />
-        <div className='flex items-center justify-center py-12'>
-          <div className='text-center'>
-            <div className='animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4'></div>
-            <p className='text-muted-foreground'>Loading tenants...</p>
-          </div>
-        </div>
+        <LoadingIndicator message='Loading tenants...' />
       </>
     );
   }

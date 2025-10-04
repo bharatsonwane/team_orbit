@@ -2,12 +2,14 @@ import { configureStore } from '@reduxjs/toolkit';
 import notificationSlice from './slices/notificationSlice';
 import userSlice from './slices/userSlice';
 import tenantSlice from './slices/tenantSlice';
+import lookupSlice from './slices/lookupSlice';
 
 // Root state type
 export interface RootState {
   notification: ReturnType<typeof notificationSlice.reducer>;
   user: ReturnType<typeof userSlice.reducer>;
   tenant: ReturnType<typeof tenantSlice.reducer>;
+  lookup: ReturnType<typeof lookupSlice.reducer>;
 }
 
 // Configure the store
@@ -16,6 +18,7 @@ export const store = configureStore({
     notification: notificationSlice.reducer,
     user: userSlice.reducer,
     tenant: tenantSlice.reducer,
+    lookup: lookupSlice.reducer,
   },
   middleware: getDefaultMiddleware =>
     getDefaultMiddleware({

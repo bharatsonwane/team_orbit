@@ -5,21 +5,16 @@ import type {
   TenantWithTrackingSchema,
 } from '../schemas/tenant.schema';
 import type { dbClientPool } from '../middleware/dbClientMiddleware';
-import { getHashPassword } from '../utils/authHelper';
 import { buildUpdateFields } from '../utils/queryHelper';
 import User from './user.service';
-import Lookup from './lookup.service';
 import {
   dbTransactionKeys,
-  lookupTypeKeys,
-  userRoleKeys,
-  userStatusKeys,
 } from '../utils/constants';
 import { UserWithTrackingSchema } from '../schemas/user.schema';
 
 export default class Tenant {
   /**
-   * Create a new tenant with automatic Tenant Admin creation
+   * Create a new tenant
    */
   static async createTenant(
     db: dbClientPool,
@@ -32,23 +27,7 @@ export default class Tenant {
       // Start transaction
       await client.mainPool.query(dbTransactionKeys.BEGIN);
 
-      // 1. Create the tenant
-      // First get the active tenant status ID
-      const activeTenantStatusQuery = `
-        SELECT l.id FROM lookup l
-        INNER JOIN lookup_type lt ON l."lookupTypeId" = lt.id
-        WHERE l.name = 'ACTIVE' AND lt.name = 'TENANT_STATUS'
-      `;
-
-      const statusResult = await dbClient.mainPool.query(
-        activeTenantStatusQuery
-      );
-
-      if (statusResult.rows.length === 0) {
-        throw new Error('ACTIVE not found');
-      }
-      const activeTenantStatusId = statusResult.rows[0].id;
-
+      // Create the tenant
       const tenantQuery = `
         INSERT INTO tenant (name, label, description, "statusId", "isArchived", "createdAt", "updatedAt")
         VALUES ($1, $2, $3, $4, FALSE, NOW(), NOW())
@@ -59,53 +38,10 @@ export default class Tenant {
         tenantData.name,
         tenantData.label,
         tenantData.description,
-        activeTenantStatusId,
+        tenantData.statusId,
       ]);
 
       const tenant = tenantResult.rows[0];
-
-      // 2. Get Tenant Admin role ID
-      const tenantAdminRoleLookupData =
-        await Lookup.getLookupDataByLookupTypeNameAndLookupName(dbClient, {
-          lookupTypeName: lookupTypeKeys.USER_ROLE,
-          lookupName: userRoleKeys.TENANT_ADMIN,
-        });
-      const tenantAdminRoleId = tenantAdminRoleLookupData.id;
-
-      const userStatusLookupData =
-        await Lookup.getLookupDataByLookupTypeNameAndLookupName(dbClient, {
-          lookupTypeName: lookupTypeKeys.USER_STATUS,
-          lookupName: userStatusKeys.ACTIVE,
-        });
-      const userStatusId = userStatusLookupData.id;
-
-      // 3. Hash the admin user password
-      const hashPassword = await getHashPassword(tenantData.adminUser.password);
-
-      // 4. Create the Tenant Admin user
-      const adminUser = await User.signupUser(dbClient, {
-        email: tenantData.adminUser.email,
-        hashPassword,
-        phone: tenantData.adminUser.phone || '',
-        firstName: tenantData.adminUser.firstName,
-        lastName: tenantData.adminUser.lastName,
-        statusId: userStatusId,
-        tenantId: tenant.id,
-      });
-
-      // 5. Assign Tenant Admin role to the user
-      await dbClient.mainPool.query(
-        `INSERT INTO user_role_xref ("userId", "roleId", "createdAt", "updatedAt") VALUES ($1, $2, NOW(), NOW())`,
-        [adminUser.id, tenantAdminRoleId]
-      );
-
-      // 6. Get the admin user with roles for response
-      const adminUserWithRoles = await User.getUserByIdOrEmailOrPhone(
-        dbClient,
-        {
-          userId: adminUser.id,
-        }
-      );
 
       // Commit transaction
       await dbClient.mainPool.query(dbTransactionKeys.COMMIT);

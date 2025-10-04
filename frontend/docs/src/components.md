@@ -448,6 +448,141 @@ import { Checkbox } from '@/components/ui/checkbox';
 <label htmlFor="terms">Accept terms</label>
 ```
 
+#### Loading Indicator
+
+Generic loading component with multiple variants for different use cases.
+
+```typescript
+import { LoadingIndicator, LoadingSpinner, LoadingOverlay, InlineLoading } from '@/components/ui/loading-indicator';
+
+// Basic loading indicator
+<LoadingIndicator message="Loading data..." />
+
+// Different sizes
+<LoadingSpinner size="sm" />
+<LoadingSpinner size="md" />
+<LoadingSpinner size="lg" />
+
+// Full screen overlay
+<LoadingOverlay message="Processing..." />
+
+// Inline loading with text
+<InlineLoading message="Saving..." size="sm" />
+
+// Custom styling
+<LoadingIndicator 
+  message="Custom loading message"
+  size="lg"
+  className="bg-gray-100"
+  centered={false}
+/>
+```
+
+**Props:**
+- `message`: Loading message to display
+- `size`: Size of the spinner ('sm', 'md', 'lg')
+- `className`: Additional CSS classes
+- `fullScreen`: Whether to show full screen overlay
+- `centered`: Whether to center the content
+
+**Variants:**
+- `LoadingIndicator`: Main component with customizable options
+- `LoadingSpinner`: Just the spinning icon
+- `LoadingOverlay`: Full screen overlay variant
+- `InlineLoading`: Inline variant with text
+
+#### Input With Label
+
+Generic input component that combines label, input field, error handling, and helper text into a reusable component. Use props to configure different input types.
+
+```typescript
+import { InputWithLabel, SelectWithLabel } from '@/components/ui/input-with-label';
+
+// Text input
+<InputWithLabel
+  id="name"
+  label="Name"
+  placeholder="Enter your name"
+  required
+  register={register}
+  error={errors.name?.message}
+  helperText="This field is required"
+/>
+
+// Email input
+<InputWithLabel
+  id="email"
+  label="Email"
+  type="email"
+  placeholder="user@example.com"
+  register={register}
+  error={errors.email?.message}
+/>
+
+// Password input
+<InputWithLabel
+  id="password"
+  label="Password"
+  type="password"
+  register={register}
+  error={errors.password?.message}
+/>
+
+// Number input
+<InputWithLabel
+  id="age"
+  label="Age"
+  type="number"
+  register={register}
+  error={errors.age?.message}
+/>
+
+// Textarea
+<InputWithLabel
+  id="description"
+  label="Description"
+  variant="textarea"
+  placeholder="Enter description"
+  rows={4}
+  register={register}
+  error={errors.description?.message}
+/>
+
+// Select dropdown
+<SelectWithLabel
+  id="status"
+  label="Status"
+  required
+  register={register}
+  error={errors.status?.message}
+>
+  <option value="">Select a status</option>
+  <option value="active">Active</option>
+  <option value="inactive">Inactive</option>
+</SelectWithLabel>
+```
+
+**InputWithLabel Props:**
+- `id`: Unique identifier for the input
+- `label`: Label text
+- `required`: Whether the field is required (shows asterisk)
+- `error`: Error message to display
+- `helperText`: Helper text to display below the input
+- `className`: Additional CSS classes for the container
+- `inputClassName`: Additional CSS classes for the input
+- `disabled`: Whether the input is disabled
+- `register`: Register function from react-hook-form
+- `placeholder`: Placeholder text
+- `maxLength`: Maximum length for the input
+- `minLength`: Minimum length for the input
+- `rows`: Number of rows for textarea
+- `type`: Input type ('text', 'email', 'password', 'number', 'tel', 'url', 'search')
+- `variant`: Input variant ('input' for regular input, 'textarea' for textarea)
+
+**SelectWithLabel Props:**
+- Same as InputWithLabel except `type` and `variant` are not applicable
+- `children`: Select options as React nodes
+
 #### Radio Group
 
 ```typescript
@@ -1106,7 +1241,7 @@ function CreateUserDialog() {
 
 ### CreateTenantDialog
 
-**Purpose**: Comprehensive dialog for creating new tenant organizations with admin user setup.
+**Purpose**: Streamlined dialog for creating new tenant organizations with essential information only.
 
 **Location**: `src/pages/tenant/components/CreateTenantDialog.tsx`
 
@@ -1120,12 +1255,13 @@ interface CreateTenantDialogProps {
 ```
 
 #### Features
-- Multi-section form (Tenant Info + Admin User)
-- Zod validation schema
-- Loading states and error handling
-- Customizable trigger button
-- Auto-close on success
-- Form reset functionality
+- **Simplified Form**: Only essential tenant fields (name, label, description, status)
+- **Direct Lookup Integration**: Uses lookup data directly without transformations
+- **Validation**: Regex validation for tenant name (letters, numbers, underscores only)
+- **Status Dropdown**: Populated from TENANT_STATUS lookup data
+- **Zod Schema**: Form validation with proper error handling
+- **Loading States**: During form submission
+- **Form Reset**: Automatic reset on successful creation
 
 #### Usage Example
 
@@ -1142,17 +1278,41 @@ interface CreateTenantDialogProps {
 
 ```typescript
 const createTenantFormSchema = z.object({
-  name: z.string().min(2).max(255),
-  label: z.string().min(2).max(255),
+  name: z
+    .string()
+    .min(1, 'Tenant name is required')
+    .max(255)
+    .regex(/^[a-zA-Z0-9_]*$/, 'Tenant name can only contain letters, numbers, and underscores'),
+  label: z
+    .string()
+    .min(1, 'Label is required')
+    .max(50, 'Label cannot exceed 50 characters'),
   description: z.string().optional(),
-  adminUser: z.object({
-    email: z.string().email(),
-    firstName: z.string().min(1).max(100),
-    lastName: z.string().min(1).max(100),
-    phone: z.string().optional(),
-    password: z.string().min(6),
-  }),
+  status: z.string().min(1, 'Status is required'),
 });
+```
+
+#### Form Fields
+
+- **Tenant Name**: Required field with regex validation (`/^[a-zA-Z0-9_]*$/`)
+- **Label**: Required field with 50 character limit
+- **Description**: Optional textarea for additional details
+- **Status**: Required dropdown populated from lookup data
+
+#### Lookup Integration
+
+```typescript
+// Direct access to lookup data - no transformations
+const tenantStatusType = useSelector((state: RootState) => 
+  selectLookupTypeByName(state, 'TENANT_STATUS')
+);
+
+// Direct mapping in dropdown
+{tenantStatusType?.lookups.map((item) => (
+  <option key={item.id} value={item.name}>
+    {item.label}
+  </option>
+))}
 ```
 
 ### EditTenantDialog
