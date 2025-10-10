@@ -17,25 +17,41 @@ src/components/
 │   ├── form.tsx            # Form management components
 │   └── ... (42 more)
 │
+├── routing/                 # Routing components
+│   ├── AppRoutes.tsx       # Route configuration
+│   └── RouteGuardRenderer.tsx  # Route protection
+│
 ├── AppLayout.tsx           # Main application layout wrapper
 ├── AppSidebar.tsx          # Dynamic navigation sidebar
-├── AppRouter.tsx           # Route configuration & guards
+├── AddUserModal.tsx        # Unified user creation modal (platform & tenant)
 ├── ComingSoon.tsx          # Placeholder for unimplemented features
 ├── theme-provider.tsx      # Theme context provider
 └── theme-toggle.tsx        # Theme switcher component
 
 src/pages/
-├── auth/                   # Authentication pages
-├── dashboard/              # Main dashboard pages
-├── admin/                  # Admin management pages
-├── profile/                # User profile pages
-└── tenant/                 # Tenant module
-    ├── components/
-    │   ├── CreateTenantDialog.tsx  # Tenant creation dialog with form
-    │   ├── EditTenantDialog.tsx    # Tenant edit dialog with form
-    │   └── TenantCard.tsx          # Individual tenant display card
-    ├── Tenants.tsx                 # Main tenant list page
-    └── TenantDetail.tsx            # Tenant detail page
+├── auth/                   # Public authentication pages
+│   ├── Login.tsx
+│   └── Signup.tsx
+├── platform/               # Platform admin pages
+│   ├── PlatformDashboard.tsx
+│   ├── notification/
+│   │   └── PlatformNotifications.tsx
+│   ├── tenant/
+│   │   ├── Tenants.tsx
+│   │   ├── TenantDetail.tsx
+│   │   ├── Employees.tsx
+│   │   └── components/
+│   │       ├── CreateTenantModal.tsx  # Tenant creation modal
+│   │       ├── EditTenantModal.tsx    # Tenant edit modal
+│   │       ├── EditUserModal.tsx      # User edit modal
+│   │       └── TenantCard.tsx         # Tenant display card
+│   └── users/
+│       └── PlatformUsers.tsx
+├── tenant/                 # Tenant user pages
+│   ├── TenantHome.tsx
+│   └── TenantNotifications.tsx
+└── profile/
+    └── Profile.tsx
 ```
 
 ---
@@ -237,6 +253,108 @@ const isActiveLink = (href: string) => {
   return location.pathname === href || location.pathname.startsWith(href + "/");
 };
 ```
+
+---
+
+### AddUserModal
+
+**Purpose**: Unified modal for creating both platform and tenant users with context-aware behavior.
+
+**Location**: `src/components/AddUserModal.tsx`
+
+#### Props
+
+```typescript
+interface AddUserModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  tenant?: Tenant; // Optional - if provided, creates tenant user; otherwise creates platform user
+  onUserCreated?: () => void;
+}
+```
+
+#### Features
+
+- **Context-Aware**: Adapts behavior based on whether `tenant` prop is provided
+- **Platform Users**: When `tenant` is undefined, creates platform users with platform roles
+- **Tenant Users**: When `tenant` is provided, creates tenant users with tenant roles
+- **Role Filtering**: Automatically filters available roles based on context
+- **Form Validation**: Zod schema validation for all fields
+- **Loading States**: During user creation
+- **Error Handling**: Displays error messages from API
+- **Form Reset**: Automatic reset on successful creation
+- **Status Dropdown**: Populated from USER_STATUS lookup data
+- **Role Dropdown**: Populated from USER_ROLE lookup data (filtered by roleCategory)
+
+#### Usage Examples
+
+**Creating Platform Users:**
+
+```typescript
+// In PlatformUsers.tsx
+<AddUserModal
+  isOpen={isAddModalOpen}
+  onClose={() => setIsAddModalOpen(false)}
+  // No tenant prop = platform user
+  onUserCreated={fetchPlatformUsers}
+/>
+```
+
+**Creating Tenant Users:**
+
+```typescript
+// In Employees.tsx or TenantDetail.tsx
+<AddUserModal
+  isOpen={isAddModalOpen}
+  onClose={() => setIsAddModalOpen(false)}
+  tenant={tenant} // Tenant prop = tenant user
+  onUserCreated={fetchTenantUsers}
+/>
+```
+
+#### Role Filtering Logic
+
+```typescript
+const isPlatformUser = !tenant;
+
+// Filter roles based on context
+const availableRoles = userRoleType?.lookups.filter((role) =>
+  isPlatformUser
+    ? role.name.startsWith('PLATFORM_')  // Platform roles only
+    : role.name.startsWith('TENANT_')    // Tenant roles only
+);
+```
+
+#### Form Schema
+
+```typescript
+const createUserFormSchema = z.object({
+  title: z.string().min(1, "Title is required"),
+  firstName: z.string().min(1, "First name is required"),
+  lastName: z.string().min(1, "Last name is required"),
+  email: z.string().email("Invalid email address"),
+  phone: z.string().min(1, "Phone is required"),
+  password: z.string().min(8, "Password must be at least 8 characters"),
+  statusId: z.string().min(1, "Status is required"),
+  roleIds: z.array(z.string()).min(1, "At least one role is required"),
+  tenantId: z.number().optional(),
+});
+```
+
+#### API Integration
+
+- **Endpoint**: `POST /api/user/create`
+- **Redux Action**: `createUserAction()`
+- **Success**: Calls `onUserCreated()` callback and closes modal
+- **Error**: Displays error message using toast notification
+
+#### Component Benefits
+
+1. **Reusability**: Single component handles both platform and tenant user creation
+2. **Consistency**: Same UX across different contexts
+3. **Maintainability**: Changes apply to both use cases
+4. **Type Safety**: Full TypeScript support with Zod validation
+5. **Performance**: Efficient role filtering and form handling
 
 ---
 
@@ -1250,16 +1368,16 @@ function CreateUserDialog() {
 
 ## 🏢 Page-Specific Components
 
-### CreateTenantDialog
+### CreateTenantModal
 
-**Purpose**: Streamlined dialog for creating new tenant organizations with essential information only.
+**Purpose**: Streamlined modal for creating new tenant organizations with essential information only.
 
-**Location**: `src/pages/tenant/components/CreateTenantDialog.tsx`
+**Location**: `src/pages/platform/tenant/components/CreateTenantModal.tsx`
 
 #### Props
 
 ```typescript
-interface CreateTenantDialogProps {
+interface CreateTenantModalProps {
   onTenantCreated?: (tenant: Tenant) => void;
   triggerButton?: React.ReactNode;
 }
@@ -1278,7 +1396,7 @@ interface CreateTenantDialogProps {
 #### Usage Example
 
 ```typescript
-<CreateTenantDialog
+<CreateTenantModal
   onTenantCreated={(newTenant) => {
     setTenants(prev => [newTenant, ...prev]);
   }}
@@ -1330,16 +1448,16 @@ const tenantStatusType = useSelector((state: RootState) =>
 ))}
 ```
 
-### EditTenantDialog
+### EditTenantModal
 
-**Purpose**: Modal dialog for editing existing tenant information with form validation and save/cancel actions.
+**Purpose**: Modal for editing existing tenant information with form validation and save/cancel actions.
 
-**Location**: `src/pages/tenant/components/EditTenantDialog.tsx`
+**Location**: `src/pages/platform/tenant/components/EditTenantModal.tsx`
 
 #### Props
 
 ```typescript
-interface EditTenantDialogProps {
+interface EditTenantModalProps {
   tenant: Tenant | null;
   isOpen: boolean;
   onClose: () => void;
@@ -1360,7 +1478,7 @@ interface EditTenantDialogProps {
 #### Usage Example
 
 ```typescript
-<EditTenantDialog
+<EditTenantModal
   tenant={selectedTenant}
   isOpen={isEditModalOpen}
   onClose={() => setIsEditModalOpen(false)}
@@ -1390,11 +1508,59 @@ const editTenantFormSchema = z.object({
 - **Description**: Optional textarea for additional details
 - **Archive Status**: Switch toggle for archiving/unarchiving
 
+### EditUserModal
+
+**Purpose**: Modal for editing existing user information with form validation and role management.
+
+**Location**: `src/pages/platform/tenant/components/EditUserModal.tsx`
+
+#### Props
+
+```typescript
+interface EditUserModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  userId: number;
+  onUserUpdated?: () => void;
+}
+```
+
+#### Features
+
+- Pre-populated form fields with existing user data
+- Zod validation schema for form validation
+- Loading states during save operation
+- Role management with multi-select
+- Status dropdown
+- Save and Cancel buttons with proper states
+- Auto-close on successful update
+- Form reset functionality
+
+#### Usage Example
+
+```typescript
+<EditUserModal
+  isOpen={!!editingUserId}
+  onClose={() => setEditingUserId(null)}
+  userId={editingUserId}
+  onUserUpdated={fetchUsers}
+/>
+```
+
+#### API Integration
+
+- **Endpoint**: `PUT /api/user/:id`
+- **Redux Action**: `updateUserAction()`
+- **Success**: Calls `onUserUpdated()` callback and closes modal
+- **Error**: Displays error message using toast notification
+
+---
+
 ### TenantCard
 
 **Purpose**: Individual tenant display card with actions and status information.
 
-**Location**: `src/pages/tenant/components/TenantCard.tsx`
+**Location**: `src/pages/platform/tenant/components/TenantCard.tsx`
 
 #### Props
 
@@ -1427,7 +1593,7 @@ interface TenantCardProps {
 
 #### Navigation Behavior
 
-- **View Button**: Automatically navigates to `/tenant/{tenant.id}`
+- **View Button**: Automatically navigates to `/platform/tenant/{tenant.id}`
 - **Edit Button**: Calls the `onEdit` callback if provided
 - **Direct Navigation**: Uses `useNavigate()` hook for seamless routing
 
