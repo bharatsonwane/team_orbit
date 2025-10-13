@@ -11,7 +11,7 @@ TeamOrbit uses **PostgreSQL** with a multi-schema architecture for tenant isolat
 ```
 PostgreSQL Database: teamorbit
 ├── main                    # Global system data
-│   ├── app_user           # User accounts
+│   ├── user           # User accounts
 │   ├── lookup_type        # Reference data categories
 │   ├── lookup             # Reference data values
 │   ├── tenant             # Tenant organizations
@@ -52,7 +52,7 @@ npm run seed
 
 ## 📊 Main Schema Tables
 
-### app_user
+### user
 
 Stores user accounts and profiles.
 
@@ -101,7 +101,7 @@ Chat channels for direct and group conversations.
 - `id` - Primary key
 - `name` - Channel name
 - `type` - Channel type (DIRECT, GROUP, BROADCAST)
-- `created_by` - User ID (references main.app_user)
+- `created_by` - User ID (references main.user)
 - `created_at`, `updated_at` - Timestamps
 
 ### chat_message
@@ -112,7 +112,7 @@ Messages within chat channels.
 
 - `id` - Primary key
 - `channel_id` - References chat_channel
-- `sender_id` - User ID (references main.app_user)
+- `sender_id` - User ID (references main.user)
 - `message` - Message content
 - `message_type` - Type (TEXT, IMAGE, FILE)
 - `created_at` - Timestamp
@@ -129,7 +129,7 @@ SELECT
     'name', r.name,
     'label', r.label
   )) AS roles
-FROM app_user u
+FROM user u
 LEFT JOIN user_role_xref urx ON u.id = urx."userId"
 LEFT JOIN lookup r ON urx."roleId" = r.id
 WHERE u.id = 1
@@ -214,18 +214,18 @@ Create SQL migration files for schema changes:
 -- src/database/migrations/main/003-add-user-profile-fields.do.sql
 -- Add new fields to user profile table
 
-ALTER TABLE app_user
+ALTER TABLE user
 ADD COLUMN phone VARCHAR(20),
 ADD COLUMN address TEXT,
 ADD COLUMN date_of_birth DATE;
 
 -- Create index for phone number
-CREATE INDEX idx_user_phone ON app_user(phone);
+CREATE INDEX idx_user_phone ON user(phone);
 
 -- Add comment
-COMMENT ON COLUMN app_user.phone IS 'User phone number';
-COMMENT ON COLUMN app_user.address IS 'User address';
-COMMENT ON COLUMN app_user.date_of_birth IS 'User date of birth';
+COMMENT ON COLUMN user.phone IS 'User phone number';
+COMMENT ON COLUMN user.address IS 'User address';
+COMMENT ON COLUMN user.date_of_birth IS 'User date of birth';
 ```
 
 **SQL Migration Guidelines:**
@@ -252,7 +252,7 @@ export async function up(pool: Pool): Promise<void> {
     await pool.query(`
       INSERT INTO user_role_xref ("userId", "roleId")
       SELECT u.id, r.id
-      FROM app_user u
+      FROM user u
       CROSS JOIN lookup r
       WHERE r.key = 'PLATFORM_USER'
       AND NOT EXISTS (
@@ -303,7 +303,7 @@ export async function down(pool: Pool): Promise<void> {
 -- src/database/migrations/main/005-create-notifications-table.do.sql
 CREATE TABLE notification (
   id SERIAL PRIMARY KEY,
-  user_id INTEGER NOT NULL REFERENCES app_user(id),
+  user_id INTEGER NOT NULL REFERENCES user(id),
   title VARCHAR(255) NOT NULL,
   message TEXT NOT NULL,
   type VARCHAR(50) NOT NULL DEFAULT 'info',
@@ -347,7 +347,7 @@ export async function up(pool: Pool): Promise<void> {
     await pool.query(`
       CREATE TABLE user_preferences (
         id SERIAL PRIMARY KEY,
-        user_id INTEGER NOT NULL REFERENCES app_user(id),
+        user_id INTEGER NOT NULL REFERENCES user(id),
         theme VARCHAR(20) DEFAULT 'light',
         language VARCHAR(10) DEFAULT 'en',
         notifications_enabled BOOLEAN DEFAULT TRUE,
@@ -364,7 +364,7 @@ export async function up(pool: Pool): Promise<void> {
         'light' as theme,
         'en' as language,
         TRUE as notifications_enabled
-      FROM app_user
+      FROM user
       WHERE is_active = TRUE
     `);
 
@@ -434,7 +434,7 @@ CHECK (attachment_size IS NULL OR attachment_size > 0);
    npm run migrate
 
    # Verify schema changes
-   psql -d teamorbit -c "\d app_user"
+   psql -d teamorbit -c "\d user"
    ```
 
 ### Production Deployment
@@ -458,7 +458,7 @@ CHECK (attachment_size IS NULL OR attachment_size > 0);
    curl http://localhost:5100/health
 
    # Verify schema changes
-   psql -h localhost -U teamorbit -d teamorbit -c "\d app_user"
+   psql -h localhost -U teamorbit -d teamorbit -c "\d user"
    ```
 
 4. **Monitor Application**
@@ -477,9 +477,9 @@ DO $$
 BEGIN
   IF NOT EXISTS (
     SELECT 1 FROM information_schema.columns
-    WHERE table_name = 'app_user' AND column_name = 'phone'
+    WHERE table_name = 'user' AND column_name = 'phone'
   ) THEN
-    ALTER TABLE app_user ADD COLUMN phone VARCHAR(20);
+    ALTER TABLE user ADD COLUMN phone VARCHAR(20);
   END IF;
 END $$;
 ```
@@ -488,13 +488,13 @@ END $$;
 
 ```sql
 -- Good: Add nullable column first
-ALTER TABLE app_user ADD COLUMN new_field VARCHAR(100);
+ALTER TABLE user ADD COLUMN new_field VARCHAR(100);
 
 -- Later migration: Populate data
-UPDATE app_user SET new_field = 'default_value' WHERE new_field IS NULL;
+UPDATE user SET new_field = 'default_value' WHERE new_field IS NULL;
 
 -- Final migration: Make NOT NULL
-ALTER TABLE app_user ALTER COLUMN new_field SET NOT NULL;
+ALTER TABLE user ALTER COLUMN new_field SET NOT NULL;
 ```
 
 ### 3. Proper Indexing
@@ -593,7 +593,7 @@ npm run migrate
 
 3. **Permission Denied**
    ```
-   Error: permission denied for table app_user
+   Error: permission denied for table user
    ```
    **Solution**: Check database user permissions and grant necessary privileges
 

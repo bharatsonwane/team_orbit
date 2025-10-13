@@ -186,7 +186,7 @@ SELECT
     ) FILTER (WHERE lr.id IS NOT NULL),
     '[]'
   ) AS roles
-FROM app_user u
+FROM user u
 LEFT JOIN user_role_xref urx ON u.id = urx."userId"
 LEFT JOIN lookup lr ON urx."roleId" = lr.id
 LEFT JOIN lookup ls ON u."statusId" = ls.id
@@ -431,7 +431,7 @@ static async createUser(data: any, mainPool: Pool): Promise<User> {
     }
 
     const existing = await mainPool.query(
-      'SELECT id FROM app_user WHERE email = $1',
+      'SELECT id FROM user WHERE email = $1',
       [data.email]
     );
 
@@ -459,7 +459,7 @@ static async createUserWithRole(userData: any, mainPool: Pool): Promise<User> {
 
     // Create user
     const userResult = await client.query(
-      'INSERT INTO app_user (email, password) VALUES ($1, $2) RETURNING *',
+      'INSERT INTO user (email, password) VALUES ($1, $2) RETURNING *',
       [userData.email, hashedPassword]
     );
 
@@ -498,7 +498,7 @@ static async getUserWithRoles(id: string, mainPool: Pool): Promise<User> {
         ) FILTER (WHERE r.id IS NOT NULL),
         '[]'
       ) AS roles
-    FROM app_user u
+    FROM user u
     LEFT JOIN user_role_xref urx ON u.id = urx."userId"
     LEFT JOIN lookup r ON urx."roleId" = r.id
     WHERE u.id = $1
@@ -511,7 +511,7 @@ static async getUserWithRoles(id: string, mainPool: Pool): Promise<User> {
 
 // ❌ Bad: Multiple separate queries (N+1 problem)
 static async getUserWithRoles(id: string, mainPool: Pool): Promise<User> {
-  const user = await mainPool.query('SELECT * FROM app_user WHERE id = $1', [id]);
+  const user = await mainPool.query('SELECT * FROM user WHERE id = $1', [id]);
   const roles = await mainPool.query(
     'SELECT r.* FROM lookup r JOIN user_role_xref urx ON r.id = urx."roleId" WHERE urx."userId" = $1',
     [id]

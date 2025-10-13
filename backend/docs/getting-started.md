@@ -411,7 +411,7 @@ export default class UserService {
             ) FILTER (WHERE r.id IS NOT NULL),
             '[]'
           ) AS roles
-        FROM app_user u
+        FROM user u
         LEFT JOIN user_role_xref urx ON u.id = urx."userId"
         LEFT JOIN lookup r ON urx."roleId" = r.id
         WHERE u.id = $1 AND u.is_active = true

@@ -85,7 +85,7 @@ EXCEPTION
 END $$;
 
 -- user Table
-CREATE TABLE IF NOT EXISTS app_user (
+CREATE TABLE IF NOT EXISTS user (
     id SERIAL PRIMARY KEY,
     title title_enum, -- Use ENUM type
     "firstName" VARCHAR(255) NOT NULL,
@@ -121,6 +121,6 @@ CREATE TABLE IF NOT EXISTS user_role_xref (
     "roleId" INT NOT NULL,
     "createdAt" TIMESTAMP DEFAULT NOW() NOT NULL,
     "updatedAt" TIMESTAMP DEFAULT NOW() NOT NULL,
-    CONSTRAINT fk_user_role_xref_user FOREIGN KEY ("userId") REFERENCES app_user (id),
+    CONSTRAINT fk_user_role_xref_user FOREIGN KEY ("userId") REFERENCES user (id),
     CONSTRAINT fk_user_role_xref_role FOREIGN KEY ("roleId") REFERENCES lookup (id)
 );

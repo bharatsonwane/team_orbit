@@ -16,7 +16,7 @@ export default class User {
     userData: UserSignupServiceSchema
   ): Promise<UserWithTrackingSchema> {
     const userSignupQuery = `
-        INSERT INTO app_user (
+        INSERT INTO user (
                 email,
                 "hashPassword",
                 phone,
@@ -75,7 +75,7 @@ export default class User {
 
       // Create the user
       const createUserQuery = `
-        INSERT INTO app_user (
+        INSERT INTO user (
           title,
           "firstName",
           "lastName",
@@ -196,7 +196,7 @@ export default class User {
       .join(", ");
 
     const queryString = `
-      UPDATE app_user
+      UPDATE user
       SET ${setQueryString}, "updatedAt" = NOW()
       WHERE id = ${userId} RETURNING *;`;
     const results = await dbClient.mainPool.query(queryString);
@@ -216,7 +216,7 @@ export default class User {
     }
   ): Promise<UserWithTrackingSchema> {
     const queryString = `
-      UPDATE app_user
+      UPDATE user
       SET "hashPassword" = '${hashPassword}', "updatedAt" = NOW()
       WHERE id = ${userId} RETURNING *;`;
     const results = await dbClient.mainPool.query(queryString);
@@ -298,7 +298,7 @@ export default class User {
           '[]'::json
         ) as "roles"
       FROM 
-        app_user up
+        user up
       LEFT JOIN lookup ls ON up."statusId" = ls.id
       LEFT JOIN user_role_xref urx ON up.id = urx."userId"
       LEFT JOIN lookup l ON urx."roleId" = l.id
@@ -366,7 +366,7 @@ export default class User {
           up."createdAt",
           up."updatedAt"
       FROM 
-        app_user up
+        user up
       LEFT JOIN lookup ls ON up."statusId" = ls.id
       ${roleJoin}
       ${whereClause}

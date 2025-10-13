@@ -1,5 +1,5 @@
-import { PoolClient } from 'pg';
-import bcrypt from 'bcryptjs';
+import { PoolClient } from "pg";
+import bcrypt from "bcryptjs";
 
 interface Lookup {
   id?: number;
@@ -43,132 +43,132 @@ interface AppUser {
 
 const lookupData: LookupTypeWithLookupsSchema[] = [
   {
-    name: 'USER_ROLE',
-    label: 'User Role',
+    name: "USER_ROLE",
+    label: "User Role",
     isSystem: true,
     lookups: [
       {
-        name: 'PLATFORM_SUPER_ADMIN',
-        label: 'Platform Super Admin',
-        category: 'PLATFORM',
-        description: 'Highest level administrator with full system access',
+        name: "PLATFORM_SUPER_ADMIN",
+        label: "Platform Super Admin",
+        category: "PLATFORM",
+        description: "Highest level administrator with full system access",
         isSystem: true,
         sortOrder: 1,
       },
       {
-        name: 'PLATFORM_ADMIN',
-        label: 'Platform Admin',
-        category: 'PLATFORM',
-        description: 'Platform administrator with administrative privileges',
+        name: "PLATFORM_ADMIN",
+        label: "Platform Admin",
+        category: "PLATFORM",
+        description: "Platform administrator with administrative privileges",
         isSystem: true,
         sortOrder: 2,
       },
       {
-        name: 'PLATFORM_USER',
-        label: 'Platform User',
-        category: 'PLATFORM',
-        description: 'Standard platform user with basic access',
+        name: "PLATFORM_USER",
+        label: "Platform User",
+        category: "PLATFORM",
+        description: "Standard platform user with basic access",
         isSystem: true,
         sortOrder: 3,
       },
       {
-        name: 'TENANT_ADMIN',
-        label: 'Tenant Admin',
-        category: 'TENANT',
-        description: 'Tenant administrator with full tenant access',
+        name: "TENANT_ADMIN",
+        label: "Tenant Admin",
+        category: "TENANT",
+        description: "Tenant administrator with full tenant access",
         isSystem: true,
         sortOrder: 4,
       },
       {
-        name: 'TENANT_MANAGER',
-        label: 'Tenant Manager',
-        category: 'TENANT',
-        description: 'Tenant manager with limited administrative access',
+        name: "TENANT_MANAGER",
+        label: "Tenant Manager",
+        category: "TENANT",
+        description: "Tenant manager with limited administrative access",
         isSystem: true,
         sortOrder: 5,
       },
       {
-        name: 'TENANT_USER',
-        label: 'Tenant User',
-        category: 'TENANT',
-        description: 'Standard tenant user with basic tenant access',
+        name: "TENANT_USER",
+        label: "Tenant User",
+        category: "TENANT",
+        description: "Standard tenant user with basic tenant access",
         isSystem: true,
         sortOrder: 6,
       },
     ],
   },
   {
-    name: 'USER_STATUS',
-    label: 'User Status',
+    name: "USER_STATUS",
+    label: "User Status",
     isSystem: true,
     lookups: [
       {
-        name: 'PENDING',
-        label: 'Pending',
-        description: 'User account is pending activation',
+        name: "PENDING",
+        label: "Pending",
+        description: "User account is pending activation",
         isSystem: true,
         sortOrder: 1,
       },
       {
-        name: 'ACTIVE',
-        label: 'Active',
-        description: 'User account is active and can access the system',
+        name: "ACTIVE",
+        label: "Active",
+        description: "User account is active and can access the system",
         isSystem: true,
         sortOrder: 2,
       },
       {
-        name: 'DEACTIVATED',
-        label: 'Deactivated',
-        description: 'User account is temporarily deactivated',
+        name: "DEACTIVATED",
+        label: "Deactivated",
+        description: "User account is temporarily deactivated",
         isSystem: true,
         sortOrder: 3,
       },
     ],
   },
   {
-    name: 'TENANT_STATUS',
-    label: 'Tenant Status',
+    name: "TENANT_STATUS",
+    label: "Tenant Status",
     isSystem: true,
     lookups: [
       {
-        name: 'PENDING',
-        label: 'Pending',
-        description: 'Tenant is pending approval',
+        name: "PENDING",
+        label: "Pending",
+        description: "Tenant is pending approval",
         isSystem: true,
         sortOrder: 1,
       },
       {
-        name: 'ACTIVE',
-        label: 'Active',
-        description: 'Tenant is active and operational',
+        name: "ACTIVE",
+        label: "Active",
+        description: "Tenant is active and operational",
         isSystem: true,
         sortOrder: 2,
       },
       {
-        name: 'DEACTIVATED',
-        label: 'Deactivated',
-        description: 'Tenant is temporarily deactivated',
+        name: "DEACTIVATED",
+        label: "Deactivated",
+        description: "Tenant is temporarily deactivated",
         isSystem: true,
         sortOrder: 3,
       },
     ],
   },
   {
-    name: 'CHAT_TYPE',
-    label: 'Chat Type',
+    name: "CHAT_TYPE",
+    label: "Chat Type",
     isSystem: true,
     lookups: [
       {
-        name: 'ONE_TO_ONE',
-        label: '1:1 Chat',
-        description: 'Direct message between two users',
+        name: "ONE_TO_ONE",
+        label: "1:1 Chat",
+        description: "Direct message between two users",
         isSystem: true,
         sortOrder: 1,
       },
       {
-        name: 'GROUP',
-        label: 'Group Chat',
-        description: 'Group conversation with multiple users',
+        name: "GROUP",
+        label: "Group Chat",
+        description: "Group conversation with multiple users",
         isSystem: true,
         sortOrder: 2,
       },
@@ -198,7 +198,7 @@ export async function up(client: PoolClient): Promise<void> {
       } else {
         /** If it already existed, fetch the existing ID */
         const existingResult = await client.query(
-          'SELECT id FROM lookup_type WHERE name = $1',
+          "SELECT id FROM lookup_type WHERE name = $1",
           [data.name]
         );
         lookupTypeId = existingResult.rows[0].id;
@@ -262,34 +262,34 @@ export async function up(client: PoolClient): Promise<void> {
     await upsertAndFetchLookupData();
 
   const superAdminRoleData = await getLookupDataByLookupTypeNameAndLookupName({
-    lookupName: 'PLATFORM_SUPER_ADMIN',
-    lookupTypeName: 'USER_ROLE',
+    lookupName: "PLATFORM_SUPER_ADMIN",
+    lookupTypeName: "USER_ROLE",
   });
 
   const activeUserStatusData = await getLookupDataByLookupTypeNameAndLookupName(
     {
-      lookupName: 'ACTIVE',
-      lookupTypeName: 'USER_STATUS',
+      lookupName: "ACTIVE",
+      lookupTypeName: "USER_STATUS",
     }
   );
 
   const upsertAndFetchUserData = async () => {
     const userDataList: AppUser[] = [
       {
-        title: 'Mr',
-        firstName: 'SuperFirstName',
-        lastName: 'SuperLastName',
-        middleName: 'SuperMiddleName',
-        maidenName: '',
-        gender: 'Male',
-        dob: '1995-07-31',
-        bloodGroup: 'B+',
-        marriedStatus: 'Married',
-        email: 'superadmin@gmail.com',
-        phone: '1234567890',
-        hashPassword: 'Super@123',
+        title: "Mr",
+        firstName: "SuperFirstName",
+        lastName: "SuperLastName",
+        middleName: "SuperMiddleName",
+        maidenName: "",
+        gender: "Male",
+        dob: "1995-07-31",
+        bloodGroup: "B+",
+        marriedStatus: "Married",
+        email: "superadmin@gmail.com",
+        phone: "1234567890",
+        hashPassword: "Super@123",
         lastPasswordChangedAt: new Date(),
-        bio: 'This is Super Admin',
+        bio: "This is Super Admin",
         statusId: activeUserStatusData.id as number,
         userRoles: [superAdminRoleData.id as number],
       },
@@ -300,23 +300,23 @@ export async function up(client: PoolClient): Promise<void> {
       const saltRounds = 10;
       const hashPassword = await bcrypt.hash(userData.hashPassword, saltRounds);
 
-      /** Check if app_user already exists */
+      /** Check if user already exists */
       const checkUserQuery = `
-          SELECT id, email FROM app_user WHERE email = $1;
+          SELECT id, email FROM user WHERE email = $1;
         `;
       const existingUser = (
         await client.query(checkUserQuery, [userData.email])
       ).rows;
 
-      /** If app_user already exists, continue */
+      /** If user already exists, continue */
       if (existingUser.length > 0) {
         console.log(`User already exists: ${userData.email}`);
         continue;
       }
 
-      /** Insert new app_user */
+      /** Insert new user */
       const upsertUserQuery = `
-          INSERT INTO app_user (
+          INSERT INTO user (
             title,
             "firstName",
             "lastName",

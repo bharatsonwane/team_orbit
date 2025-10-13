@@ -100,7 +100,7 @@ npm run dev      # Start development server
 
 ### Database Updates
 - New `lookup_type` and `lookup` tables for centralized role/status management
-- Updated `app_user` table to use `statusId` instead of string status
+- Updated `user` table to use `statusId` instead of string status
 - New `user_role_xref` table for role assignments
 - Enhanced foreign key constraints for data integrity
 

@@ -1,20 +1,20 @@
-import { PoolClient } from 'pg';
-import { z } from 'zod';
-import db, { schemaNames } from '../db';
-import logger from '../../utils/logger';
+import { PoolClient } from "pg";
+import { z } from "zod";
+import db, { schemaNames } from "../db";
+import logger from "../../utils/logger";
 import {
   BaseLookupSchema,
   LookupWithTrackingSchema,
-} from '../../schemas/lookup.schema';
-import { UserSignupSchema } from '../../schemas/user.schema';
+} from "../../schemas/lookup.schema";
+import { UserSignupSchema } from "../../schemas/user.schema";
 import {
   lookupTypeKeys,
   userRoleKeys,
   userStatusKeys,
   tenantStatusKeys,
-} from '../../utils/constants';
-import { getHashPassword } from '../../utils/authHelper';
-import Lookup from '../../services/lookup.service';
+} from "../../utils/constants";
+import { getHashPassword } from "../../utils/authHelper";
+import Lookup from "../../services/lookup.service";
 
 /** Get lookup data by lookup name */
 const getLookupDataByLookupTypeNameAndLookupName = async ({
@@ -50,7 +50,7 @@ const getLookupDataByLookupTypeNameAndLookupName = async ({
 
 async function main(): Promise<void> {
   try {
-    logger.info('seed main function called');
+    logger.info("seed main function called");
 
     const pool = await db.getSchemaPool(schemaNames.main);
 
@@ -64,9 +64,10 @@ async function main(): Promise<void> {
 
     /** create tenant data */
     const tenantData = {
-      name: 'iConnect',
-      label: 'iConnect',
-      description: 'We are a company that provides a software solutions for businesses',
+      name: "iConnect",
+      label: "iConnect",
+      description:
+        "We are a company that provides a software solutions for businesses",
     };
     const tenantResult = await pool.query(
       `INSERT INTO tenant (name, label, "statusId") 
@@ -103,19 +104,19 @@ async function main(): Promise<void> {
       }
     > = [
       {
-        title: 'Mr',
-        firstName: 'iConnect',
-        lastName: 'Admin',
-        middleName: '',
-        maidenName: '',
-        gender: 'Male',
-        dob: '1990-01-01',
-        bloodGroup: 'A+',
-        marriedStatus: 'Single',
-        email: 'iconnect@gmail.com',
-        phone: '9876543210',
-        password: 'Admin@123',
-        bio: 'iConnect Tenant Admin',
+        title: "Mr",
+        firstName: "iConnect",
+        lastName: "Admin",
+        middleName: "",
+        maidenName: "",
+        gender: "Male",
+        dob: "1990-01-01",
+        bloodGroup: "A+",
+        marriedStatus: "Single",
+        email: "iconnect@gmail.com",
+        phone: "9876543210",
+        password: "Admin@123",
+        bio: "iConnect Tenant Admin",
         statusId: activeUserStatusData.id,
         tenantId: tenantId,
         roleIds: [tenantAdminRoleData.id],
@@ -126,22 +127,22 @@ async function main(): Promise<void> {
       /** Hash the password */
       const hashPassword = await getHashPassword(userData.password);
 
-      /** Check if app_user already exists */
+      /** Check if user already exists */
       const checkUserQuery = `
-          SELECT id, email FROM app_user WHERE email = $1;
+          SELECT id, email FROM user WHERE email = $1;
         `;
       const existingUser = (await pool.query(checkUserQuery, [userData.email]))
         .rows;
 
-      /** If app_user already exists, continue */
+      /** If user already exists, continue */
       if (existingUser.length > 0) {
         console.log(`User already exists: ${userData.email}`);
         continue;
       }
 
-      /** Insert new app_user */
+      /** Insert new user */
       const upsertUserQuery = `
-        INSERT INTO app_user (
+        INSERT INTO user (
           title,
           "firstName",
           "lastName",
@@ -201,35 +202,35 @@ async function main(): Promise<void> {
       }
     }
 
-    logger.info('Seeding completed successfully!');
+    logger.info("Seeding completed successfully!");
   } catch (error) {
-    logger.error('Error occurred during seeding:', error);
+    logger.error("Error occurred during seeding:", error);
     throw error; // Re-throw to ensure the process exits with error code
   } finally {
-    logger.info('Seeding reached to finally!');
+    logger.info("Seeding reached to finally!");
     process.exit(0);
   }
 }
 
 // Handle graceful shutdown
-process.on('SIGINT', async () => {
-  logger.info('Received SIGINT. Graceful shutdown...');
+process.on("SIGINT", async () => {
+  logger.info("Received SIGINT. Graceful shutdown...");
   process.exit(0);
 });
 
-process.on('SIGTERM', async () => {
-  logger.info('Received SIGTERM. Graceful shutdown...');
+process.on("SIGTERM", async () => {
+  logger.info("Received SIGTERM. Graceful shutdown...");
   process.exit(0);
 });
 
 // Handle unhandled promise rejections
-process.on('unhandledRejection', (reason: any, promise: Promise<any>) => {
-  logger.error('Unhandled Rejection at:', promise, 'reason:', reason);
+process.on("unhandledRejection", (reason: any, promise: Promise<any>) => {
+  logger.error("Unhandled Rejection at:", promise, "reason:", reason);
   process.exit(1);
 });
 
 // Run the main function
 main().catch(error => {
-  logger.error('Fatal error in main function:', error);
+  logger.error("Fatal error in main function:", error);
   process.exit(1);
 });

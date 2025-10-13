@@ -396,7 +396,7 @@ Login Request
 ```
 PostgreSQL Database: teamorbit
 ├── main                    # Global system data
-│   ├── app_user           # User accounts and profiles
+│   ├── user           # User accounts and profiles
 │   ├── lookup_type        # Reference data categories
 │   ├── lookup             # Reference data values
 │   ├── tenant             # Tenant organizations

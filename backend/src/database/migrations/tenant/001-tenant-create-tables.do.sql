@@ -20,13 +20,13 @@ CREATE TABLE IF NOT EXISTS chat_channel (
 CREATE TABLE IF NOT EXISTS chat_channel_user_mapping (
     id SERIAL PRIMARY KEY,
     "chatChannelId" INT NOT NULL, -- Foreign key to chat_channel table
-    "userId" INT NOT NULL, -- Foreign key to app_user table
+    "userId" INT NOT NULL, -- Foreign key to user table
     "isAdmin" BOOLEAN DEFAULT FALSE NOT NULL, -- Indicates if the user is an admin in the chat channel
     "isActive" BOOLEAN DEFAULT TRUE NOT NULL, -- Indicates if the mapping is active
     "createdAt" TIMESTAMP DEFAULT NOW() NOT NULL,
     "updatedAt" TIMESTAMP DEFAULT NOW() NOT NULL,
     CONSTRAINT fk_chat_channel FOREIGN KEY ("chatChannelId") REFERENCES chat_channel (id) ON DELETE CASCADE,
-    CONSTRAINT fk_user FOREIGN KEY ("userId") REFERENCES main.app_user (id) ON DELETE CASCADE,
+    CONSTRAINT fk_user FOREIGN KEY ("userId") REFERENCES main.user (id) ON DELETE CASCADE,
     CONSTRAINT unique_chat_channel_user UNIQUE ("chatChannelId", "userId")
 );
 
@@ -41,9 +41,9 @@ CREATE TABLE IF NOT EXISTS chat_message (
     "readBy" JSON, -- JSON array storing who has read the message
     reaction JSON, -- JSON storing reactions to the message
     "chatChannelId" INT NOT NULL, -- Foreign key to chat_channel table
-    "senderId" INT NOT NULL, -- Foreign key to app_user table
+    "senderId" INT NOT NULL, -- Foreign key to user table
     "createdAt" TIMESTAMP DEFAULT NOW() NOT NULL,
     "updatedAt" TIMESTAMP DEFAULT NOW() NOT NULL,
     CONSTRAINT fk_chat_channel FOREIGN KEY ("chatChannelId") REFERENCES chat_channel (id) ON DELETE CASCADE,
-    CONSTRAINT fk_sender_user FOREIGN KEY ("senderId") REFERENCES main.app_user (id) ON DELETE CASCADE
+    CONSTRAINT fk_sender_user FOREIGN KEY ("senderId") REFERENCES main.user (id) ON DELETE CASCADE
 );
