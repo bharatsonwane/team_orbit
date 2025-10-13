@@ -339,12 +339,13 @@ export async function up(client: PoolClient): Promise<void> {
             "bloodGroup",
             "marriedStatus",
             bio,
+            "isPlatformUser",
             "statusId",
             "createdAt",
             "updatedAt"
             )
           VALUES (
-              $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, NOW(), NOW()
+              $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, NOW(), NOW()
           )
           RETURNING *;
         `;
@@ -361,6 +362,7 @@ export async function up(client: PoolClient): Promise<void> {
           userData.bloodGroup,
           userData.marriedStatus,
           userData.bio,
+          true, // isPlatformUser = true for super admin
           userData.statusId,
         ])
       ).rows;

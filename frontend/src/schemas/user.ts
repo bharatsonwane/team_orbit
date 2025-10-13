@@ -35,6 +35,7 @@ export const detailedUserSchema = z.object({
   email: z.string().email(),
   phone: z.string(),
   bio: z.string().nullable().optional(),
+  isPlatformUser: z.boolean().default(false),
   tenantId: z.number(),
   statusId: z.number(),
   statusName: z.string(),

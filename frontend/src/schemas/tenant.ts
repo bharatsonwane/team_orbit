@@ -72,6 +72,7 @@ export const tenantUserSchema = z.object({
   firstName: z.string(),
   lastName: z.string(),
   phone: z.string(),
+  isPlatformUser: z.boolean().default(false),
   tenantId: z.number(),
   statusId: z.number(),
   statusName: z.string(),

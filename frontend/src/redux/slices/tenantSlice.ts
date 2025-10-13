@@ -90,6 +90,7 @@ const tenantSlice = createSlice({
             firstName: user.firstName,
             lastName: user.lastName,
             phone: user.phone,
+            isPlatformUser: user.isPlatformUser,
             tenantId: user.tenantId,
             statusId: user.statusId,
             statusName: user.statusName,

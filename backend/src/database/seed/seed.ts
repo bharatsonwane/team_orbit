@@ -154,13 +154,14 @@ async function main(): Promise<void> {
           "bloodGroup",
           "marriedStatus",
           bio,
+          "isPlatformUser",
           "tenantId",
           "statusId",
           "createdAt",
           "updatedAt"
             )
           VALUES (
-              $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, NOW(), NOW()
+              $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, NOW(), NOW()
           )
           RETURNING id, "firstName", "lastName";
         `;
@@ -177,6 +178,7 @@ async function main(): Promise<void> {
           userData.bloodGroup,
           userData.marriedStatus,
           userData.bio,
+          false, // isPlatformUser = false for tenant users
           userData.tenantId,
           userData.statusId,
         ])

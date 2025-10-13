@@ -35,6 +35,9 @@ export default class User {
         throw new Error("Default PENDING status not found");
       }
 
+      // Determine if this is a platform user (tenantId is null or 1)
+      const isPlatformUser = !userData.tenantId || userData.tenantId === 1;
+
       // Create the user profile
       const createUserQuery = `
         INSERT INTO users (
@@ -48,11 +51,12 @@ export default class User {
           "bloodGroup",
           "marriedStatus",
           bio,
+          "isPlatformUser",
           "statusId",
           "tenantId",
           "createdAt",
           "updatedAt"
-        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, NOW(), NOW())
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, NOW(), NOW())
         RETURNING id
       `;
 
@@ -67,6 +71,7 @@ export default class User {
         userData.bloodGroup || null,
         userData.marriedStatus || null,
         userData.bio || null,
+        isPlatformUser,
         statusId,
         userData.tenantId,
       ]);
@@ -284,6 +289,7 @@ export default class User {
         ua.phone,
         ${includePassword ? 'ua."hashPassword",' : ""}
         up.bio,
+        up."isPlatformUser",
         up."statusId",
         ls.name as "statusName",
         ls.label as "statusLabel",
@@ -309,7 +315,7 @@ export default class User {
       LEFT JOIN user_role_xref urx ON up.id = urx."userId"
       LEFT JOIN lookups l ON urx."roleId" = l.id
       WHERE ${whereClause}
-      GROUP BY up.id, ua.email, ua.phone, ${includePassword ? 'ua."hashPassword",' : ""} ls.name, ls.label;`;
+      GROUP BY up.id, ua.email, ua.phone, ${includePassword ? 'ua."hashPassword",' : ""} up."isPlatformUser", up."isArchived", ls.name, ls.label;`;
 
     const results = await dbClient.mainPool.query(queryString);
     const response = results.rows[0];
@@ -365,6 +371,7 @@ export default class User {
           ua.email,
           ua.phone,
           up.bio,
+          up."isPlatformUser",
           up."statusId",
           ls.name as "statusName",
           ls.label as "statusLabel",

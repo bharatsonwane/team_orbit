@@ -97,6 +97,7 @@ CREATE TABLE IF NOT EXISTS users (
     "bloodGroup" blood_group_enum, -- Use ENUM type
     "marriedStatus" married_status_enum,
     bio TEXT, -- User biography
+    "isPlatformUser" BOOLEAN DEFAULT FALSE NOT NULL,
     "isArchived" BOOLEAN DEFAULT FALSE NOT NULL,
     "statusId" INT NOT NULL, -- Use "lookupId"
     "tenantId" INT,

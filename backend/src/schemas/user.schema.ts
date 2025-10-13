@@ -35,6 +35,7 @@ export const baseUserSchema = z.object({
 export const userWithTrackingSchema = baseUserSchema.extend({
   id: z.number().int(),
   hashPassword: z.string().optional(),
+  isPlatformUser: z.boolean().default(false),
   isArchived: z.boolean().default(false),
   createdAt: z.string().optional(),
   updatedAt: z.string().optional(),
