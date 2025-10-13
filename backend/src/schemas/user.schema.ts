@@ -76,10 +76,7 @@ export const userUpdatePasswordSchema = z.object({
 });
 
 export const createUserSchema = baseUserSchema.extend({
-  password: z.string().min(6, "Password should be at least 6 characters long"),
   tenantId: z.number().int().min(1, "Tenant ID is required"),
-  statusId: z.number().int().min(1, "Status ID is required"),
-  roleIds: z.array(z.number().int()).min(1, "At least one role is required"),
 });
 
 /**

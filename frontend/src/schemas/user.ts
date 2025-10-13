@@ -82,7 +82,7 @@ export const authResponseSchema = z.object({
 
 export type AuthResponse = z.infer<typeof authResponseSchema>;
 
-// Create user form schema (accepts strings from form inputs)
+// Create user form schema (accepts strings from form inputs - profile only, password/status/roles set separately)
 export const createUserFormSchema = z.object({
   title: z
     .string()
@@ -114,23 +114,11 @@ export const createUserFormSchema = z.object({
     .optional(),
   email: z.string().email("Invalid email"),
   phone: z.string().min(10, "Phone must be at least 10 characters"),
-  password: z.string().min(6, "Password must be at least 6 characters"),
   bio: z.string().optional().or(z.literal("")),
   tenantId: z.number().min(1, "Tenant ID is required"),
-  statusId: z.string().min(1, "Status is required"), // Accept string from select
-  roleIds: z.string().refine(val => {
-    if (!val) return false;
-    const roleIds = val
-      .split(",")
-      .map(Number)
-      .filter(n => !isNaN(n));
-    return roleIds.length > 0;
-  }, "At least one role is required"),
 });
 
-export type CreateUserFormData = z.infer<typeof createUserFormSchema> & {
-  title?: "Mr" | "Mrs" | "Ms" | "";
-};
+export type CreateUserFormData = z.infer<typeof createUserFormSchema>;
 
 // Create user request schema (transforms form data for API)
 export const createUserRequestSchema = createUserFormSchema.transform(data => {
@@ -149,13 +137,6 @@ export const createUserRequestSchema = createUserFormSchema.transform(data => {
   return {
     ...data,
     dob: formattedDob,
-    statusId: Number(data.statusId), // Convert string to number for API
-    roleIds: data.roleIds
-      ? data.roleIds
-          .split(",")
-          .map(Number)
-          .filter(n => !isNaN(n))
-      : [], // Convert string to array of numbers
   };
 });
 

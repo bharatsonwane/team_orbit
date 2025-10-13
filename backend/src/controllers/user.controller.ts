@@ -107,30 +107,30 @@ export const createUser = async (
     );
 
     // Get lookup data for the roles being assigned
-    const userRoleLookupType = await Lookup.getLookupTypeByName(
-      req.db,
-      lookupTypeKeys.USER_ROLE
-    );
-    const roleLookups = userData.roleIds.map(roleId => {
-      const roleLookup = userRoleLookupType.lookups.find(
-        (lookup: any) => lookup.id === roleId
-      );
-      return roleLookup?.name;
-    });
+    // const userRoleLookupType = await Lookup.getLookupTypeByName(
+    //   req.db,
+    //   lookupTypeKeys.USER_ROLE
+    // );
+    // const roleLookups = userData.roleIds.map(roleId => {
+    //   const roleLookup = userRoleLookupType.lookups.find(
+    //     (lookup: any) => lookup.id === roleId
+    //   );
+    //   return roleLookup?.name;
+    // });
 
     // Role-based permission validation
-    const hasPermission = validateUserCreationPermission({
-      currentUserRoleNames: currentUserRoleNames,
-      targetRoleNames: roleLookups,
-    });
+    // const hasPermission = validateUserCreationPermission({
+    //   currentUserRoleNames: currentUserRoleNames,
+    //   targetRoleNames: roleLookups,
+    // });
 
-    if (!hasPermission) {
-      throw {
-        statusCode: 403,
-        message:
-          "Insufficient permissions to create users with the specified roles",
-      };
-    }
+    // if (!hasPermission) {
+    //   throw {
+    //     statusCode: 403,
+    //     message:
+    //       "Insufficient permissions to create users with the specified roles",
+    //   };
+    // }
 
     // Create user with roles
     const createdUserId = await User.createUser(req.db, userData);

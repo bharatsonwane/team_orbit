@@ -1,7 +1,7 @@
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useDispatch, useSelector } from "react-redux";
+import { useDispatch } from "react-redux";
 import {
   Drawer,
   DrawerContent,
@@ -16,12 +16,15 @@ import {
   SelectWithLabel,
 } from "@/components/ui/input-with-label";
 import { DatePicker } from "@/components/ui/date-picker";
-import { createUserFormSchema, createUserRequestSchema } from "@/schemas/user";
+import {
+  createUserFormSchema,
+  createUserRequestSchema,
+  type CreateUserFormData,
+} from "@/schemas/user";
 import { createUserAction } from "@/redux/actions/userActions";
-import { selectLookupTypeByName } from "@/redux/slices/lookupSlice";
-import type { AppDispatch, RootState } from "@/redux/store";
+import type { AppDispatch } from "@/redux/store";
 import type { Tenant } from "@/schemas/tenant";
-import { lookupTypeKeys } from "@/utils/constants";
+import { toast } from "sonner";
 import { XIcon } from "lucide-react";
 
 interface AddUserModalProps {
@@ -38,19 +41,11 @@ export const AddUserModal: React.FC<AddUserModalProps> = ({
   tenant,
 }) => {
   const dispatch = useDispatch<AppDispatch>();
-  const userRoles = useSelector((state: RootState) =>
-    selectLookupTypeByName(state, lookupTypeKeys.USER_ROLE)
-  );
-  const userStatuses = useSelector((state: RootState) =>
-    selectLookupTypeByName(state, lookupTypeKeys.USER_STATUS)
-  );
 
   // Determine if this is a platform or tenant user
   const isPlatformUser = !tenant;
-  const roleCategory = isPlatformUser ? "PLATFORM" : "TENANT";
 
-  // Local state for role management and loading
-  const [selectedRoleIds, setSelectedRoleIds] = useState<number[]>([]);
+  // Local state for loading
   const [isLoading, setIsLoading] = useState(false);
 
   const {
@@ -59,51 +54,27 @@ export const AddUserModal: React.FC<AddUserModalProps> = ({
     reset,
     setValue,
     formState: { errors },
-  } = useForm<any>({
-    resolver: zodResolver(createUserFormSchema) as any,
+  } = useForm<CreateUserFormData>({
+    resolver: zodResolver(createUserFormSchema),
     defaultValues: {
       tenantId: tenant?.id || 1, // Use tenant ID or default to 1 for platform users
-      statusId:
-        userStatuses?.lookups
-          ?.find(
-            (status: { name: string; id: number }) => status.name === "ACTIVE"
-          )
-          ?.id?.toString() || "",
-      roleIds: "",
       dob: "",
     },
   });
 
-  // Update default values when tenant or lookups change
-  useEffect(() => {
-    if (userStatuses) {
-      const activeStatus = userStatuses.lookups?.find(
-        (status: { name: string; id: number }) => status.name === "ACTIVE"
-      );
-      if (activeStatus) {
-        reset({
-          tenantId: tenant?.id || 1,
-          statusId: activeStatus.id.toString(),
-          roleIds: "",
-          dob: "",
-        });
-        setSelectedRoleIds([]);
-        setValue("roleIds", "");
-      }
-    }
-  }, [tenant, userStatuses, reset, setValue]);
-
-  const onSubmit = async (data: any) => {
+  const onSubmit = async (data: CreateUserFormData) => {
     setIsLoading(true);
     try {
-      // Transform form data for API (converts statusId string to number, roleIds string to array)
-      const transformedData = createUserRequestSchema.parse({
-        ...data,
-        roleIds: selectedRoleIds.join(","), // Convert array to comma-separated string
-      });
+      // Transform form data for API
+      const transformedData = createUserRequestSchema.parse(data);
       await dispatch(createUserAction(transformedData)).unwrap();
+
+      toast.success("User Profile Created Successfully", {
+        description:
+          "User profile has been created. Set their password, status, and roles next.",
+      });
+
       reset();
-      setSelectedRoleIds([]);
       onUserCreated?.();
       onClose();
     } catch (error) {
@@ -111,6 +82,7 @@ export const AddUserModal: React.FC<AddUserModalProps> = ({
         `Failed to create ${isPlatformUser ? "platform" : "tenant"} user:`,
         error
       );
+      toast.error("Failed to create user. Please try again.");
     } finally {
       setIsLoading(false);
     }
@@ -118,23 +90,7 @@ export const AddUserModal: React.FC<AddUserModalProps> = ({
 
   const handleCancel = () => {
     reset();
-    setSelectedRoleIds([]);
-    setValue("roleIds", "");
     onClose();
-  };
-
-  const handleRoleChange = (roleId: number) => {
-    let newRoleIds;
-    if (selectedRoleIds.includes(roleId)) {
-      // Remove role if already selected
-      newRoleIds = selectedRoleIds.filter(id => id !== roleId);
-    } else {
-      // Add role if not selected
-      newRoleIds = [...selectedRoleIds, roleId];
-    }
-    setSelectedRoleIds(newRoleIds);
-    // Update form field for validation
-    setValue("roleIds", newRoleIds.join(","));
   };
 
   const modalTitle = isPlatformUser
@@ -339,70 +295,6 @@ export const AddUserModal: React.FC<AddUserModalProps> = ({
                   register={register}
                   error={errors.bio?.message as string}
                 />
-              </div>
-
-              {/* Account Information */}
-              <div className="space-y-4">
-                <h3 className="text-lg font-semibold">Account Information</h3>
-
-                <InputWithLabel
-                  id="password"
-                  label="Password"
-                  type="password"
-                  placeholder="Enter password"
-                  required
-                  register={register}
-                  error={errors.password?.message as string}
-                />
-
-                <SelectWithLabel
-                  id="statusId"
-                  label="Status"
-                  required
-                  register={register}
-                  error={errors.statusId?.message as string}
-                >
-                  <option value="">Select status</option>
-                  {userStatuses?.lookups?.map(
-                    (status: { id: number; label: string }) => (
-                      <option key={status.id} value={status.id}>
-                        {status.label}
-                      </option>
-                    )
-                  )}
-                </SelectWithLabel>
-
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">Roles</label>
-                  <div className="grid grid-cols-2 gap-2">
-                    {userRoles?.lookups
-                      ?.filter(
-                        (role: { id: number; label: string; name: string }) =>
-                          role.name.startsWith(`${roleCategory}_`)
-                      )
-                      .map((role: { id: number; label: string }) => (
-                        <label
-                          key={role.id}
-                          className="flex items-center space-x-2"
-                        >
-                          <input
-                            type="checkbox"
-                            checked={selectedRoleIds.includes(role.id)}
-                            onChange={() => handleRoleChange(role.id)}
-                            className="rounded"
-                          />
-                          <span className="text-sm">{role.label}</span>
-                        </label>
-                      ))}
-                  </div>
-                  {errors.roleIds && (
-                    <p className="text-sm text-red-600">
-                      {errors.roleIds.message as string}
-                    </p>
-                  )}
-                  {/* Hidden input for form validation */}
-                  <input type="hidden" {...register("roleIds")} />
-                </div>
               </div>
             </div>
           </div>

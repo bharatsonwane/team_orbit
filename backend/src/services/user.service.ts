@@ -21,8 +21,19 @@ export default class User {
       // Start transaction
       await client.mainPool.query(dbTransactionKeys.BEGIN);
 
-      // Hash the password
-      const hashPassword = await getHashPassword(userData.password);
+      // Get default PENDING status if not provided
+      let statusId = 0;
+      const statusResult = await dbClientPool.mainPool.query(
+        `SELECT l.id FROM lookups l 
+         INNER JOIN lookup_types lt ON l."lookupTypeId" = lt.id 
+         WHERE lt.name = 'USER_STATUS' AND l.name = 'PENDING'`
+      );
+
+      if (statusResult.rows.length > 0) {
+        statusId = statusResult.rows[0].id;
+      } else {
+        throw new Error("Default PENDING status not found");
+      }
 
       // Create the user profile
       const createUserQuery = `
@@ -42,7 +53,7 @@ export default class User {
           "createdAt",
           "updatedAt"
         ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, NOW(), NOW())
-        RETURNING id, title, "firstName", "lastName", "middleName", "maidenName", gender, dob, "bloodGroup", "marriedStatus", bio, "statusId", "tenantId", "createdAt", "updatedAt", "isArchived", "archivedAt"
+        RETURNING id
       `;
 
       const userResult = await dbClientPool.mainPool.query(createUserQuery, [
@@ -56,48 +67,29 @@ export default class User {
         userData.bloodGroup || null,
         userData.marriedStatus || null,
         userData.bio || null,
-        userData.statusId,
+        statusId,
         userData.tenantId,
       ]);
 
       const user = userResult.rows[0];
 
-      // Insert authentication data
+      // Insert authentication data (without password initially)
       const authInsertQuery = `
         INSERT INTO user_auths (
           "userId",
           email,
           phone,
-          "hashPassword",
-          "passwordUpdatedAt",
           "createdAt",
           "updatedAt"
-        ) VALUES ($1, $2, $3, $4, NOW(), NOW(), NOW())
+        ) VALUES ($1, $2, $3, NOW(), NOW())
         RETURNING email, phone;
       `;
 
-      const authResult = await dbClientPool.mainPool.query(authInsertQuery, [
+      await dbClientPool.mainPool.query(authInsertQuery, [
         user.id,
         userData.email,
         userData.phone,
-        hashPassword,
       ]);
-
-      const auth = authResult.rows[0];
-
-      // Assign roles to the user
-      if (userData.roleIds && userData.roleIds.length > 0) {
-        const roleInsertValues = userData.roleIds
-          .map(roleId => `(${user.id}, ${roleId})`)
-          .join(", ");
-
-        const assignRolesQuery = `
-          INSERT INTO user_role_xref ("userId", "roleId")
-          VALUES ${roleInsertValues}
-        `;
-
-        await dbClientPool.mainPool.query(assignRolesQuery);
-      }
 
       // Commit transaction
       await client.mainPool.query(dbTransactionKeys.COMMIT);
