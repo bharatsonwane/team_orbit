@@ -2,7 +2,6 @@ import { z } from "zod";
 import {
   userLoginSchema,
   baseUserSchema,
-  userSignupSchema,
   userUpdatePasswordSchema,
   createUserSchema,
 } from "../schemas/user.schema";
@@ -17,8 +16,6 @@ import {
   getUserProfile,
   getUsers,
   userLogin,
-  userSignup,
-  signoutUser,
   updateUserPassword,
   updateUserProfile,
   createUser,
@@ -45,13 +42,6 @@ registrar.post("/login", {
   requestSchema: { bodySchema: userLoginSchema },
   responseSchemas: [{ statusCode: 200, schema: baseUserSchema }],
   controller: userLogin,
-});
-
-/**@description user signup  */
-registrar.post("/signup", {
-  requestSchema: { bodySchema: userSignupSchema },
-  responseSchemas: [{ statusCode: 200, schema: userSignupSchema }],
-  controller: userSignup,
 });
 
 /**@description Create User (Role-based permissions) */
@@ -105,11 +95,6 @@ registrar.get("/:id", {
   middleware: [authRoleMiddleware()],
   controller: getUserById,
 });
-
-/**@description signout user */
-// registrar.post("/signout", {
-//   controller: signoutUser,
-// });
 
 // registrar.get("/test-query", {
 //   oasSchema: testQueryOASSchema,

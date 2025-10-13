@@ -31,14 +31,21 @@ interface AppUser {
   dob: string;
   bloodGroup: string;
   marriedStatus: string;
+  bio: string;
+  statusId: number;
+  tenantId?: number;
+}
+
+interface UserAuth {
   email: string;
   phone: string;
   hashPassword: string;
-  bio: string;
-  lastPasswordChangedAt: Date;
-  statusId: number;
+  passwordUpdatedAt?: Date;
+}
+
+interface AppUserWithAuth extends AppUser {
+  userAuth: UserAuth;
   userRoles: number[];
-  tenantId?: number;
 }
 
 const lookupData: LookupTypeWithLookupsSchema[] = [
@@ -183,7 +190,7 @@ export async function up(client: PoolClient): Promise<void> {
       /** Insert lookup type and get the ID */
       const lookupTypeResult = await client.query(
         `
-            INSERT INTO lookup_type (name, label, "isSystem", "createdAt", "updatedAt")
+            INSERT INTO lookup_types (name, label, "isSystem", "createdAt", "updatedAt")
             VALUES ($1, $2, $3, NOW(), NOW())
             ON CONFLICT (name) DO NOTHING
             RETURNING id;
@@ -198,7 +205,7 @@ export async function up(client: PoolClient): Promise<void> {
       } else {
         /** If it already existed, fetch the existing ID */
         const existingResult = await client.query(
-          "SELECT id FROM lookup_type WHERE name = $1",
+          "SELECT id FROM lookup_types WHERE name = $1",
           [data.name]
         );
         lookupTypeId = existingResult.rows[0].id;
@@ -208,7 +215,7 @@ export async function up(client: PoolClient): Promise<void> {
       for (const lookup of data.lookups) {
         await client.query(
           `
-                INSERT INTO lookup (name, label, category, description, "isSystem", "sortOrder", "lookupTypeId", "createdAt", "updatedAt")
+                INSERT INTO lookups (name, label, category, description, "isSystem", "sortOrder", "lookupTypeId", "createdAt", "updatedAt")
                 VALUES ($1, $2, $3, $4, $5, $6, $7, NOW(), NOW())
                 ON CONFLICT ("lookupTypeId", name) DO NOTHING;
             `,
@@ -236,8 +243,8 @@ export async function up(client: PoolClient): Promise<void> {
       /** Get lookup data query */
       const getLookupDataQuery = `
         SELECT l.id, l.name, l.label, l."lookupTypeId", lt.name as typeName
-        FROM lookup_type lt
-        INNER JOIN lookup l ON lt.id = l."lookupTypeId"
+        FROM lookup_types lt
+        INNER JOIN lookups l ON lt.id = l."lookupTypeId"
         WHERE l.name = $1 AND lt.name = $2;
       `;
 
@@ -274,7 +281,7 @@ export async function up(client: PoolClient): Promise<void> {
   );
 
   const upsertAndFetchUserData = async () => {
-    const userDataList: AppUser[] = [
+    const userDataList: AppUserWithAuth[] = [
       {
         title: "Mr",
         firstName: "SuperFirstName",
@@ -285,12 +292,14 @@ export async function up(client: PoolClient): Promise<void> {
         dob: "1995-07-31",
         bloodGroup: "B+",
         marriedStatus: "Married",
-        email: "superadmin@gmail.com",
-        phone: "1234567890",
-        hashPassword: "Super@123",
-        lastPasswordChangedAt: new Date(),
         bio: "This is Super Admin",
         statusId: activeUserStatusData.id as number,
+        userAuth: {
+          email: "superadmin@gmail.com",
+          phone: "1234567890",
+          hashPassword: "Super@123",
+          passwordUpdatedAt: new Date(),
+        },
         userRoles: [superAdminRoleData.id as number],
       },
     ];
@@ -298,25 +307,28 @@ export async function up(client: PoolClient): Promise<void> {
     for (const userData of userDataList) {
       /** Hash the password using bcrypt directly */
       const saltRounds = 10;
-      const hashPassword = await bcrypt.hash(userData.hashPassword, saltRounds);
+      const hashPassword = await bcrypt.hash(
+        userData.userAuth.hashPassword,
+        saltRounds
+      );
 
-      /** Check if user already exists */
-      const checkUserQuery = `
-          SELECT id, email FROM user WHERE email = $1;
+      /** Check if user already exists by checking user_auths table */
+      const checkUserAuthQuery = `
+          SELECT id, email FROM user_auths WHERE email = $1;
         `;
-      const existingUser = (
-        await client.query(checkUserQuery, [userData.email])
+      const existingUserAuth = (
+        await client.query(checkUserAuthQuery, [userData.userAuth.email])
       ).rows;
 
       /** If user already exists, continue */
-      if (existingUser.length > 0) {
-        console.log(`User already exists: ${userData.email}`);
+      if (existingUserAuth.length > 0) {
+        console.log(`User already exists: ${userData.userAuth.email}`);
         continue;
       }
 
       /** Insert new user */
       const upsertUserQuery = `
-          INSERT INTO user (
+          INSERT INTO users (
             title,
             "firstName",
             "lastName",
@@ -326,16 +338,13 @@ export async function up(client: PoolClient): Promise<void> {
             dob,
             "bloodGroup",
             "marriedStatus",
-            email,
-            phone,
-            "hashPassword",
             bio,
             "statusId",
             "createdAt",
             "updatedAt"
             )
           VALUES (
-              $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, NOW(), NOW()
+              $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, NOW(), NOW()
           )
           RETURNING *;
         `;
@@ -351,9 +360,6 @@ export async function up(client: PoolClient): Promise<void> {
           userData.dob,
           userData.bloodGroup,
           userData.marriedStatus,
-          userData.email,
-          userData.phone,
-          hashPassword,
           userData.bio,
           userData.statusId,
         ])
@@ -361,6 +367,30 @@ export async function up(client: PoolClient): Promise<void> {
 
       const userResponse = userResult[0] as AppUser;
 
+      /** Insert user authentication data */
+      await client.query(
+        `
+          INSERT INTO user_auths (
+            "userId",
+            email,
+            phone,
+            "hashPassword",
+            "passwordUpdatedAt",
+            "createdAt",
+            "updatedAt"
+          )
+          VALUES ($1, $2, $3, $4, $5, NOW(), NOW())
+        `,
+        [
+          userResponse.id,
+          userData.userAuth.email,
+          userData.userAuth.phone,
+          hashPassword,
+          userData.userAuth.passwordUpdatedAt,
+        ]
+      );
+
+      /** Insert user roles */
       for (const roleId of userData.userRoles) {
         await client.query(
           `

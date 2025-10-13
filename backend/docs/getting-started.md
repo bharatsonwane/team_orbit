@@ -446,18 +446,11 @@ Use the `RouteRegistrar` class for consistent route definition with automatic Op
 import RouteRegistrar from "../middleware/RouteRegistrar";
 import { authRoleMiddleware } from "../middleware/authRoleMiddleware";
 import { userSignupSchema, baseUserSchema } from "../schemas/user.schema";
-import { userSignup, getUserProfile } from "../controllers/user.controller";
+import {getUserProfile } from "../controllers/user.controller";
 
 const registrar = new RouteRegistrar({
   basePath: "/api/user",
   tags: ["User"],
-});
-
-// Public endpoints
-registrar.post("/signup", {
-  requestSchema: { bodySchema: userSignupSchema },
-  responseSchemas: [{ statusCode: 201, schema: baseUserSchema }],
-  controller: userSignup,
 });
 
 // Protected endpoints

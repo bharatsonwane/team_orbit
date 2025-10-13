@@ -36,8 +36,6 @@ export const controllerFunction = async (
 **Authentication:**
 
 - `userLogin` - Authenticate user and generate JWT token
-- `userSignup` - Register new user account
-- `signoutUser` - Sign out current user
 
 **Profile Management:**
 

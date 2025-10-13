@@ -28,7 +28,7 @@ export default class Tenant {
 
       // Create the tenant
       const tenantQuery = `
-        INSERT INTO tenant (name, label, description, "statusId", "isArchived", "createdAt", "updatedAt")
+        INSERT INTO tenants (name, label, description, "statusId", "isArchived", "createdAt", "updatedAt")
         VALUES ($1, $2, $3, $4, FALSE, NOW(), NOW())
         RETURNING id, name, label, description, "statusId", "isArchived", "createdAt", "updatedAt", "archivedAt"
       `;
@@ -79,7 +79,7 @@ export default class Tenant {
   ): Promise<BaseTenantSchema[]> {
     const query = `
       SELECT id, name, label, description, "statusId", "isArchived", "createdAt", "updatedAt", "archivedAt"
-      FROM tenant
+      FROM tenants
       ${includeArchived ? "" : 'WHERE "isArchived" = FALSE'}
       ORDER BY "createdAt" DESC
     `;
@@ -97,7 +97,7 @@ export default class Tenant {
   ): Promise<BaseTenantSchema | null> {
     const query = `
       SELECT id, name, label, description, "statusId", "isArchived", "createdAt", "updatedAt", "archivedAt"
-      FROM tenant
+      FROM tenants
       WHERE id = $1
     `;
 
@@ -137,7 +137,7 @@ export default class Tenant {
       .join(", ");
 
     const queryString = `
-      UPDATE tenant
+      UPDATE tenants
       SET ${setQueryString}, "updatedAt" = NOW()
       WHERE id = ${tenantId}
       RETURNING id, name, label, description, "statusId", "isArchived", "createdAt", "updatedAt", "archivedAt"

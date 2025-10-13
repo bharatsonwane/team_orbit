@@ -26,7 +26,7 @@ CREATE TABLE IF NOT EXISTS chat_channel_user_mapping (
     "createdAt" TIMESTAMP DEFAULT NOW() NOT NULL,
     "updatedAt" TIMESTAMP DEFAULT NOW() NOT NULL,
     CONSTRAINT fk_chat_channel FOREIGN KEY ("chatChannelId") REFERENCES chat_channel (id) ON DELETE CASCADE,
-    CONSTRAINT fk_user FOREIGN KEY ("userId") REFERENCES main.user (id) ON DELETE CASCADE,
+    CONSTRAINT fk_user FOREIGN KEY ("userId") REFERENCES main.users (id) ON DELETE CASCADE,
     CONSTRAINT unique_chat_channel_user UNIQUE ("chatChannelId", "userId")
 );
 
@@ -45,5 +45,5 @@ CREATE TABLE IF NOT EXISTS chat_message (
     "createdAt" TIMESTAMP DEFAULT NOW() NOT NULL,
     "updatedAt" TIMESTAMP DEFAULT NOW() NOT NULL,
     CONSTRAINT fk_chat_channel FOREIGN KEY ("chatChannelId") REFERENCES chat_channel (id) ON DELETE CASCADE,
-    CONSTRAINT fk_sender_user FOREIGN KEY ("senderId") REFERENCES main.user (id) ON DELETE CASCADE
+    CONSTRAINT fk_sender_user FOREIGN KEY ("senderId") REFERENCES main.users (id) ON DELETE CASCADE
 );

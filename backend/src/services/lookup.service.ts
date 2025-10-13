@@ -38,8 +38,8 @@ export default class Lookup {
           ) FILTER (WHERE l.id IS NOT NULL),
           '[]'::json
         ) AS lookups
-      FROM lookup_type lt
-      LEFT JOIN lookup l ON lt.id = l."lookupTypeId" AND l."isArchived" = FALSE
+      FROM lookup_types lt
+      LEFT JOIN lookups l ON lt.id = l."lookupTypeId" AND l."isArchived" = FALSE
       WHERE lt."archivedAt" IS NULL
       GROUP BY lt.id, lt.name
       ORDER BY lt.id;
@@ -78,8 +78,8 @@ export default class Lookup {
           ) FILTER (WHERE l.id IS NOT NULL),
           '[]'::json
         ) AS lookups
-      FROM lookup_type lt
-      LEFT JOIN lookup l ON lt.id = l."lookupTypeId" AND l."isArchived" = FALSE
+      FROM lookup_types lt
+      LEFT JOIN lookups l ON lt.id = l."lookupTypeId" AND l."isArchived" = FALSE
       WHERE lt.id = ${id} AND lt."archivedAt" IS NULL
       GROUP BY lt.id, lt.name;
     `;
@@ -123,8 +123,8 @@ export default class Lookup {
           ) FILTER (WHERE l.id IS NOT NULL),
           '[]'::json
         ) AS lookups
-      FROM lookup_type lt
-      LEFT JOIN lookup l ON lt.id = l."lookupTypeId" AND l."isArchived" = FALSE
+      FROM lookup_types lt
+      LEFT JOIN lookups l ON lt.id = l."lookupTypeId" AND l."isArchived" = FALSE
       WHERE lt.name = '${lookupTypeName}' AND lt."archivedAt" IS NULL
       GROUP BY lt.id, lt.name;
     `;
@@ -166,8 +166,8 @@ export default class Lookup {
         l."createdBy",
         l."updatedBy",
         l."archivedBy"
-      FROM lookup l
-      INNER JOIN lookup_type lt ON l."lookupTypeId" = lt.id
+      FROM lookups l
+      INNER JOIN lookup_types lt ON l."lookupTypeId" = lt.id
       WHERE l.name = '${lookupName}' AND lt.name = '${lookupTypeName}';
     `;
     const results = await dbClient.mainPool.query(queryString);
@@ -201,7 +201,7 @@ export default class Lookup {
         l."archivedAt",
         l."updatedBy",
         l."archivedBy"
-      FROM lookup l
+      FROM lookups l
       WHERE l.id = ${id} AND l."isArchived" = FALSE;
     `;
     const results = await dbClient.mainPool.query(queryString);

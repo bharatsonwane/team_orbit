@@ -1,6 +1,5 @@
 import { dbClientPool } from "../middleware/dbClientMiddleware";
 import {
-  UserSignupServiceSchema,
   BaseUserSchema,
   UserWithTrackingSchema,
   UserDataWithHashPasswordSchema,
@@ -11,54 +10,6 @@ import { getHashPassword } from "../utils/authHelper";
 import { dbTransactionKeys } from "../utils/constants";
 
 export default class User {
-  static async signupUser(
-    dbClient: dbClientPool,
-    userData: UserSignupServiceSchema
-  ): Promise<UserWithTrackingSchema> {
-    const userSignupQuery = `
-        INSERT INTO user (
-                email,
-                "hashPassword",
-                phone,
-                "firstName",
-                "lastName",
-                "statusId",
-                "tenantId",
-                title,
-                "middleName",
-                "maidenName",
-                gender,
-                dob,
-                "bloodGroup",
-                "marriedStatus",
-                bio,
-                "createdAt",
-                "updatedAt"
-            ) VALUES (
-                '${userData.email}',
-                '${userData.hashPassword}',
-                '${userData.phone}',
-                '${userData.firstName}',
-                '${userData.lastName}',
-                ${userData.statusId},
-                ${userData.tenantId || "NULL"},
-                ${userData.title ? `'${userData.title}'` : "NULL"},
-                ${userData.middleName ? `'${userData.middleName}'` : "NULL"},
-                ${userData.maidenName ? `'${userData.maidenName}'` : "NULL"},
-                ${userData.gender ? `'${userData.gender}'` : "NULL"},
-                ${userData.dob ? `'${userData.dob}'` : "NULL"},
-                ${userData.bloodGroup ? `'${userData.bloodGroup}'` : "NULL"},
-                ${userData.marriedStatus ? `'${userData.marriedStatus}'` : "NULL"},
-                ${userData.bio ? `'${userData.bio}'` : "NULL"},
-                NOW(),
-                NOW()
-        )
-        RETURNING *;`;
-    const results = await dbClient.mainPool.query(userSignupQuery);
-    const response = results.rows[0];
-    return response;
-  }
-
   static async createUser(
     dbClient: dbClientPool,
     userData: CreateUserSchema
@@ -73,9 +24,9 @@ export default class User {
       // Hash the password
       const hashPassword = await getHashPassword(userData.password);
 
-      // Create the user
+      // Create the user profile
       const createUserQuery = `
-        INSERT INTO user (
+        INSERT INTO users (
           title,
           "firstName",
           "lastName",
@@ -85,16 +36,13 @@ export default class User {
           dob,
           "bloodGroup",
           "marriedStatus",
-          email,
-          phone,
-          "hashPassword",
           bio,
           "statusId",
           "tenantId",
           "createdAt",
           "updatedAt"
-        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, NOW(), NOW())
-        RETURNING id, title, "firstName", "lastName", "middleName", "maidenName", gender, dob, "bloodGroup", "marriedStatus", email, phone, bio, "statusId", "tenantId", "createdAt", "updatedAt", "isArchived", "archivedAt"
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, NOW(), NOW())
+        RETURNING id, title, "firstName", "lastName", "middleName", "maidenName", gender, dob, "bloodGroup", "marriedStatus", bio, "statusId", "tenantId", "createdAt", "updatedAt", "isArchived", "archivedAt"
       `;
 
       const userResult = await dbClientPool.mainPool.query(createUserQuery, [
@@ -107,15 +55,35 @@ export default class User {
         userData.dob || null,
         userData.bloodGroup || null,
         userData.marriedStatus || null,
-        userData.email,
-        userData.phone,
-        hashPassword,
         userData.bio || null,
         userData.statusId,
         userData.tenantId,
       ]);
 
       const user = userResult.rows[0];
+
+      // Insert authentication data
+      const authInsertQuery = `
+        INSERT INTO user_auths (
+          "userId",
+          email,
+          phone,
+          "hashPassword",
+          "passwordUpdatedAt",
+          "createdAt",
+          "updatedAt"
+        ) VALUES ($1, $2, $3, $4, NOW(), NOW(), NOW())
+        RETURNING email, phone;
+      `;
+
+      const authResult = await dbClientPool.mainPool.query(authInsertQuery, [
+        user.id,
+        userData.email,
+        userData.phone,
+        hashPassword,
+      ]);
+
+      const auth = authResult.rows[0];
 
       // Assign roles to the user
       if (userData.roleIds && userData.roleIds.length > 0) {
@@ -145,8 +113,8 @@ export default class User {
         dob: user.dob,
         bloodGroup: user.bloodGroup,
         marriedStatus: user.marriedStatus,
-        email: user.email,
-        phone: user.phone,
+        email: auth.email,
+        phone: auth.phone,
         bio: user.bio,
         statusId: user.statusId,
         tenantId: user.tenantId,
@@ -196,7 +164,7 @@ export default class User {
       .join(", ");
 
     const queryString = `
-      UPDATE user
+      UPDATE users
       SET ${setQueryString}, "updatedAt" = NOW()
       WHERE id = ${userId} RETURNING *;`;
     const results = await dbClient.mainPool.query(queryString);
@@ -216,13 +184,20 @@ export default class User {
     }
   ): Promise<UserWithTrackingSchema> {
     const queryString = `
-      UPDATE user
-      SET "hashPassword" = '${hashPassword}', "updatedAt" = NOW()
-      WHERE id = ${userId} RETURNING *;`;
-    const results = await dbClient.mainPool.query(queryString);
+      UPDATE user_auths
+      SET "hashPassword" = '${hashPassword}', "passwordUpdatedAt" = NOW(), "updatedAt" = NOW()
+      WHERE "userId" = ${userId} RETURNING "userId";`;
+    await dbClient.mainPool.query(queryString);
 
-    delete (results.rows[0] as any).hashPassword;
-    return results.rows[0];
+    // Fetch and return the updated user data
+    const userResult = await dbClient.mainPool.query(`
+      SELECT u.*, ua.email, ua.phone
+      FROM users u
+      INNER JOIN user_auths ua ON u.id = ua."userId"
+      WHERE u.id = ${userId}
+    `);
+
+    return userResult.rows[0];
   }
 
   static async getUserByIdOrEmailOrPhone(
@@ -246,10 +221,10 @@ export default class User {
       whereConditions.push(`up.id = ${userId}`);
     }
     if (email) {
-      whereConditions.push(`up.email = '${email}'`);
+      whereConditions.push(`ua.email = '${email}'`);
     }
     if (phone) {
-      whereConditions.push(`up.phone = '${phone}'`);
+      whereConditions.push(`ua.phone = '${phone}'`);
     }
 
     if (whereConditions.length === 0) {
@@ -275,9 +250,9 @@ export default class User {
         up.dob,
         up."bloodGroup",
         up."marriedStatus",
-        up.email,
-        up.phone,
-        ${includePassword ? 'up."hashPassword",' : ""}
+        ua.email,
+        ua.phone,
+        ${includePassword ? 'ua."hashPassword",' : ""}
         up.bio,
         up."statusId",
         ls.name as "statusName",
@@ -298,12 +273,13 @@ export default class User {
           '[]'::json
         ) as "roles"
       FROM 
-        user up
-      LEFT JOIN lookup ls ON up."statusId" = ls.id
+        users up
+      INNER JOIN user_auths ua ON up.id = ua."userId"
+      LEFT JOIN lookups ls ON up."statusId" = ls.id
       LEFT JOIN user_role_xref urx ON up.id = urx."userId"
-      LEFT JOIN lookup l ON urx."roleId" = l.id
+      LEFT JOIN lookups l ON urx."roleId" = l.id
       WHERE ${whereClause}
-      GROUP BY up.id, ls.name, ls.label;`;
+      GROUP BY up.id, ua.email, ua.phone, ${includePassword ? 'ua."hashPassword",' : ""} ls.name, ls.label;`;
 
     const results = await dbClient.mainPool.query(queryString);
     const response = results.rows[0];
@@ -336,7 +312,7 @@ export default class User {
     if (filters?.roleCategory) {
       roleJoin = `
         INNER JOIN user_role_xref urx ON up.id = urx."userId"
-        INNER JOIN lookup lr ON urx."roleId" = lr.id
+        INNER JOIN lookups lr ON urx."roleId" = lr.id
       `;
       conditions.push(`lr.name LIKE '${filters.roleCategory}_%'`);
     }
@@ -356,8 +332,8 @@ export default class User {
           up.dob,
           up."bloodGroup",
           up."marriedStatus",
-          up.email,
-          up.phone,
+          ua.email,
+          ua.phone,
           up.bio,
           up."statusId",
           ls.name as "statusName",
@@ -366,8 +342,9 @@ export default class User {
           up."createdAt",
           up."updatedAt"
       FROM 
-        user up
-      LEFT JOIN lookup ls ON up."statusId" = ls.id
+        users up
+      INNER JOIN user_auths ua ON up.id = ua."userId"
+      LEFT JOIN lookups ls ON up."statusId" = ls.id
       ${roleJoin}
       ${whereClause}
       ORDER BY up."createdAt" DESC;`;

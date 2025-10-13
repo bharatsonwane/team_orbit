@@ -6,11 +6,7 @@ import {
   createJwtToken,
 } from "../utils/authHelper";
 import Lookup from "../services/lookup.service";
-import {
-  UserLoginSchema,
-  UserSignupSchema,
-  CreateUserSchema,
-} from "../schemas/user.schema";
+import { UserLoginSchema, CreateUserSchema } from "../schemas/user.schema";
 import { AuthenticatedRequest } from "../middleware/authRoleMiddleware";
 import {
   lookupTypeKeys,
@@ -56,78 +52,6 @@ export const userLogin = async (
       user: userData,
       token,
     });
-  } catch (error) {
-    next(error);
-  }
-};
-
-export const userSignup = async (
-  req: Request,
-  res: Response,
-  next: NextFunction
-): Promise<void> => {
-  try {
-    const {
-      email,
-      password,
-      phone,
-      firstName,
-      lastName,
-      title,
-      middleName,
-      maidenName,
-      gender,
-      dob,
-      bloodGroup,
-      marriedStatus,
-      bio,
-    }: UserSignupSchema = req.body;
-
-    // Check if user already exists
-    const userExists = await User.getUserByIdOrEmailOrPhone(req.db, {
-      email,
-      phone,
-    });
-
-    if (userExists) {
-      throw {
-        statusCode: 400,
-        message: "User already exists with this email or phone",
-      };
-    }
-
-    // Get default user status and role IDs
-    const userStatusLookupData =
-      await Lookup.getLookupDataByLookupTypeNameAndLookupName(req.db, {
-        lookupTypeName: lookupTypeKeys.USER_STATUS,
-        lookupName: userStatusKeys.PENDING,
-      });
-    const userStatusId = userStatusLookupData.id;
-
-    // Hash password
-    const hashPassword = await getHashPassword(password);
-
-    // Create user
-    const createdUser = await User.signupUser(req.db, {
-      email,
-      hashPassword,
-      phone,
-      firstName,
-      lastName,
-      statusId: userStatusId,
-      tenantId: undefined, // tenantId should be null for signup
-      // Optional fields
-      title,
-      middleName,
-      maidenName,
-      gender,
-      dob,
-      bloodGroup,
-      marriedStatus,
-      bio,
-    });
-
-    res.status(201).json(createdUser);
   } catch (error) {
     next(error);
   }
@@ -315,22 +239,6 @@ export const updateUserPassword = async (
     });
 
     res.status(200).json(updatedUser);
-  } catch (error) {
-    next(error);
-  }
-};
-
-export const signoutUser = async (
-  req: Request,
-  res: Response,
-  next: NextFunction
-): Promise<void> => {
-  try {
-    // In a real application, you might want to invalidate the token
-    // For now, just return a success message
-    res.status(200).json({
-      message: "User signed out successfully",
-    });
   } catch (error) {
     next(error);
   }

@@ -1,5 +1,5 @@
--- lookup_type Table
-CREATE TABLE IF NOT EXISTS lookup_type (
+-- lookup_types Table
+CREATE TABLE IF NOT EXISTS lookup_types (
     id SERIAL PRIMARY KEY,
     name VARCHAR(255) UNIQUE NOT NULL,  -- Internal name (e.g., 'USER_ROLE')
     label VARCHAR(255) NOT NULL,        -- Display label (e.g., 'User Role')
@@ -13,8 +13,8 @@ CREATE TABLE IF NOT EXISTS lookup_type (
     "archivedBy" INT DEFAULT NULL
 );
 
--- lookup Table
-CREATE TABLE IF NOT EXISTS lookup (
+-- lookups Table
+CREATE TABLE IF NOT EXISTS lookups (
     id SERIAL PRIMARY KEY,
     name VARCHAR(100) NOT NULL,              -- Internal name (e.g., 'USER_ROLE_PLATFORM_ADMIN', 'USER_STATUS_ACTIVE')
     label VARCHAR(255) NOT NULL,             -- Display label (e.g., 'Platform Admin', 'Active')
@@ -30,13 +30,13 @@ CREATE TABLE IF NOT EXISTS lookup (
     "updatedBy" INT DEFAULT NULL,
     "archivedBy" INT DEFAULT NULL,
     "lookupTypeId" INT NOT NULL,
-    CONSTRAINT fk_lookup_lookup_type FOREIGN KEY ("lookupTypeId") REFERENCES lookup_type (id) ON DELETE CASCADE,
+    CONSTRAINT fk_lookups_lookup_types FOREIGN KEY ("lookupTypeId") REFERENCES lookup_types (id) ON DELETE CASCADE,
     CONSTRAINT unique_lookup_type_id_name UNIQUE ("lookupTypeId", name),                        -- Unique constraint for lookup type and name
     CONSTRAINT unique_lookup_type_id_label UNIQUE ("lookupTypeId", label)                       -- Unique constraint for lookup type and label
 );
 
--- tenant Table
-CREATE TABLE IF NOT EXISTS tenant (
+-- tenants Table
+CREATE TABLE IF NOT EXISTS tenants (
     id SERIAL PRIMARY KEY,
     name VARCHAR(255) NOT NULL UNIQUE,
     label VARCHAR(255) NOT NULL UNIQUE,
@@ -49,7 +49,7 @@ CREATE TABLE IF NOT EXISTS tenant (
     "createdBy" INT DEFAULT NULL,
     "updatedBy" INT DEFAULT NULL,
     "archivedBy" INT DEFAULT NULL,
-    CONSTRAINT fk_tenant_status FOREIGN KEY ("statusId") REFERENCES lookup (id)
+    CONSTRAINT fk_tenants_status FOREIGN KEY ("statusId") REFERENCES lookups (id)
 );
 
 -- title_enum Type
@@ -84,8 +84,8 @@ EXCEPTION
     WHEN duplicate_object THEN null;
 END $$;
 
--- user Table
-CREATE TABLE IF NOT EXISTS user (
+-- users Table
+CREATE TABLE IF NOT EXISTS users (
     id SERIAL PRIMARY KEY,
     title title_enum, -- Use ENUM type
     "firstName" VARCHAR(255) NOT NULL,
@@ -96,10 +96,6 @@ CREATE TABLE IF NOT EXISTS user (
     dob DATE,
     "bloodGroup" blood_group_enum, -- Use ENUM type
     "marriedStatus" married_status_enum,
-    email VARCHAR(255) UNIQUE NOT NULL,
-    phone VARCHAR(255) UNIQUE NOT NULL,
-    "hashPassword" VARCHAR(255),  -- Store hashPassword
-    "lastPasswordChangedAt" TIMESTAMP DEFAULT NULL,
     bio TEXT, -- User biography
     "isArchived" BOOLEAN DEFAULT FALSE NOT NULL,
     "statusId" INT NOT NULL, -- Use "lookupId"
@@ -110,17 +106,41 @@ CREATE TABLE IF NOT EXISTS user (
     "createdBy" INT DEFAULT NULL,
     "updatedBy" INT DEFAULT NULL,
     "archivedBy" INT DEFAULT NULL,
-    CONSTRAINT fk_user_tenant FOREIGN KEY ("tenantId") REFERENCES tenant (id),
-    CONSTRAINT fk_user_user_status FOREIGN KEY ("statusId") REFERENCES lookup (id)
+    CONSTRAINT fk_users_tenants FOREIGN KEY ("tenantId") REFERENCES tenants (id),
+    CONSTRAINT fk_users_status FOREIGN KEY ("statusId") REFERENCES lookups (id)
 );
 
--- user_role_xref table
+-- user_auths Table
+CREATE TABLE IF NOT EXISTS user_auths (
+    id SERIAL PRIMARY KEY,    
+    "userId" INT NOT NULL,
+    -- Local login
+    email VARCHAR(255) UNIQUE,
+    phone VARCHAR(20) UNIQUE,
+    "hashPassword" TEXT,        -- Store hashPassword   
+    "passwordUpdatedAt" TIMESTAMP DEFAULT NULL,
+    "otpCode" VARCHAR(10),
+    "otpExpiresAt" TIMESTAMP,
+    
+    -- Third-party SSO
+    "googleId" VARCHAR(255) UNIQUE,
+    "outlookId" VARCHAR(255) UNIQUE,
+    "appleId" VARCHAR(255) UNIQUE,  -- Apple Sign-In
+    
+    -- Audit
+    "lastLoginAt" TIMESTAMP,
+    "createdAt" TIMESTAMP DEFAULT NOW(),
+    "updatedAt" TIMESTAMP DEFAULT NOW(),
+    CONSTRAINT fk_user_auths_users FOREIGN KEY ("userId") REFERENCES users (id) ON DELETE CASCADE
+);
+
+-- user_role_xref Table (junction table, kept singular for relationship clarity)
 CREATE TABLE IF NOT EXISTS user_role_xref (
     id SERIAL PRIMARY KEY,
     "userId" INT NOT NULL,
     "roleId" INT NOT NULL,
     "createdAt" TIMESTAMP DEFAULT NOW() NOT NULL,
     "updatedAt" TIMESTAMP DEFAULT NOW() NOT NULL,
-    CONSTRAINT fk_user_role_xref_user FOREIGN KEY ("userId") REFERENCES user (id),
-    CONSTRAINT fk_user_role_xref_role FOREIGN KEY ("roleId") REFERENCES lookup (id)
+    CONSTRAINT fk_user_role_xref_users FOREIGN KEY ("userId") REFERENCES users (id),
+    CONSTRAINT fk_user_role_xref_lookups FOREIGN KEY ("roleId") REFERENCES lookups (id)
 );

@@ -438,7 +438,7 @@ Forbidden:
       const client = await db.getDbClient();
 
       const { rows: tenants } = await client.query(
-        `SELECT id, name FROM ${schemaNames.main}.tenant`
+        `SELECT id, name FROM ${schemaNames.main}.tenants`
       );
       for (const tenant of tenants) {
         const schemaName = schemaNames.tenantSchemaName(tenant.id);

@@ -29,8 +29,8 @@ const getLookupDataByLookupTypeNameAndLookupName = async ({
   /** Get lookup data query */
   const getLookupDataQuery = `
         SELECT l.id, l.name, l.label, l."lookupTypeId", lt.name as typeName
-        FROM lookup_type lt
-        INNER JOIN lookup l ON lt.id = l."lookupTypeId"
+        FROM lookup_types lt
+        INNER JOIN lookups l ON lt.id = l."lookupTypeId"
         WHERE l.name = $1 AND lt.name = $2;
       `;
 
@@ -70,7 +70,7 @@ async function main(): Promise<void> {
         "We are a company that provides a software solutions for businesses",
     };
     const tenantResult = await pool.query(
-      `INSERT INTO tenant (name, label, "statusId") 
+      `INSERT INTO tenants (name, label, "statusId") 
        VALUES ($1, $2, $3)
        ON CONFLICT (name) DO UPDATE SET
          label = EXCLUDED.label,
@@ -128,21 +128,22 @@ async function main(): Promise<void> {
       const hashPassword = await getHashPassword(userData.password);
 
       /** Check if user already exists */
-      const checkUserQuery = `
-          SELECT id, email FROM user WHERE email = $1;
+      const checkUserAuthQuery = `
+          SELECT id, email FROM user_auths WHERE email = $1;
         `;
-      const existingUser = (await pool.query(checkUserQuery, [userData.email]))
-        .rows;
+      const existingUserAuth = (
+        await pool.query(checkUserAuthQuery, [userData.email])
+      ).rows;
 
       /** If user already exists, continue */
-      if (existingUser.length > 0) {
+      if (existingUserAuth.length > 0) {
         console.log(`User already exists: ${userData.email}`);
         continue;
       }
 
       /** Insert new user */
       const upsertUserQuery = `
-        INSERT INTO user (
+        INSERT INTO users (
           title,
           "firstName",
           "lastName",
@@ -152,9 +153,6 @@ async function main(): Promise<void> {
           dob,
           "bloodGroup",
           "marriedStatus",
-          email,
-          phone,
-          "hashPassword",
           bio,
           "tenantId",
           "statusId",
@@ -162,9 +160,9 @@ async function main(): Promise<void> {
           "updatedAt"
             )
           VALUES (
-              $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, NOW(), NOW()
+              $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, NOW(), NOW()
           )
-          RETURNING id, email, "firstName", "lastName";
+          RETURNING id, "firstName", "lastName";
         `;
 
       const userResult = (
@@ -178,9 +176,6 @@ async function main(): Promise<void> {
           userData.dob,
           userData.bloodGroup,
           userData.marriedStatus,
-          userData.email,
-          userData.phone,
-          hashPassword,
           userData.bio,
           userData.tenantId,
           userData.statusId,
@@ -188,6 +183,23 @@ async function main(): Promise<void> {
       ).rows;
 
       const userResponse = userResult[0];
+
+      /** Insert user authentication data */
+      await pool.query(
+        `
+          INSERT INTO user_auths (
+            "userId",
+            email,
+            phone,
+            "hashPassword",
+            "passwordUpdatedAt",
+            "createdAt",
+            "updatedAt"
+          )
+          VALUES ($1, $2, $3, $4, NOW(), NOW(), NOW())
+        `,
+        [userResponse.id, userData.email, userData.phone, hashPassword]
+      );
 
       if (userData.roleIds) {
         for (const roleId of userData.roleIds) {
