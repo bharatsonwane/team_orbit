@@ -124,3 +124,45 @@ export const updateUserAction = createAsyncThunk(
     }
   }
 );
+
+/** Update user password action - API call only */
+export const updateUserPasswordAction = createAsyncThunk(
+  "user/updateUserPasswordAction",
+  async (
+    { userId, password }: { userId: number; password: string },
+    { rejectWithValue }
+  ) => {
+    try {
+      const response = await getAxios().put<DetailedUser>(
+        `/api/user/${userId}/update-password`,
+        { password }
+      );
+      return response.data;
+    } catch (error: unknown) {
+      return rejectWithValue(getAppErrorMessage(error));
+    }
+  }
+);
+
+/** Update user status and roles action - API call only */
+export const updateUserStatusAndRolesAction = createAsyncThunk(
+  "user/updateUserStatusAndRolesAction",
+  async (
+    {
+      userId,
+      statusId,
+      roleIds,
+    }: { userId: number; statusId: number; roleIds: number[] },
+    { rejectWithValue }
+  ) => {
+    try {
+      const response = await getAxios().put<DetailedUser>(
+        `/api/user/${userId}/update-status-roles`,
+        { statusId, roleIds }
+      );
+      return response.data;
+    } catch (error: unknown) {
+      return rejectWithValue(getAppErrorMessage(error));
+    }
+  }
+);

@@ -20,6 +20,12 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
   Building2,
   Users,
   Calendar,
@@ -29,6 +35,9 @@ import {
   Mail,
   Phone,
   User,
+  MoreVertical,
+  KeyRound,
+  UserCog,
 } from "lucide-react";
 import { HeaderLayout } from "@/components/AppLayout";
 import { getTenantAction } from "@/redux/actions/tenantActions";
@@ -45,6 +54,8 @@ import type { AppDispatch, RootState } from "@/redux/store";
 import { EditTenantModal } from "./components/EditTenantModal";
 import { AddUserModal } from "@/components/AddUserModal";
 import { EditUserModal } from "./components/EditUserModal";
+import { UpdateUserPasswordModal } from "./components/UpdateUserPasswordModal";
+import { UpdateUserStatusAndRolesModal } from "./components/UpdateUserStatusAndRolesModal";
 import { LoadingIndicator } from "@/components/ui/loading-indicator";
 
 export default function TenantDetail() {
@@ -68,6 +79,14 @@ export default function TenantDetail() {
       )?.label || "Unknown"
     : "";
 
+  // Helper function to get user status badge variant
+  const getUserStatusVariant = (statusName: string) => {
+    if (statusName === "ACTIVE") return "default";
+    if (statusName === "PENDING") return "secondary";
+    if (statusName === "DEACTIVATED") return "destructive";
+    return "secondary";
+  };
+
   // Edit modal state
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
 
@@ -77,6 +96,25 @@ export default function TenantDetail() {
   // Edit user modal state
   const [isEditUserModalOpen, setIsEditUserModalOpen] = useState(false);
   const [selectedUserId, setSelectedUserId] = useState<number | null>(null);
+
+  // Update password modal state
+  const [isUpdatePasswordModalOpen, setIsUpdatePasswordModalOpen] =
+    useState(false);
+  const [updatePasswordUserId, setUpdatePasswordUserId] = useState<
+    number | null
+  >(null);
+  const [updatePasswordUserName, setUpdatePasswordUserName] = useState<
+    string | undefined
+  >(undefined);
+
+  // Update status and roles modal state
+  const [isUpdateStatusAndRolesModalOpen, setIsUpdateStatusAndRolesModalOpen] =
+    useState(false);
+  const [updateStatusAndRolesUserId, setUpdateStatusAndRolesUserId] = useState<
+    number | null
+  >(null);
+  const [updateStatusAndRolesUserName, setUpdateStatusAndRolesUserName] =
+    useState<string | undefined>(undefined);
 
   useEffect(() => {
     if (id) {
@@ -110,6 +148,24 @@ export default function TenantDetail() {
     setIsEditUserModalOpen(true);
   };
 
+  const handleResetPassword = (userId: number) => {
+    const user = users.find(u => u.id === userId);
+    setUpdatePasswordUserId(userId);
+    setUpdatePasswordUserName(
+      user ? `${user.firstName} ${user.lastName}` : undefined
+    );
+    setIsUpdatePasswordModalOpen(true);
+  };
+
+  const handleUpdateStatusOrRoles = (userId: number) => {
+    const user = users.find(u => u.id === userId);
+    setUpdateStatusAndRolesUserId(userId);
+    setUpdateStatusAndRolesUserName(
+      user ? `${user.firstName} ${user.lastName}` : undefined
+    );
+    setIsUpdateStatusAndRolesModalOpen(true);
+  };
+
   const handleTenantUpdated = () => {
     // Refresh tenant data after update
     if (id) {
@@ -126,6 +182,18 @@ export default function TenantDetail() {
 
   const handleUserUpdated = () => {
     // Refresh user list after update
+    if (id) {
+      dispatch(getTenantUsersAction(parseInt(id)));
+    }
+  };
+
+  const handlePasswordUpdated = () => {
+    // Password update doesn't require list refresh, just close modal
+    setIsUpdatePasswordModalOpen(false);
+  };
+
+  const handleStatusAndRolesUpdated = () => {
+    // Refresh user list after status/roles update
     if (id) {
       dispatch(getTenantUsersAction(parseInt(id)));
     }
@@ -368,7 +436,9 @@ export default function TenantDetail() {
                       </div>
                     </TableCell>
                     <TableCell>
-                      <Badge variant="default">Active</Badge>
+                      <Badge variant={getUserStatusVariant(user.statusName)}>
+                        {user.statusLabel}
+                      </Badge>
                     </TableCell>
                     <TableCell>
                       <div className="flex items-center space-x-2">
@@ -379,14 +449,33 @@ export default function TenantDetail() {
                       </div>
                     </TableCell>
                     <TableCell className="text-right">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleEditUser(user.id)}
-                      >
-                        <Edit className="h-4 w-4 mr-1" />
-                        Edit
-                      </Button>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" size="sm">
+                            <MoreVertical className="h-4 w-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem
+                            onClick={() => handleEditUser(user.id)}
+                          >
+                            <Edit className="h-4 w-4 mr-2" />
+                            Edit
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            onClick={() => handleResetPassword(user.id)}
+                          >
+                            <KeyRound className="h-4 w-4 mr-2" />
+                            Update Password
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            onClick={() => handleUpdateStatusOrRoles(user.id)}
+                          >
+                            <UserCog className="h-4 w-4 mr-2" />
+                            Update Status & Roles
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
                     </TableCell>
                   </TableRow>
                 ))}
@@ -420,6 +509,24 @@ export default function TenantDetail() {
         onClose={() => setIsEditUserModalOpen(false)}
         userId={selectedUserId}
         onUserUpdated={handleUserUpdated}
+      />
+
+      {/* Update Password Modal */}
+      <UpdateUserPasswordModal
+        isOpen={isUpdatePasswordModalOpen}
+        onClose={() => setIsUpdatePasswordModalOpen(false)}
+        userId={updatePasswordUserId}
+        userName={updatePasswordUserName}
+        onPasswordUpdated={handlePasswordUpdated}
+      />
+
+      {/* Update Status and Roles Modal */}
+      <UpdateUserStatusAndRolesModal
+        isOpen={isUpdateStatusAndRolesModalOpen}
+        onClose={() => setIsUpdateStatusAndRolesModalOpen(false)}
+        userId={updateStatusAndRolesUserId}
+        userName={updateStatusAndRolesUserName}
+        onUpdated={handleStatusAndRolesUpdated}
       />
     </Fragment>
   );

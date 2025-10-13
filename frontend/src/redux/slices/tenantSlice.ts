@@ -85,7 +85,17 @@ const tenantSlice = createSlice({
         // Map DetailedUser (with 'roles') to TenantUser (with 'userRoles')
         state.tenantUsers =
           action.payload?.map(user => ({
-            ...user,
+            id: user.id,
+            email: user.email,
+            firstName: user.firstName,
+            lastName: user.lastName,
+            phone: user.phone,
+            tenantId: user.tenantId,
+            statusId: user.statusId,
+            statusName: user.statusName,
+            statusLabel: user.statusLabel,
+            createdAt: user.createdAt,
+            updatedAt: user.updatedAt,
             userRoles: user.roles || [],
           })) || [];
         state.error = null;

@@ -19,6 +19,7 @@ import {
   updateUserPassword,
   updateUserProfile,
   createUser,
+  updateUserStatusAndRoles,
 } from "../controllers/user.controller";
 import RouteRegistrar from "../middleware/RouteRegistrar";
 import { authRoleMiddleware } from "../middleware/authRoleMiddleware";
@@ -47,7 +48,7 @@ registrar.post("/login", {
 /**@description Create User (Role-based permissions) */
 registrar.post("/create", {
   requestSchema: { bodySchema: createUserSchema },
-  responseSchemas: [{ statusCode: 201, schema: baseUserSchema }],
+  responseSchemas: [{ statusCode: 201, schema: z.number() }],
   middleware: [authRoleMiddleware()],
   controller: createUser,
 });
@@ -72,6 +73,19 @@ registrar.put("/:id/update-password/", {
   },
   middleware: [authRoleMiddleware()],
   controller: updateUserPassword,
+});
+
+/**@description update user status and roles  */
+registrar.put("/:id/update-status-roles/", {
+  requestSchema: {
+    paramsSchema: { id: idValidation },
+    bodySchema: z.object({
+      statusId: z.number(),
+      roleIds: z.array(z.number()),
+    }),
+  },
+  middleware: [authRoleMiddleware()],
+  controller: updateUserStatusAndRoles,
 });
 
 // /api/user/profile

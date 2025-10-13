@@ -37,8 +37,8 @@ export const detailedUserSchema = z.object({
   bio: z.string().nullable().optional(),
   tenantId: z.number(),
   statusId: z.number(),
-  statusName: z.string().optional(),
-  statusLabel: z.string().optional(),
+  statusName: z.string(),
+  statusLabel: z.string(),
   roles: z.array(
     lookupItemSchema.extend({
       name: userRoleName,
@@ -161,7 +161,7 @@ export const createUserRequestSchema = createUserFormSchema.transform(data => {
 
 export type CreateUserRequest = z.infer<typeof createUserRequestSchema>;
 
-// Update user form schema (password is optional)
+// Update user form schema (for profile updates only - password, status, and roles handled separately)
 export const updateUserFormSchema = z.object({
   title: z
     .string()
@@ -190,26 +190,10 @@ export const updateUserFormSchema = z.object({
     .or(z.literal("")),
   email: z.string().email("Invalid email"),
   phone: z.string().min(10, "Phone must be at least 10 characters"),
-  password: z
-    .string()
-    .min(6, "Password must be at least 6 characters")
-    .optional()
-    .or(z.literal("")),
   bio: z.string().optional().or(z.literal("")),
-  statusId: z.string().min(1, "Status is required"), // Accept string from select
-  roleIds: z.string().refine(val => {
-    if (!val) return false;
-    const roleIds = val
-      .split(",")
-      .map(Number)
-      .filter(n => !isNaN(n));
-    return roleIds.length > 0;
-  }, "At least one role is required"),
 });
 
-export type UpdateUserFormData = z.infer<typeof updateUserFormSchema> & {
-  title?: "Mr" | "Mrs" | "Ms" | "";
-};
+export type UpdateUserFormData = z.infer<typeof updateUserFormSchema>;
 
 // Update user request schema (transforms form data for API)
 export const updateUserRequestSchema = updateUserFormSchema.transform(data => {
@@ -228,18 +212,31 @@ export const updateUserRequestSchema = updateUserFormSchema.transform(data => {
   return {
     ...data,
     dob: formattedDob,
-    statusId: Number(data.statusId), // Convert string to number for API
-    roleIds: data.roleIds
-      ? data.roleIds
-          .split(",")
-          .map(Number)
-          .filter(n => !isNaN(n))
-      : [], // Convert string to array of numbers
-    password: data.password && data.password !== "" ? data.password : undefined, // Only send password if provided
   };
 });
 
 export type UpdateUserRequest = z.infer<typeof updateUserRequestSchema>;
+
+// Update user password schema
+export const updateUserPasswordSchema = z
+  .object({
+    newPassword: z
+      .string()
+      .min(8, "Password must be at least 8 characters")
+      .regex(
+        /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]/,
+        "Password must contain at least one uppercase letter, one lowercase letter, one number, and one special character"
+      ),
+    confirmPassword: z.string().min(1, "Please confirm your password"),
+  })
+  .refine(data => data.newPassword === data.confirmPassword, {
+    message: "Passwords don't match",
+    path: ["confirmPassword"],
+  });
+
+export type UpdateUserPasswordFormData = z.infer<
+  typeof updateUserPasswordSchema
+>;
 
 // Login response interface
 export interface LoginResponse {

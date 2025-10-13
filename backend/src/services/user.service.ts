@@ -13,7 +13,7 @@ export default class User {
   static async createUser(
     dbClient: dbClientPool,
     userData: CreateUserSchema
-  ): Promise<UserWithTrackingSchema> {
+  ): Promise<number> {
     const client = dbClient;
     const dbClientPool: dbClientPool = { mainPool: client.mainPool };
 
@@ -102,27 +102,7 @@ export default class User {
       // Commit transaction
       await client.mainPool.query(dbTransactionKeys.COMMIT);
 
-      return {
-        id: user.id,
-        title: user.title,
-        firstName: user.firstName,
-        lastName: user.lastName,
-        middleName: user.middleName,
-        maidenName: user.maidenName,
-        gender: user.gender,
-        dob: user.dob,
-        bloodGroup: user.bloodGroup,
-        marriedStatus: user.marriedStatus,
-        email: auth.email,
-        phone: auth.phone,
-        bio: user.bio,
-        statusId: user.statusId,
-        tenantId: user.tenantId,
-        isArchived: user.isArchived,
-        createdAt: user.createdAt,
-        updatedAt: user.updatedAt,
-        archivedAt: user.archivedAt,
-      };
+      return user.id;
     } catch (error) {
       // Rollback transaction on error
       await client.mainPool.query(dbTransactionKeys.ROLLBACK);
@@ -200,6 +180,63 @@ export default class User {
     return userResult.rows[0];
   }
 
+  static async updateUserStatusAndRoles(
+    dbClient: dbClientPool,
+    {
+      userId,
+      statusId,
+      roleIds,
+    }: {
+      userId: number;
+      statusId: number;
+      roleIds: number[];
+    }
+  ): Promise<UserWithTrackingSchema> {
+    try {
+      // Start transaction
+      await dbClient.mainPool.query(dbTransactionKeys.BEGIN);
+
+      // Update user status
+      await dbClient.mainPool.query(
+        `UPDATE users SET "statusId" = $1, "updatedAt" = NOW() WHERE id = $2`,
+        [statusId, userId]
+      );
+
+      // Delete existing roles
+      await dbClient.mainPool.query(
+        `DELETE FROM user_role_xref WHERE "userId" = $1`,
+        [userId]
+      );
+
+      // Insert new roles
+      if (roleIds && roleIds.length > 0) {
+        const roleValues = roleIds
+          .map(roleId => `(${userId}, ${roleId})`)
+          .join(", ");
+        await dbClient.mainPool.query(
+          `INSERT INTO user_role_xref ("userId", "roleId", "createdAt", "updatedAt") VALUES ${roleValues}`
+        );
+      }
+
+      // Commit transaction
+      await dbClient.mainPool.query(dbTransactionKeys.COMMIT);
+
+      // Fetch and return the updated user data
+      const userResult = await dbClient.mainPool.query(`
+        SELECT u.*, ua.email, ua.phone
+        FROM users u
+        INNER JOIN user_auths ua ON u.id = ua."userId"
+        WHERE u.id = ${userId}
+      `);
+
+      return userResult.rows[0];
+    } catch (error) {
+      // Rollback transaction on error
+      await dbClient.mainPool.query(dbTransactionKeys.ROLLBACK);
+      throw error;
+    }
+  }
+
   static async getUserByIdOrEmailOrPhone(
     dbClient: dbClientPool,
     {
@@ -250,6 +287,7 @@ export default class User {
         up.dob,
         up."bloodGroup",
         up."marriedStatus",
+        up."isArchived",
         ua.email,
         ua.phone,
         ${includePassword ? 'ua."hashPassword",' : ""}

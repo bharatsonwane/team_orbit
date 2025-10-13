@@ -1,7 +1,7 @@
 import React, { useEffect, useState, Fragment } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useDispatch, useSelector } from "react-redux";
+import { useDispatch } from "react-redux";
 import {
   Drawer,
   DrawerContent,
@@ -25,9 +25,7 @@ import {
   getUserByIdAction,
   updateUserAction,
 } from "@/redux/actions/userActions";
-import { selectLookupTypeByName } from "@/redux/slices/lookupSlice";
-import type { AppDispatch, RootState } from "@/redux/store";
-import { lookupTypeKeys } from "@/utils/constants";
+import type { AppDispatch } from "@/redux/store";
 import { LoadingIndicator } from "@/components/ui/loading-indicator";
 import { XIcon } from "lucide-react";
 
@@ -45,15 +43,8 @@ export const EditUserModal: React.FC<EditUserModalProps> = ({
   onUserUpdated,
 }) => {
   const dispatch = useDispatch<AppDispatch>();
-  const userRoles = useSelector((state: RootState) =>
-    selectLookupTypeByName(state, lookupTypeKeys.USER_ROLE)
-  );
-  const userStatuses = useSelector((state: RootState) =>
-    selectLookupTypeByName(state, lookupTypeKeys.USER_STATUS)
-  );
 
   // Local state
-  const [selectedRoleIds, setSelectedRoleIds] = useState<number[]>([]);
   const [selectedDob, setSelectedDob] = useState<string>("");
   const [isLoading, setIsLoading] = useState(false);
   const [isFetching, setIsFetching] = useState(false);
@@ -64,8 +55,8 @@ export const EditUserModal: React.FC<EditUserModalProps> = ({
     reset,
     setValue,
     formState: { errors },
-  } = useForm<any>({
-    resolver: zodResolver(updateUserFormSchema) as any,
+  } = useForm<UpdateUserFormData>({
+    resolver: zodResolver(updateUserFormSchema),
   });
 
   // Fetch user data when modal opens
@@ -110,17 +101,8 @@ export const EditUserModal: React.FC<EditUserModalProps> = ({
               | undefined,
             email: result.email,
             phone: result.phone,
-            password: "", // Don't populate password
             bio: result.bio || "",
-            statusId: result.statusId?.toString() || "",
-            roleIds: "",
           });
-
-          // Set selected roles
-          const roleIds =
-            result.roles?.map((role: { id: number }) => role.id) || [];
-          setSelectedRoleIds(roleIds);
-          setValue("roleIds", roleIds.join(","));
 
           // Set DOB
           setSelectedDob(result.dob || "");
@@ -141,10 +123,7 @@ export const EditUserModal: React.FC<EditUserModalProps> = ({
     setIsLoading(true);
     try {
       // Transform form data for API
-      const transformedData = updateUserRequestSchema.parse({
-        ...data,
-        roleIds: selectedRoleIds.join(","),
-      });
+      const transformedData = updateUserRequestSchema.parse(data);
 
       await dispatch(
         updateUserAction({
@@ -164,19 +143,7 @@ export const EditUserModal: React.FC<EditUserModalProps> = ({
 
   const handleCancel = () => {
     reset();
-    setSelectedRoleIds([]);
     onClose();
-  };
-
-  const handleRoleChange = (roleId: number) => {
-    let newRoleIds;
-    if (selectedRoleIds.includes(roleId)) {
-      newRoleIds = selectedRoleIds.filter(id => id !== roleId);
-    } else {
-      newRoleIds = [...selectedRoleIds, roleId];
-    }
-    setSelectedRoleIds(newRoleIds);
-    setValue("roleIds", newRoleIds.join(","));
   };
 
   return (
@@ -385,74 +352,6 @@ export const EditUserModal: React.FC<EditUserModalProps> = ({
                       register={register}
                       error={errors.bio?.message as string}
                     />
-                  </div>
-
-                  {/* Account Information */}
-                  <div className="space-y-4">
-                    <h3 className="text-lg font-semibold">
-                      Account Information
-                    </h3>
-
-                    <InputWithLabel
-                      id="password"
-                      label="Password (leave empty to keep current)"
-                      type="password"
-                      placeholder="Enter new password"
-                      register={register}
-                      error={errors.password?.message as string}
-                    />
-
-                    <SelectWithLabel
-                      id="statusId"
-                      label="Status"
-                      required
-                      register={register}
-                      error={errors.statusId?.message as string}
-                    >
-                      <option value="">Select status</option>
-                      {userStatuses?.lookups?.map(
-                        (status: { id: number; label: string }) => (
-                          <option key={status.id} value={status.id}>
-                            {status.label}
-                          </option>
-                        )
-                      )}
-                    </SelectWithLabel>
-
-                    <div className="space-y-2">
-                      <label className="text-sm font-medium">Roles</label>
-                      <div className="grid grid-cols-2 gap-2">
-                        {userRoles?.lookups
-                          ?.filter(
-                            (role: {
-                              id: number;
-                              label: string;
-                              name: string;
-                            }) => role.name.startsWith("TENANT_")
-                          )
-                          .map((role: { id: number; label: string }) => (
-                            <label
-                              key={role.id}
-                              className="flex items-center space-x-2 cursor-pointer"
-                            >
-                              <input
-                                type="checkbox"
-                                checked={selectedRoleIds.includes(role.id)}
-                                onChange={() => handleRoleChange(role.id)}
-                                className="rounded cursor-pointer"
-                              />
-                              <span className="text-sm">{role.label}</span>
-                            </label>
-                          ))}
-                      </div>
-                      {errors.roleIds && (
-                        <p className="text-sm text-red-600">
-                          {errors.roleIds.message as string}
-                        </p>
-                      )}
-                      {/* Hidden input for form validation */}
-                      <input type="hidden" {...register("roleIds")} />
-                    </div>
                   </div>
                 </div>
               </div>

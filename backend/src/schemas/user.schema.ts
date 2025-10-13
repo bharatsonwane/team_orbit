@@ -6,6 +6,7 @@ import {
   genderEnum,
   bloodGroupEnum,
   marriedStatusEnum,
+  userStatusName,
 } from "../utils/constants";
 
 /**
@@ -40,6 +41,7 @@ export const userWithTrackingSchema = baseUserSchema.extend({
   archivedAt: z.string().nullable().optional(),
   lastPasswordChangedAt: z.string().optional(),
   statusId: z.number().int().optional(),
+  statusName: userStatusName,
   tenantId: z.number().int().optional(),
   roleIds: z.array(z.number().int()).optional(),
   roles: z.array(baseLookupSchema).optional(),

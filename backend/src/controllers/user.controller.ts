@@ -22,13 +22,16 @@ export const userLogin = async (
 ): Promise<void> => {
   try {
     const { email, password } = req.body as UserLoginSchema;
-
     const userData = await User.getUserByIdOrEmailOrPhone(req.db, {
       email,
       includePassword: true,
     });
 
-    if (!userData) {
+    if (
+      !userData ||
+      userData.isArchived === true ||
+      userData.statusName !== userStatusKeys.ACTIVE
+    ) {
       throw { statusCode: 401, message: "Invalid email or password" };
     }
 
@@ -130,9 +133,9 @@ export const createUser = async (
     }
 
     // Create user with roles
-    const createdUser = await User.createUser(req.db, userData);
+    const createdUserId = await User.createUser(req.db, userData);
 
-    res.status(201).json(createdUser);
+    res.status(201).json(createdUserId);
   } catch (error) {
     next(error);
   }
@@ -236,6 +239,27 @@ export const updateUserPassword = async (
     const updatedUser = await User.updateUserPassword(req.db, {
       userId: parseInt(id),
       hashPassword,
+    });
+
+    res.status(200).json(updatedUser);
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const updateUserStatusAndRoles = async (
+  req: AuthenticatedRequest,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  try {
+    const { id } = req.params;
+    const { statusId, roleIds } = req.body;
+
+    const updatedUser = await User.updateUserStatusAndRoles(req.db, {
+      userId: parseInt(id),
+      statusId,
+      roleIds,
     });
 
     res.status(200).json(updatedUser);
