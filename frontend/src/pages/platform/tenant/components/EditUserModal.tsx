@@ -230,44 +230,7 @@ export const EditUserModal: React.FC<EditUserModalProps> = ({
                         register={register}
                         error={errors.maidenName?.message as string}
                       />
-                    </div>
-                  </div>
 
-                  {/* Contact Information */}
-                  <div className="space-y-4">
-                    <h3 className="text-lg font-semibold">
-                      Contact Information
-                    </h3>
-
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <InputWithLabel
-                        id="email"
-                        label="Email"
-                        type="email"
-                        placeholder="Enter email address"
-                        required
-                        register={register}
-                        error={errors.email?.message as string}
-                      />
-
-                      <InputWithLabel
-                        id="phone"
-                        label="Phone"
-                        placeholder="Enter phone number"
-                        required
-                        register={register}
-                        error={errors.phone?.message as string}
-                      />
-                    </div>
-                  </div>
-
-                  {/* Additional Information */}
-                  <div className="space-y-4">
-                    <h3 className="text-lg font-semibold">
-                      Additional Information
-                    </h3>
-
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <SelectWithLabel
                         id="gender"
                         label="Gender"
@@ -342,16 +305,44 @@ export const EditUserModal: React.FC<EditUserModalProps> = ({
                         <option value="Divorced">Divorced</option>
                         <option value="Widowed">Widowed</option>
                       </SelectWithLabel>
-                    </div>
 
-                    <InputWithLabel
-                      id="bio"
-                      label="Bio"
-                      variant="textarea"
-                      placeholder="Enter bio"
-                      register={register}
-                      error={errors.bio?.message as string}
-                    />
+                      <InputWithLabel
+                        id="bio"
+                        label="Bio"
+                        variant="textarea"
+                        placeholder="Enter bio"
+                        register={register}
+                        error={errors.bio?.message as string}
+                      />
+                    </div>
+                  </div>
+
+                  {/* Contact Information */}
+                  <div className="space-y-4">
+                    <h3 className="text-lg font-semibold">
+                      Contact Information
+                    </h3>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <InputWithLabel
+                        id="email"
+                        label="Email"
+                        type="email"
+                        placeholder="Enter email address"
+                        required
+                        register={register}
+                        error={errors.email?.message as string}
+                      />
+
+                      <InputWithLabel
+                        id="phone"
+                        label="Phone"
+                        placeholder="Enter phone number"
+                        required
+                        register={register}
+                        error={errors.phone?.message as string}
+                      />
+                    </div>
                   </div>
                 </div>
               </div>
