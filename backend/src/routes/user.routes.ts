@@ -7,13 +7,13 @@ import {
   updateUserStatusAndRolesSchema,
   saveUserContactsSchema,
   saveUserJobDetailsSchema,
-} from "../schemas/user.schema";
+} from "@src/schemas/user.schema";
 import {
   getUserOASSchema,
   getUserProfileOASSchema,
   updateUserPasswordOASSchema,
-} from "../openApiSpecification/oasDoc/user.oas";
-import { idValidation } from "../schemas/common.schema";
+} from "@src/openApiSpecification/oasDoc/user.oas";
+import { idValidation } from "@src/schemas/common.schema";
 import {
   getUserById,
   getUserProfile,
@@ -25,10 +25,10 @@ import {
   updateUserStatusAndRoles,
   saveUserContacts,
   saveUserJobDetails,
-} from "../controllers/user.controller";
-import RouteRegistrar from "../middleware/RouteRegistrar";
-import { authRoleMiddleware } from "../middleware/authRoleMiddleware";
-import { userRoleKeys } from "../utils/constants";
+} from "@src/controllers/user.controller";
+import RouteRegistrar from "@src/middleware/RouteRegistrar";
+import { authRoleMiddleware } from "@src/middleware/authRoleMiddleware";
+import { userRoleKeys } from "@src/utils/constants";
 
 // Query schema for user list filtering
 const getUsersQuerySchema = z.object({

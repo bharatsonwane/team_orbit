@@ -3,13 +3,13 @@ import type {
   UpdateTenantSchema,
   BaseTenantSchema,
   TenantWithTrackingSchema,
-} from "../schemas/tenant.schema";
-import type { dbClientPool } from "../middleware/dbClientMiddleware";
-import { buildUpdateFields } from "../utils/queryHelper";
-import User from "./user.service";
-import { dbTransactionKeys } from "../utils/constants";
-import { DbMigrationManager } from "../database/dbMigrationManager";
-import { schemaNames } from "../database/db";
+} from "@src/schemas/tenant.schema";
+import type { dbClientPool } from "@src/middleware/dbClientMiddleware";
+import { buildUpdateFields } from "@src/utils/queryHelper";
+import User from "@src/services/user.service";
+import { dbTransactionKeys } from "@src/utils/constants";
+import { DbMigrationManager } from "@src/database/dbMigrationManager";
+import { schemaNames } from "@src/database/db";
 
 export default class Tenant {
   /**

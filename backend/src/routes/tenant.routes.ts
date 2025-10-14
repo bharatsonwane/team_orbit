@@ -2,17 +2,17 @@ import {
   createTenantSchema,
   updateTenantSchema,
   tenantWithTrackingSchema,
-} from "../schemas/tenant.schema";
-import { idValidation } from "../schemas/common.schema";
+} from "@src/schemas/tenant.schema";
+import { idValidation } from "@src/schemas/common.schema";
 import {
   createTenant,
   getTenants,
   getTenantById,
   updateTenant,
-} from "../controllers/tenant.controller";
-import RouteRegistrar from "../middleware/RouteRegistrar";
-import { authRoleMiddleware } from "../middleware/authRoleMiddleware";
-import { userRoleKeys } from "../utils/constants";
+} from "@src/controllers/tenant.controller";
+import RouteRegistrar from "@src/middleware/RouteRegistrar";
+import { authRoleMiddleware } from "@src/middleware/authRoleMiddleware";
+import { userRoleKeys } from "@src/utils/constants";
 
 const registrar = new RouteRegistrar({
   basePath: "/api/tenant",

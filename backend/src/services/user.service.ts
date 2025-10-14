@@ -1,4 +1,4 @@
-import { dbClientPool } from "../middleware/dbClientMiddleware";
+import { dbClientPool } from "@src/middleware/dbClientMiddleware";
 import {
   BaseUserSchema,
   UserWithTrackingSchema,
@@ -6,11 +6,11 @@ import {
   CreateUserSchema,
   SaveUserContactsSchema,
   SaveUserJobDetailsSchema,
-} from "../schemas/user.schema";
-import { buildUpdateFields } from "../utils/queryHelper";
-import { getHashPassword } from "../utils/authHelper";
-import { dbTransactionKeys } from "../utils/constants";
-import db, { schemaNames } from "../database/db";
+} from "@src/schemas/user.schema";
+import { buildUpdateFields } from "@src/utils/queryHelper";
+import { getHashPassword } from "@src/utils/authHelper";
+import { dbTransactionKeys } from "@src/utils/constants";
+import db, { schemaNames } from "@src/database/db";
 
 export default class User {
   static async createUser(

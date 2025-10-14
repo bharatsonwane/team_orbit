@@ -1,9 +1,9 @@
-import RouteRegistrar from "../middleware/RouteRegistrar";
-import { authRoleMiddleware } from "../middleware/authRoleMiddleware";
+import RouteRegistrar from "@src/middleware/RouteRegistrar";
+import { authRoleMiddleware } from "@src/middleware/authRoleMiddleware";
 import {
   getMessagesByChatChannel,
   sendMessage,
-} from "../controllers/chat.controller";
+} from "@src/controllers/chat.controller";
 
 const registrar = new RouteRegistrar({
   basePath: "/api/chat",

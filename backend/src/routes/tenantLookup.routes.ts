@@ -1,6 +1,6 @@
-import RouteRegistrar from "../middleware/RouteRegistrar";
-import { TenantLookupController } from "../controllers/tenantLookup.controller";
-import { idValidation } from "../schemas/common.schema";
+import RouteRegistrar from "@src/middleware/RouteRegistrar";
+import { TenantLookupController } from "@src/controllers/tenantLookup.controller";
+import { idValidation } from "@src/schemas/common.schema";
 import {
   tenantLookupTypesListSchema,
   tenantLookupsListSchema,
@@ -9,7 +9,7 @@ import {
   updateTenantLookupRequestSchema,
   tenantLookupResponseSchema,
   deleteTenantLookupResponseSchema,
-} from "../schemas/tenantLookup.schema";
+} from "@src/schemas/tenantLookup.schema";
 
 const registrar = new RouteRegistrar({
   basePath: "/api/tenant/:tenantId",

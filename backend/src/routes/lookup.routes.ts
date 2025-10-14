@@ -2,13 +2,13 @@ import {
   retrieveLookupList,
   getLookupTypeById,
   getLookupTypeByName,
-} from "../controllers/lookup.controller";
-import RouteRegistrar from "../middleware/RouteRegistrar";
+} from "@src/controllers/lookup.controller";
+import RouteRegistrar from "@src/middleware/RouteRegistrar";
 import {
   lookupListSchema,
   lookupTypeWithLookupsSchema,
-} from "../schemas/lookup.schema";
-import { idValidation, nameValidation } from "../schemas/common.schema";
+} from "@src/schemas/lookup.schema";
+import { idValidation, nameValidation } from "@src/schemas/common.schema";
 
 const registrar = new RouteRegistrar({
   basePath: "/api/lookup",

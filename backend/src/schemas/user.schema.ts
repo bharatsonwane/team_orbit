@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { oasRegisterSchemas } from "../openApiSpecification/openAPIDocumentGenerator";
+import { oasRegisterSchemas } from "@src/openApiSpecification/openAPIDocumentGenerator";
 import { baseLookupSchema } from "./lookup.schema";
 import {
   titleEnum,
@@ -7,7 +7,7 @@ import {
   bloodGroupEnum,
   marriedStatusEnum,
   userStatusName,
-} from "../utils/constants";
+} from "@src/utils/constants";
 
 /**
  * @description ZOD SCHEMAS

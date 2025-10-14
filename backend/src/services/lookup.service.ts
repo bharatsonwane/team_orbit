@@ -1,11 +1,10 @@
-import { HttpError } from "../utils/httpError";
-import { dbClientPool } from "../middleware/dbClientMiddleware";
-import { PoolClient } from "pg";
+import { HttpError } from "@src/utils/httpError";
+import { dbClientPool } from "@src/middleware/dbClientMiddleware";
 import {
   LookupListSchema,
   LookupTypeWithLookupsSchema,
   LookupWithTrackingSchema,
-} from "../schemas/lookup.schema";
+} from "@src/schemas/lookup.schema";
 
 export default class Lookup {
   constructor() {}

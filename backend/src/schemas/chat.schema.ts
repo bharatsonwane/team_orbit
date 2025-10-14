@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { oasRegisterSchemas } from "../openApiSpecification/openAPIDocumentGenerator";
+import { oasRegisterSchemas } from "@src/openApiSpecification/openAPIDocumentGenerator";
 
 /**
  * @description ZOD SCHEMAS
