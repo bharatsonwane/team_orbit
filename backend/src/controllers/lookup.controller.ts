@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from "express";
-import Lookup from "../services/lookup.service";
+import Lookup from "@src/services/lookup.service";
 
 export const retrieveLookupList = async (
   req: Request,

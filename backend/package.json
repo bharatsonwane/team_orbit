@@ -5,15 +5,15 @@
   "main": "dist/server.js",
   "scripts": {
     "start": "node dist/server.js",
-    "dev": "nodemon src/server.ts",
+    "dev": "nodemon --exec ts-node -r tsconfig-paths/register src/server.ts",
     "build": "tsc",
     "build:watch": "tsc --watch",
     "clean": "rm -rf dist",
     "type-check": "tsc --noEmit",
     "type-check:watch": "tsc --noEmit --watch",
     "lint": "tsc --noEmit --pretty",
-    "migrate": "ts-node src/database/dbMigrate.ts",
-    "seed": "ts-node src/database/seed/seed.ts",
+    "migrate": "ts-node -r tsconfig-paths/register src/database/dbMigrate.ts",
+    "seed": "ts-node -r tsconfig-paths/register src/database/seed/seed.ts",
     "test": "echo \"Error: no test specified\" && exit 1",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
@@ -60,6 +60,7 @@
     "nodemon": "^3.0.2",
     "prettier": "^3.6.2",
     "ts-node": "^10.9.2",
+    "tsconfig-paths": "^4.2.0",
     "typescript": "^5.3.3"
   }
 }

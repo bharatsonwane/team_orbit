@@ -1,6 +1,6 @@
 import { NextFunction, Request, Response } from "express";
-import Chat from "../services/chat.service";
-import { ChatMessageSchema } from "../schemas/chat.schema";
+import Chat from "@src/services/chat.service";
+import { ChatMessageSchema } from "@src/schemas/chat.schema";
 
 export const sendMessage = async (
   req: Request<{}, {}, ChatMessageSchema>,

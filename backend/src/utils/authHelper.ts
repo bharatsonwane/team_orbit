@@ -1,6 +1,6 @@
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
-import { envVariable } from "../config/envVariable";
+import { envVariable } from "@src/config/envVariable";
 
 // JWT token payload interface
 interface JwtPayload {

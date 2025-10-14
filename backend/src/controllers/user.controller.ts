@@ -1,19 +1,19 @@
 import { Request, Response, NextFunction } from "express";
-import User from "../services/user.service";
+import User from "@src/services/user.service";
 import {
   getHashPassword,
   validatePassword,
   createJwtToken,
-} from "../utils/authHelper";
-import Lookup from "../services/lookup.service";
-import { UserLoginSchema, CreateUserSchema } from "../schemas/user.schema";
-import { AuthenticatedRequest } from "../middleware/authRoleMiddleware";
+} from "@src/utils/authHelper";
+import Lookup from "@src/services/lookup.service";
+import { UserLoginSchema, CreateUserSchema } from "@src/schemas/user.schema";
+import { AuthenticatedRequest } from "@src/middleware/authRoleMiddleware";
 import {
   lookupTypeKeys,
   userRoleKeys,
   userStatusKeys,
-} from "../utils/constants";
-import { validateUserCreationPermission } from "../utils/userHelper";
+} from "@src/utils/constants";
+import { validateUserCreationPermission } from "@src/utils/userHelper";
 
 export const userLogin = async (
   req: Request,

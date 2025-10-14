@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from "express";
-import logger from "../utils/logger";
-import { HttpError } from "../utils/httpError";
+import logger from "@src/utils/logger";
+import { HttpError } from "@src/utils/httpError";
 
 /**
  * 404 Not Found middleware

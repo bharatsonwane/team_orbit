@@ -1,7 +1,7 @@
 import { Request, Response, NextFunction } from "express";
 import { PoolClient } from "pg";
-import db, { schemaNames } from "../database/db";
-import logger from "../utils/logger";
+import db, { schemaNames } from "@src/database/db";
+import logger from "@src/utils/logger";
 
 export interface dbClientPool {
   mainPool: PoolClient;

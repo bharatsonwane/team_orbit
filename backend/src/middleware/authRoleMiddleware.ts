@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from "express";
-import { validateJwtToken } from "../utils/authHelper";
+import { validateJwtToken } from "@src/utils/authHelper";
 
 export interface AuthenticatedRequest extends Request {
   user?: JwtTokenPayload;

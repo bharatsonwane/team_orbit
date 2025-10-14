@@ -1,10 +1,10 @@
 import express, { Router, RequestHandler } from "express";
-import { validateRequest } from "./validationMiddleware";
+import { validateRequest } from "@src/middleware/validationMiddleware";
 import {
   bearerAuth,
   oasRegistry,
-} from "../openApiSpecification/openAPIDocumentGenerator";
-import { commonDocCreator } from "../openApiSpecification/openAPIDocumentGenerator";
+} from "@src/openApiSpecification/openAPIDocumentGenerator";
+import { commonDocCreator } from "@src/openApiSpecification/openAPIDocumentGenerator";
 
 interface RouteOptions {
   middleware?: RequestHandler[];

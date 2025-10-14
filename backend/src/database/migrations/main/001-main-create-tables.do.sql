@@ -1,7 +1,7 @@
 -- lookup_types Table
 CREATE TABLE IF NOT EXISTS lookup_types (
     id SERIAL PRIMARY KEY,
-    name VARCHAR(255) UNIQUE NOT NULL,  -- Internal name (e.g., 'USER_ROLE')
+    name VARCHAR(255) UNIQUE NOT NULL,  -- Internal name (e.g., 'USER_ROLE', 'CONTACT_TYPE', 'USER_DESIGNATION')
     label VARCHAR(255) NOT NULL,        -- Display label (e.g., 'User Role')
     "isSystem" BOOLEAN NOT NULL,        -- System values that cannot be deleted
     "isArchived" BOOLEAN DEFAULT FALSE NOT NULL, -- Soft delete instead of hard delete

@@ -1,10 +1,10 @@
 import { Response, NextFunction } from "express";
-import { AuthenticatedRequest } from "../middleware/authRoleMiddleware";
-import Tenant from "../services/tenant.service";
+import { AuthenticatedRequest } from "@src/middleware/authRoleMiddleware";
+import Tenant from "@src/services/tenant.service";
 import type {
   CreateTenantSchema,
   UpdateTenantSchema,
-} from "../schemas/tenant.schema";
+} from "@src/schemas/tenant.schema";
 
 export const createTenant = async (
   req: AuthenticatedRequest,

@@ -2,7 +2,7 @@ import { Request, Response, NextFunction } from "express";
 import { z } from "zod";
 import { fromError } from "zod-validation-error";
 import { StatusCodes } from "http-status-codes";
-import { ServiceResponse } from "../openApiSpecification/serviceResponse";
+import { ServiceResponse } from "@src/openApiSpecification/serviceResponse";
 
 interface ValidationSchemas {
   paramsSchema?: Record<string, z.ZodSchema>;
