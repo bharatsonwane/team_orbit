@@ -37,8 +37,7 @@ interface AppUser {
 }
 
 interface UserAuth {
-  email: string;
-  phone: string;
+  authEmail: string;
   hashPassword: string;
   passwordUpdatedAt?: Date;
 }
@@ -181,6 +180,90 @@ const lookupData: LookupTypeWithLookupsSchema[] = [
       },
     ],
   },
+  {
+    name: "CONTACT_TYPE",
+    label: "Contact Type",
+    isSystem: true,
+    lookups: [
+      {
+        name: "OFFICIAL_EMAIL",
+        label: "Official Email",
+        description: "Official work email address",
+        isSystem: true,
+        sortOrder: 1,
+      },
+      {
+        name: "PERSONAL_EMAIL",
+        label: "Personal Email",
+        description: "Personal email address",
+        isSystem: true,
+        sortOrder: 2,
+      },
+      {
+        name: "OFFICIAL_PHONE",
+        label: "Official Phone",
+        description: "Official work phone number",
+        isSystem: true,
+        sortOrder: 3,
+      },
+      {
+        name: "PERSONAL_PHONE",
+        label: "Personal Phone",
+        description: "Personal phone number",
+        isSystem: true,
+        sortOrder: 4,
+      },
+      {
+        name: "EMERGENCY_PHONE",
+        label: "Emergency Phone",
+        description: "Emergency contact phone number",
+        isSystem: true,
+        sortOrder: 5,
+      },
+    ],
+  },
+  {
+    name: "CONTACT_TYPE",
+    label: "Contact Type",
+    isSystem: true,
+    lookups: [
+      {
+        name: "OFFICIAL_EMAIL",
+        label: "Official Email",
+        description: "Official work email address",
+        isSystem: true,
+        sortOrder: 1,
+      },
+      {
+        name: "PERSONAL_EMAIL",
+        label: "Personal Email",
+        description: "Personal email address",
+        isSystem: true,
+        sortOrder: 2,
+      },
+      {
+        name: "OFFICIAL_PHONE",
+        label: "Official Phone",
+        description: "Official work phone number",
+        isSystem: true,
+        sortOrder: 3,
+      },
+      {
+        name: "PERSONAL_PHONE",
+        label: "Personal Phone",
+        description: "Personal phone number",
+        isSystem: true,
+        sortOrder: 4,
+      },
+      {
+        name: "EMERGENCY_PHONE",
+        label: "Emergency Phone",
+        description: "Emergency contact phone number",
+        isSystem: true,
+        sortOrder: 5,
+      },
+    ],
+  },
 ];
 
 export async function up(client: PoolClient): Promise<void> {
@@ -295,8 +378,7 @@ export async function up(client: PoolClient): Promise<void> {
         bio: "This is Super Admin",
         statusId: activeUserStatusData.id as number,
         userAuth: {
-          email: "superadmin@gmail.com",
-          phone: "1234567890",
+          authEmail: "superadmin@gmail.com", // Official email as authEmail
           hashPassword: "Super@123",
           passwordUpdatedAt: new Date(),
         },
@@ -314,15 +396,15 @@ export async function up(client: PoolClient): Promise<void> {
 
       /** Check if user already exists by checking user_auths table */
       const checkUserAuthQuery = `
-          SELECT id, email FROM user_auths WHERE email = $1;
+          SELECT id, "authEmail" FROM user_auths WHERE "authEmail" = $1;
         `;
       const existingUserAuth = (
-        await client.query(checkUserAuthQuery, [userData.userAuth.email])
+        await client.query(checkUserAuthQuery, [userData.userAuth.authEmail])
       ).rows;
 
       /** If user already exists, continue */
       if (existingUserAuth.length > 0) {
-        console.log(`User already exists: ${userData.userAuth.email}`);
+        console.log(`User already exists: ${userData.userAuth.authEmail}`);
         continue;
       }
 
@@ -374,19 +456,17 @@ export async function up(client: PoolClient): Promise<void> {
         `
           INSERT INTO user_auths (
             "userId",
-            email,
-            phone,
+            "authEmail",
             "hashPassword",
             "passwordUpdatedAt",
             "createdAt",
             "updatedAt"
           )
-          VALUES ($1, $2, $3, $4, $5, NOW(), NOW())
+          VALUES ($1, $2, $3, $4, NOW(), NOW())
         `,
         [
           userResponse.id,
-          userData.userAuth.email,
-          userData.userAuth.phone,
+          userData.userAuth.authEmail,
           hashPassword,
           userData.userAuth.passwordUpdatedAt,
         ]

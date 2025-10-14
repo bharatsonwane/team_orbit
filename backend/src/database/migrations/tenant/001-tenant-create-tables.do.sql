@@ -47,3 +47,18 @@ CREATE TABLE IF NOT EXISTS chat_message (
     CONSTRAINT fk_chat_channel FOREIGN KEY ("chatChannelId") REFERENCES chat_channel (id) ON DELETE CASCADE,
     CONSTRAINT fk_sender_user FOREIGN KEY ("senderId") REFERENCES main.users (id) ON DELETE CASCADE
 );
+
+-- user_contacts Table (stores different contact types per tenant)
+CREATE TABLE IF NOT EXISTS user_contacts (
+    id SERIAL PRIMARY KEY,
+    "userId" INT NOT NULL, -- Foreign key to main.users table
+    "contactTypeId" INT NOT NULL, -- Foreign key to main.lookups (CONTACT_TYPE)
+    value VARCHAR(255) NOT NULL, -- The actual contact value (email or phone)
+    "isPrimary" BOOLEAN DEFAULT FALSE NOT NULL, -- Is this the primary contact of this type
+    "isVerified" BOOLEAN DEFAULT FALSE NOT NULL, -- Is this contact verified
+    "createdAt" TIMESTAMP DEFAULT NOW() NOT NULL,
+    "updatedAt" TIMESTAMP DEFAULT NOW() NOT NULL,
+    CONSTRAINT fk_user_contacts_user FOREIGN KEY ("userId") REFERENCES main.users (id) ON DELETE CASCADE,
+    CONSTRAINT fk_user_contacts_contact_type FOREIGN KEY ("contactTypeId") REFERENCES main.lookups (id),
+    CONSTRAINT unique_user_contact_type_value UNIQUE ("userId", "contactTypeId", value) -- Same user can't have duplicate contacts
+);

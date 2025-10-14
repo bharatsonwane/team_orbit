@@ -86,7 +86,8 @@ const tenantSlice = createSlice({
         state.tenantUsers =
           action.payload?.map(user => ({
             id: user.id,
-            email: user.email,
+            authEmail: user.authEmail,
+            email: user.email || user.authEmail, // Fallback to authEmail if email not available
             firstName: user.firstName,
             lastName: user.lastName,
             phone: user.phone,

@@ -79,21 +79,20 @@ export default class User {
       const user = userResult.rows[0];
 
       // Insert authentication data (without password initially)
+      // Use email as default authEmail (official email)
       const authInsertQuery = `
         INSERT INTO user_auths (
           "userId",
-          email,
-          phone,
+          "authEmail",
           "createdAt",
           "updatedAt"
-        ) VALUES ($1, $2, $3, NOW(), NOW())
-        RETURNING email, phone;
+        ) VALUES ($1, $2, NOW(), NOW())
+        RETURNING "authEmail";
       `;
 
       await dbClientPool.mainPool.query(authInsertQuery, [
         user.id,
-        userData.email,
-        userData.phone,
+        userData.email, // Using official email as authEmail
       ]);
 
       // Commit transaction
@@ -168,7 +167,7 @@ export default class User {
 
     // Fetch and return the updated user data
     const userResult = await dbClient.mainPool.query(`
-      SELECT u.*, ua.email, ua.phone
+      SELECT u.*, ua."authEmail"
       FROM users u
       INNER JOIN user_auths ua ON u.id = ua."userId"
       WHERE u.id = ${userId}
@@ -220,7 +219,7 @@ export default class User {
 
       // Fetch and return the updated user data
       const userResult = await dbClient.mainPool.query(`
-        SELECT u.*, ua.email, ua.phone
+        SELECT u.*, ua."authEmail"
         FROM users u
         INNER JOIN user_auths ua ON u.id = ua."userId"
         WHERE u.id = ${userId}
@@ -234,17 +233,15 @@ export default class User {
     }
   }
 
-  static async getUserByIdOrEmailOrPhone(
+  static async getUserByIdOrAuthEmail(
     dbClient: dbClientPool,
     {
       userId,
-      email,
-      phone,
+      authEmail,
       includePassword = false,
     }: {
       userId?: number;
-      email?: string;
-      phone?: string;
+      authEmail?: string;
       includePassword?: boolean;
     }
   ): Promise<UserDataWithHashPasswordSchema | undefined> {
@@ -254,23 +251,18 @@ export default class User {
     if (userId) {
       whereConditions.push(`up.id = ${userId}`);
     }
-    if (email) {
-      whereConditions.push(`ua.email = '${email}'`);
-    }
-    if (phone) {
-      whereConditions.push(`ua.phone = '${phone}'`);
+    if (authEmail) {
+      whereConditions.push(`ua."authEmail" = '${authEmail}'`);
     }
 
     if (whereConditions.length === 0) {
       throw new Error(
-        "At least one search criteria must be provided (userId, email, or phone)"
+        "At least one search criteria must be provided (userId or authEmail)"
       );
     }
 
-    // Use OR for email/phone combination, AND for userId with others
-    const whereClause = userId
-      ? whereConditions.join(" AND ")
-      : whereConditions.join(" OR ");
+    // Use OR for multiple conditions
+    const whereClause = whereConditions.join(" OR ");
 
     const queryString = `
         SELECT 
@@ -285,8 +277,7 @@ export default class User {
         up."bloodGroup",
         up."marriedStatus",
         up."isArchived",
-        ua.email,
-        ua.phone,
+        ua."authEmail",
         ${includePassword ? 'ua."hashPassword",' : ""}
         up.bio,
         up."isPlatformUser",
@@ -315,7 +306,7 @@ export default class User {
       LEFT JOIN user_role_xref urx ON up.id = urx."userId"
       LEFT JOIN lookups l ON urx."roleId" = l.id
       WHERE ${whereClause}
-      GROUP BY up.id, ua.email, ua.phone, ${includePassword ? 'ua."hashPassword",' : ""} up."isPlatformUser", up."isArchived", ls.name, ls.label;`;
+      GROUP BY up.id, ua."authEmail", ${includePassword ? 'ua."hashPassword",' : ""} up."isPlatformUser", up."isArchived", ls.name, ls.label;`;
 
     const results = await dbClient.mainPool.query(queryString);
     const response = results.rows[0];
@@ -368,8 +359,7 @@ export default class User {
           up.dob,
           up."bloodGroup",
           up."marriedStatus",
-          ua.email,
-          ua.phone,
+          ua."authEmail",
           up.bio,
           up."isPlatformUser",
           up."statusId",

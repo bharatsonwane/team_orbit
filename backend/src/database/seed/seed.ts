@@ -129,7 +129,7 @@ async function main(): Promise<void> {
 
       /** Check if user already exists */
       const checkUserAuthQuery = `
-          SELECT id, email FROM user_auths WHERE email = $1;
+          SELECT id, "authEmail" FROM user_auths WHERE "authEmail" = $1;
         `;
       const existingUserAuth = (
         await pool.query(checkUserAuthQuery, [userData.email])
@@ -137,7 +137,7 @@ async function main(): Promise<void> {
 
       /** If user already exists, continue */
       if (existingUserAuth.length > 0) {
-        console.log(`User already exists: ${userData.email}`);
+        console.log(`User already exists (authEmail): ${userData.email}`);
         continue;
       }
 
@@ -191,16 +191,15 @@ async function main(): Promise<void> {
         `
           INSERT INTO user_auths (
             "userId",
-            email,
-            phone,
+            "authEmail",
             "hashPassword",
             "passwordUpdatedAt",
             "createdAt",
             "updatedAt"
           )
-          VALUES ($1, $2, $3, $4, NOW(), NOW(), NOW())
+          VALUES ($1, $2, $3, NOW(), NOW(), NOW())
         `,
-        [userResponse.id, userData.email, userData.phone, hashPassword]
+        [userResponse.id, userData.email, hashPassword] // Using email as authEmail
       );
 
       if (userData.roleIds) {

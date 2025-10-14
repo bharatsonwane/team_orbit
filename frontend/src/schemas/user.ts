@@ -32,8 +32,9 @@ export const detailedUserSchema = z.object({
   dob: z.string().nullable().optional(),
   bloodGroup: z.string().nullable().optional(),
   marriedStatus: z.string().nullable().optional(),
-  email: z.string().email(),
-  phone: z.string(),
+  authEmail: z.string(), // Email for authentication/login
+  email: z.string().email().optional(), // From user_contacts (for backward compatibility)
+  phone: z.string().optional(), // From user_contacts (for backward compatibility)
   bio: z.string().nullable().optional(),
   isPlatformUser: z.boolean().default(false),
   tenantId: z.number(),
@@ -113,8 +114,12 @@ export const createUserFormSchema = z.object({
   marriedStatus: z
     .enum(["Single", "Married", "Divorced", "Widowed"])
     .optional(),
-  email: z.string().email("Invalid email"),
-  phone: z.string().min(10, "Phone must be at least 10 characters"),
+  email: z.string().email("Invalid email"), // Will be used as userName
+  phone: z
+    .string()
+    .min(10, "Phone must be at least 10 characters")
+    .optional()
+    .or(z.literal("")), // Optional, will be stored in user_contacts
   bio: z.string().optional().or(z.literal("")),
   tenantId: z.number().min(1, "Tenant ID is required"),
 });
@@ -170,8 +175,12 @@ export const updateUserFormSchema = z.object({
     .enum(["Single", "Married", "Divorced", "Widowed"])
     .optional()
     .or(z.literal("")),
-  email: z.string().email("Invalid email"),
-  phone: z.string().min(10, "Phone must be at least 10 characters"),
+  email: z.string().email("Invalid email").optional().or(z.literal("")), // From user_contacts
+  phone: z
+    .string()
+    .min(10, "Phone must be at least 10 characters")
+    .optional()
+    .or(z.literal("")), // From user_contacts
   bio: z.string().optional().or(z.literal("")),
 });
 

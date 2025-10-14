@@ -26,7 +26,7 @@ export const baseUserSchema = z.object({
   bloodGroup: bloodGroupEnum.optional(),
   marriedStatus: marriedStatusEnum.optional(),
   email: z.string().email("Invalid email"),
-  phone: z.string().min(10),
+  phone: z.string().min(10).optional(),
   password: z.string().optional(),
   bio: z.string().optional(),
 });
@@ -34,6 +34,7 @@ export const baseUserSchema = z.object({
 // lookupTypeWithTrackingSchema
 export const userWithTrackingSchema = baseUserSchema.extend({
   id: z.number().int(),
+  authEmail: z.string().optional(), // Email for authentication from user_auths
   hashPassword: z.string().optional(),
   isPlatformUser: z.boolean().default(false),
   isArchived: z.boolean().default(false),

@@ -22,8 +22,8 @@ export const userLogin = async (
 ): Promise<void> => {
   try {
     const { email, password } = req.body as UserLoginSchema;
-    const userData = await User.getUserByIdOrEmailOrPhone(req.db, {
-      email,
+    const userData = await User.getUserByIdOrAuthEmail(req.db, {
+      authEmail: email,
       includePassword: true,
     });
 
@@ -32,7 +32,7 @@ export const userLogin = async (
       userData.isArchived === true ||
       userData.statusName !== userStatusKeys.ACTIVE
     ) {
-      throw { statusCode: 401, message: "Invalid email or password" };
+      throw { statusCode: 401, message: "Invalid credentials" };
     }
 
     const isValidPassword = await validatePassword(
@@ -40,14 +40,14 @@ export const userLogin = async (
       userData.hashPassword || ""
     );
     if (!isValidPassword) {
-      throw { statusCode: 401, message: "Invalid email or password" };
+      throw { statusCode: 401, message: "Invalid credentials" };
     }
 
     delete (userData as Partial<typeof userData>).hashPassword;
 
     const token = createJwtToken({
       userId: userData.id,
-      email: userData.email,
+      email: userData.authEmail, // Using authEmail (which is email)
       userRoles: userData.roles,
     });
 
@@ -69,16 +69,15 @@ export const createUser = async (
     const loggedInUser = req.user;
     const userData: CreateUserSchema = req.body;
 
-    // Check if user already exists
-    const userExists = await User.getUserByIdOrEmailOrPhone(req.db, {
-      email: userData.email,
-      phone: userData.phone,
+    // Check if user already exists by authEmail
+    const userExists = await User.getUserByIdOrAuthEmail(req.db, {
+      authEmail: userData.email,
     });
 
     if (userExists) {
       throw {
         statusCode: 400,
-        message: "User already exists with this email or phone",
+        message: "User already exists with this email",
       };
     }
 
@@ -90,7 +89,7 @@ export const createUser = async (
       };
     }
 
-    const currentUser = await User.getUserByIdOrEmailOrPhone(req.db, {
+    const currentUser = await User.getUserByIdOrAuthEmail(req.db, {
       userId: loggedInUser.userId,
     });
 
@@ -169,7 +168,7 @@ export const getUserById = async (
 ): Promise<void> => {
   try {
     const { id } = req.params;
-    const userData = await User.getUserByIdOrEmailOrPhone(req.db, {
+    const userData = await User.getUserByIdOrAuthEmail(req.db, {
       userId: parseInt(id),
     });
 
@@ -195,7 +194,7 @@ export const getUserProfile = async (
       throw { statusCode: 401, message: "User not authenticated" };
     }
 
-    const userData = await User.getUserByIdOrEmailOrPhone(req.db, { userId });
+    const userData = await User.getUserByIdOrAuthEmail(req.db, { userId });
 
     if (!userData) {
       throw { statusCode: 404, message: "User profile not found" };

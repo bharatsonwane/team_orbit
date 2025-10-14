@@ -116,8 +116,7 @@ CREATE TABLE IF NOT EXISTS user_auths (
     id SERIAL PRIMARY KEY,    
     "userId" INT NOT NULL,
     -- Local login
-    email VARCHAR(255) UNIQUE,
-    phone VARCHAR(20) UNIQUE,
+    "authEmail" VARCHAR(255) UNIQUE NOT NULL,  -- Office Email for authentication/login
     "hashPassword" TEXT,        -- Store hashPassword   
     "passwordUpdatedAt" TIMESTAMP DEFAULT NULL,
     "otpCode" VARCHAR(10),
@@ -132,7 +131,8 @@ CREATE TABLE IF NOT EXISTS user_auths (
     "lastLoginAt" TIMESTAMP,
     "createdAt" TIMESTAMP DEFAULT NOW(),
     "updatedAt" TIMESTAMP DEFAULT NOW(),
-    CONSTRAINT fk_user_auths_users FOREIGN KEY ("userId") REFERENCES users (id) ON DELETE CASCADE
+    CONSTRAINT fk_user_auths_users FOREIGN KEY ("userId") REFERENCES users (id) ON DELETE CASCADE,
+    CONSTRAINT unique_user_auth_user UNIQUE ("userId")  -- One auth record per user
 );
 
 -- user_role_xref Table (junction table, kept singular for relationship clarity)

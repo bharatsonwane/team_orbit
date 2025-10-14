@@ -68,10 +68,11 @@ export type TenantUserRole = z.infer<typeof tenantUserRoleSchema>;
 // Tenant User schema
 export const tenantUserSchema = z.object({
   id: z.number(),
-  email: z.string(),
+  authEmail: z.string(), // Email for authentication/login
+  email: z.string().optional(), // From user_contacts
   firstName: z.string(),
   lastName: z.string(),
-  phone: z.string(),
+  phone: z.string().optional(), // From user_contacts
   isPlatformUser: z.boolean().default(false),
   tenantId: z.number(),
   statusId: z.number(),
