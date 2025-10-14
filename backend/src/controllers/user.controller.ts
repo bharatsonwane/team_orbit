@@ -13,7 +13,7 @@ import {
   userRoleKeys,
   userStatusKeys,
 } from "@src/utils/constants";
-import { validateUserCreationPermission } from "@src/utils/userHelper";
+import { hasRolePermission } from "@src/utils/userHelper";
 
 export const userLogin = async (
   req: Request,
@@ -120,7 +120,7 @@ export const createUser = async (
     // });
 
     // Role-based permission validation
-    // const hasPermission = validateUserCreationPermission({
+    // const hasPermission = hasRolePermission({
     //   currentUserRoleNames: currentUserRoleNames,
     //   targetRoleNames: roleLookups,
     // });
@@ -237,12 +237,15 @@ export const updateUserPassword = async (
     const { password } = req.body;
 
     const hashPassword = await getHashPassword(password);
-    const updatedUser = await User.updateUserPassword(req.db, {
+    await User.updateUserPassword(req.db, {
       userId: parseInt(id),
       hashPassword,
     });
 
-    res.status(200).json(updatedUser);
+    res.status(200).json({
+      message: "User password updated successfully",
+      userId: parseInt(id),
+    });
   } catch (error) {
     next(error);
   }
@@ -257,13 +260,16 @@ export const updateUserStatusAndRoles = async (
     const { id } = req.params;
     const { statusId, roleIds } = req.body;
 
-    const updatedUser = await User.updateUserStatusAndRoles(req.db, {
+    await User.updateUserStatusAndRoles(req.db, {
       userId: parseInt(id),
       statusId,
       roleIds,
     });
 
-    res.status(200).json(updatedUser);
+    res.status(200).json({
+      message: "User status and roles updated successfully",
+      userId: parseInt(id),
+    });
   } catch (error) {
     next(error);
   }

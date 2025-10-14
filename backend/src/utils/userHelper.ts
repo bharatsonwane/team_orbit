@@ -7,7 +7,7 @@ import { userRoleKeys } from "./constants";
  * @param params.targetRoleNames - Array of role names that the user wants to assign
  * @returns boolean - true if permission is granted, false otherwise
  */
-export const validateUserCreationPermission = ({
+export const hasRolePermission = ({
   currentUserRoleNames,
   targetRoleNames,
 }: {

@@ -139,7 +139,7 @@ export const updateUserPasswordAction = createAsyncThunk(
   ) => {
     try {
       const response = await getAxios().put<DetailedUser>(
-        `/api/user/${userId}/update-password`,
+        `/api/user/${userId}/password`,
         { password }
       );
       return response.data;
@@ -162,7 +162,7 @@ export const updateUserStatusAndRolesAction = createAsyncThunk(
   ) => {
     try {
       const response = await getAxios().put<DetailedUser>(
-        `/api/user/${userId}/update-status-roles`,
+        `/api/user/${userId}/status-roles`,
         { statusId, roleIds }
       );
       return response.data;

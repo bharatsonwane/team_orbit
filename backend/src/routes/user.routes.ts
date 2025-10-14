@@ -70,7 +70,7 @@ registrar.put("/:id/personal", {
 });
 
 /**@description update user password  */
-registrar.put("/:id/update-password/", {
+registrar.put("/:id/password/", {
   oasSchema: updateUserPasswordOASSchema,
   requestSchema: {
     paramsSchema: { id: idValidation },
@@ -81,7 +81,7 @@ registrar.put("/:id/update-password/", {
 });
 
 /**@description update user status and roles  */
-registrar.put("/:id/update-status-roles/", {
+registrar.put("/:id/status-roles/", {
   requestSchema: {
     paramsSchema: { id: idValidation },
     bodySchema: updateUserStatusAndRolesSchema,

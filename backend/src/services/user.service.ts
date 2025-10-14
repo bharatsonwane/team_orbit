@@ -162,22 +162,13 @@ export default class User {
       userId: number;
       hashPassword: string;
     }
-  ): Promise<UserWithTrackingSchema> {
+  ): Promise<void> {
     const queryString = `
       UPDATE user_auths
       SET "hashPassword" = '${hashPassword}', "passwordUpdatedAt" = NOW(), "updatedAt" = NOW()
       WHERE "userId" = ${userId} RETURNING "userId";`;
     await dbClient.mainPool.query(queryString);
-
-    // Fetch and return the updated user data
-    const userResult = await dbClient.mainPool.query(`
-      SELECT u.*, ua."authEmail"
-      FROM users u
-      LEFT JOIN user_auths ua ON u.id = ua."userId"
-      WHERE u.id = ${userId}
-    `);
-
-    return userResult.rows[0];
+    return;
   }
 
   static async updateUserStatusAndRoles(
@@ -191,7 +182,7 @@ export default class User {
       statusId: number;
       roleIds: number[];
     }
-  ): Promise<UserWithTrackingSchema> {
+  ): Promise<void> {
     try {
       // Start transaction
       await dbClient.mainPool.query(dbTransactionKeys.BEGIN);
@@ -202,16 +193,37 @@ export default class User {
         [statusId, userId]
       );
 
-      // Delete existing roles
-      await dbClient.mainPool.query(
-        `DELETE FROM user_role_xref WHERE "userId" = $1`,
+      // Get existing roles for the user
+      const existingRolesResult = await dbClient.mainPool.query(
+        `SELECT "roleId" FROM user_role_xref WHERE "userId" = $1`,
         [userId]
       );
+      const existingRoleIds = existingRolesResult.rows.map(
+        (row: any) => row.roleId
+      );
+
+      // Determine roles to delete (exist in DB but not in roleIds)
+      const rolesToDelete = existingRoleIds.filter(
+        (roleId: number) => !roleIds.includes(roleId)
+      );
+
+      // Determine roles to add (in roleIds but not in DB)
+      const rolesToAdd = roleIds.filter(
+        (roleId: number) => !existingRoleIds.includes(roleId)
+      );
+
+      // Delete roles that are no longer needed
+      if (rolesToDelete.length > 0) {
+        await dbClient.mainPool.query(
+          `DELETE FROM user_role_xref WHERE "userId" = $1 AND "roleId" = ANY($2)`,
+          [userId, rolesToDelete]
+        );
+      }
 
       // Insert new roles
-      if (roleIds && roleIds.length > 0) {
-        const roleValues = roleIds
-          .map(roleId => `(${userId}, ${roleId})`)
+      if (rolesToAdd.length > 0) {
+        const roleValues = rolesToAdd
+          .map(roleId => `(${userId}, ${roleId}, NOW(), NOW())`)
           .join(", ");
         await dbClient.mainPool.query(
           `INSERT INTO user_role_xref ("userId", "roleId", "createdAt", "updatedAt") VALUES ${roleValues}`
@@ -221,15 +233,7 @@ export default class User {
       // Commit transaction
       await dbClient.mainPool.query(dbTransactionKeys.COMMIT);
 
-      // Fetch and return the updated user data
-      const userResult = await dbClient.mainPool.query(`
-        SELECT u.*, ua."authEmail"
-        FROM users u
-        LEFT JOIN user_auths ua ON u.id = ua."userId"
-        WHERE u.id = ${userId}
-      `);
-
-      return userResult.rows[0];
+      return;
     } catch (error) {
       // Rollback transaction on error
       await dbClient.mainPool.query(dbTransactionKeys.ROLLBACK);

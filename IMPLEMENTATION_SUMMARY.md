@@ -296,7 +296,7 @@ Topics:  Usage, Configuration, UI Integration, Progressive Save, etc.
 
 ### **Backend**
 ```
-New Routes: 4 (personal, contacts, job-details, update-status-roles)
+New Routes: 4 (personal, contacts, job-details, status-roles)
 New Services: 2 (saveUserContacts, saveUserJobDetails)
 New Schemas: 3 (updateUserStatusAndRoles, saveContacts, saveJobDetails)
 New Table: 1 (user_job_details)

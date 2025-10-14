@@ -82,7 +82,7 @@ http://localhost:5100/docs
 - **GET** `/api/user/:id` - Get user by ID (requires auth)
 - **POST** `/api/user/create` - Create user for tenant (role-based permissions)
 - **PUT** `/api/user/:id` - Update user (requires auth)
-- **PUT** `/api/user/:id/update-password` - Update password (requires auth)
+- **PUT** `/api/user/:id/password` - Update password (requires auth)
 
 ### Tenants
 
