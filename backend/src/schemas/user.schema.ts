@@ -25,7 +25,7 @@ export const baseUserSchema = z.object({
     .optional(),
   bloodGroup: bloodGroupEnum.optional(),
   marriedStatus: marriedStatusEnum.optional(),
-  email: z.string().email("Invalid email"),
+  authEmail: z.string().email("Invalid email").optional(),
   phone: z.string().min(10).optional(),
   password: z.string().optional(),
   bio: z.string().optional(),
@@ -81,6 +81,33 @@ export const createUserSchema = baseUserSchema.extend({
   tenantId: z.number().int().min(1, "Tenant ID is required"),
 });
 
+export const updateUserStatusAndRolesSchema = z.object({
+  statusId: z.number().int(),
+  roleIds: z.array(z.number().int()),
+});
+
+export const saveUserContactsSchema = z.object({
+  officeEmail: z.string().email().optional(),
+  personalEmail: z.string().email().optional(),
+  officialPhone: z.string().optional(),
+  personalPhone: z.string().optional(),
+  emergencyContactName1: z.string().optional(),
+  emergencyContactPhone1: z.string().optional(),
+  emergencyContactName2: z.string().optional(),
+  emergencyContactPhone2: z.string().optional(),
+});
+
+export const saveUserJobDetailsSchema = z.object({
+  hiringDate: z.string().optional(),
+  joiningDate: z.string().optional(),
+  probationPeriodMonths: z.number().int().optional(),
+  designation: z.string().optional(),
+  department: z.string().optional(),
+  employeeId: z.string().optional(),
+  ctc: z.number().optional(),
+  reportingManagerId: z.number().int().optional(),
+});
+
 /**
  * @description SCHEMAS TYPES
  */
@@ -95,6 +122,11 @@ export type UserSignupSchema = z.infer<typeof userSignupSchema>;
 export type UserSignupServiceSchema = z.infer<typeof userSignupServiceSchema>;
 export type UserUpdatePasswordSchema = z.infer<typeof userUpdatePasswordSchema>;
 export type CreateUserSchema = z.infer<typeof createUserSchema>;
+export type UpdateUserStatusAndRolesSchema = z.infer<
+  typeof updateUserStatusAndRolesSchema
+>;
+export type SaveUserContactsSchema = z.infer<typeof saveUserContactsSchema>;
+export type SaveUserJobDetailsSchema = z.infer<typeof saveUserJobDetailsSchema>;
 
 /**
  * @description OPENAPI SCHEMAS REGISTRATION
@@ -106,4 +138,10 @@ oasRegisterSchemas([
   { schemaName: "UserUpdatePasswordSchema", schema: userUpdatePasswordSchema },
   { schemaName: "UserSignupServiceSchema", schema: userSignupServiceSchema },
   { schemaName: "CreateUserSchema", schema: createUserSchema },
+  {
+    schemaName: "UpdateUserStatusAndRolesSchema",
+    schema: updateUserStatusAndRolesSchema,
+  },
+  { schemaName: "SaveUserContactsSchema", schema: saveUserContactsSchema },
+  { schemaName: "SaveUserJobDetailsSchema", schema: saveUserJobDetailsSchema },
 ]);

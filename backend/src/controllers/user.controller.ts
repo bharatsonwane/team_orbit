@@ -69,16 +69,18 @@ export const createUser = async (
     const loggedInUser = req.user;
     const userData: CreateUserSchema = req.body;
 
-    // Check if user already exists by authEmail
-    const userExists = await User.getUserByIdOrAuthEmail(req.db, {
-      authEmail: userData.email,
-    });
+    // Check if user already exists by authEmail (only if authEmail is provided)
+    if (userData.authEmail) {
+      const userExists = await User.getUserByIdOrAuthEmail(req.db, {
+        authEmail: userData.authEmail,
+      });
 
-    if (userExists) {
-      throw {
-        statusCode: 400,
-        message: "User already exists with this email",
-      };
+      if (userExists) {
+        throw {
+          statusCode: 400,
+          message: "User already exists with this email",
+        };
+      }
     }
 
     // Get the logged-in user's roles
@@ -262,6 +264,52 @@ export const updateUserStatusAndRoles = async (
     });
 
     res.status(200).json(updatedUser);
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const saveUserContacts = async (
+  req: AuthenticatedRequest,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  try {
+    const { id } = req.params;
+    const contactData = req.body;
+
+    await User.saveUserContacts(req.db, {
+      userId: parseInt(id),
+      contactData,
+    });
+
+    res.status(200).json({
+      message: "Contacts saved successfully",
+      userId: parseInt(id),
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const saveUserJobDetails = async (
+  req: AuthenticatedRequest,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  try {
+    const { id } = req.params;
+    const jobData = req.body;
+
+    await User.saveUserJobDetails(req.db, {
+      userId: parseInt(id),
+      jobData,
+    });
+
+    res.status(200).json({
+      message: "Job details saved successfully",
+      userId: parseInt(id),
+    });
   } catch (error) {
     next(error);
   }

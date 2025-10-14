@@ -113,7 +113,7 @@ async function main(): Promise<void> {
         dob: "1990-01-01",
         bloodGroup: "A+",
         marriedStatus: "Single",
-        email: "iconnect@gmail.com",
+        authEmail: "iconnect@gmail.com",
         phone: "9876543210",
         password: "Admin@123",
         bio: "iConnect Tenant Admin",
@@ -132,12 +132,12 @@ async function main(): Promise<void> {
           SELECT id, "authEmail" FROM user_auths WHERE "authEmail" = $1;
         `;
       const existingUserAuth = (
-        await pool.query(checkUserAuthQuery, [userData.email])
+        await pool.query(checkUserAuthQuery, [userData.authEmail])
       ).rows;
 
       /** If user already exists, continue */
       if (existingUserAuth.length > 0) {
-        console.log(`User already exists (authEmail): ${userData.email}`);
+        console.log(`User already exists (authEmail): ${userData.authEmail}`);
         continue;
       }
 
@@ -199,7 +199,7 @@ async function main(): Promise<void> {
           )
           VALUES ($1, $2, $3, NOW(), NOW(), NOW())
         `,
-        [userResponse.id, userData.email, hashPassword] // Using email as authEmail
+        [userResponse.id, userData.authEmail, hashPassword] // Using authEmail
       );
 
       if (userData.roleIds) {

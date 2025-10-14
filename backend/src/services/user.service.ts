@@ -4,10 +4,13 @@ import {
   UserWithTrackingSchema,
   UserDataWithHashPasswordSchema,
   CreateUserSchema,
+  SaveUserContactsSchema,
+  SaveUserJobDetailsSchema,
 } from "../schemas/user.schema";
 import { buildUpdateFields } from "../utils/queryHelper";
 import { getHashPassword } from "../utils/authHelper";
 import { dbTransactionKeys } from "../utils/constants";
+import db, { schemaNames } from "../database/db";
 
 export default class User {
   static async createUser(
@@ -78,22 +81,23 @@ export default class User {
 
       const user = userResult.rows[0];
 
-      // Insert authentication data (without password initially)
-      // Use email as default authEmail (official email)
-      const authInsertQuery = `
-        INSERT INTO user_auths (
-          "userId",
-          "authEmail",
-          "createdAt",
-          "updatedAt"
-        ) VALUES ($1, $2, NOW(), NOW())
-        RETURNING "authEmail";
-      `;
+      // Insert authentication data only if authEmail is provided
+      if (userData.authEmail) {
+        const authInsertQuery = `
+          INSERT INTO user_auths (
+            "userId",
+            "authEmail",
+            "createdAt",
+            "updatedAt"
+          ) VALUES ($1, $2, NOW(), NOW())
+          RETURNING "authEmail";
+        `;
 
-      await dbClientPool.mainPool.query(authInsertQuery, [
-        user.id,
-        userData.email, // Using official email as authEmail
-      ]);
+        await dbClientPool.mainPool.query(authInsertQuery, [
+          user.id,
+          userData.authEmail, // Using authEmail for authentication
+        ]);
+      }
 
       // Commit transaction
       await client.mainPool.query(dbTransactionKeys.COMMIT);
@@ -169,7 +173,7 @@ export default class User {
     const userResult = await dbClient.mainPool.query(`
       SELECT u.*, ua."authEmail"
       FROM users u
-      INNER JOIN user_auths ua ON u.id = ua."userId"
+      LEFT JOIN user_auths ua ON u.id = ua."userId"
       WHERE u.id = ${userId}
     `);
 
@@ -221,7 +225,7 @@ export default class User {
       const userResult = await dbClient.mainPool.query(`
         SELECT u.*, ua."authEmail"
         FROM users u
-        INNER JOIN user_auths ua ON u.id = ua."userId"
+        LEFT JOIN user_auths ua ON u.id = ua."userId"
         WHERE u.id = ${userId}
       `);
 
@@ -273,7 +277,7 @@ export default class User {
         up."middleName",
         up."maidenName",
         up.gender,
-        up.dob,
+        TO_CHAR(up.dob, 'YYYY-MM-DD') as dob,
         up."bloodGroup",
         up."marriedStatus",
         up."isArchived",
@@ -301,17 +305,277 @@ export default class User {
         ) as "roles"
       FROM 
         users up
-      INNER JOIN user_auths ua ON up.id = ua."userId"
+      LEFT JOIN user_auths ua ON up.id = ua."userId"
       LEFT JOIN lookups ls ON up."statusId" = ls.id
       LEFT JOIN user_role_xref urx ON up.id = urx."userId"
       LEFT JOIN lookups l ON urx."roleId" = l.id
       WHERE ${whereClause}
-      GROUP BY up.id, ua."authEmail", ${includePassword ? 'ua."hashPassword",' : ""} up."isPlatformUser", up."isArchived", ls.name, ls.label;`;
+      GROUP BY up.id, ua."authEmail", ${includePassword ? 'ua."hashPassword",' : ""} up."isPlatformUser", up."isArchived", ls.name, ls.label;
+    `;
 
     const results = await dbClient.mainPool.query(queryString);
     const response = results.rows[0];
-
     return response;
+  }
+
+  static async saveUserContacts(
+    dbClient: dbClientPool,
+    {
+      userId,
+      contactData,
+    }: {
+      userId: number;
+      contactData: SaveUserContactsSchema;
+    }
+  ): Promise<void> {
+    try {
+      // Start transaction
+      await dbClient.mainPool.query(dbTransactionKeys.BEGIN);
+
+      // Get tenant ID for the user
+      const userResult = await dbClient.mainPool.query(
+        `SELECT "tenantId" FROM users WHERE id = $1`,
+        [userId]
+      );
+
+      if (userResult.rows.length === 0) {
+        throw new Error("User not found");
+      }
+
+      const tenantId = userResult.rows[0].tenantId;
+
+      // Get contact type lookup IDs
+      const contactTypes = await dbClient.mainPool.query(`
+        SELECT l.id, l.name 
+        FROM lookups l
+        INNER JOIN lookup_types lt ON l."lookupTypeId" = lt.id
+        WHERE lt.name = 'CONTACT_TYPE'
+      `);
+
+      const contactTypeMap: Record<string, number> = {};
+      contactTypes.rows.forEach((row: { id: number; name: string }) => {
+        contactTypeMap[row.name] = row.id;
+      });
+
+      // Update or create authEmail in user_auths if officeEmail is provided
+      if (contactData.officeEmail) {
+        // Check if auth record exists
+        const authExists = await dbClient.mainPool.query(
+          `SELECT id FROM user_auths WHERE "userId" = $1`,
+          [userId]
+        );
+
+        if (authExists.rows.length > 0) {
+          // Update existing auth email
+          await dbClient.mainPool.query(
+            `UPDATE user_auths SET "authEmail" = $1, "updatedAt" = NOW() WHERE "userId" = $2`,
+            [contactData.officeEmail, userId]
+          );
+        } else {
+          // Create new auth record with authEmail
+          await dbClient.mainPool.query(
+            `INSERT INTO user_auths ("userId", "authEmail", "createdAt", "updatedAt") 
+             VALUES ($1, $2, NOW(), NOW())`,
+            [userId, contactData.officeEmail]
+          );
+        }
+      }
+
+      // Get tenant pool for user_contacts table
+      const tenantSchemaName = schemaNames.tenantSchemaName(
+        tenantId.toString()
+      );
+      const tenantPool = await db.getSchemaPool(tenantSchemaName);
+
+      // Prepare contacts array
+      const contacts = [
+        {
+          type: "OFFICIAL_EMAIL",
+          value: contactData.officeEmail,
+        },
+        {
+          type: "PERSONAL_EMAIL",
+          value: contactData.personalEmail,
+        },
+        {
+          type: "OFFICIAL_PHONE",
+          value: contactData.officialPhone,
+        },
+        {
+          type: "PERSONAL_PHONE",
+          value: contactData.personalPhone,
+        },
+        {
+          type: "EMERGENCY_PHONE",
+          value: contactData.emergencyContactPhone1,
+        },
+        {
+          type: "EMERGENCY_PHONE",
+          value: contactData.emergencyContactPhone2,
+        },
+      ];
+
+      // Delete existing contacts for this user
+      await tenantPool.query(`DELETE FROM user_contacts WHERE "userId" = $1`, [
+        userId,
+      ]);
+
+      // Insert new contacts
+      for (const contact of contacts) {
+        if (contact.value && contact.value.trim() !== "") {
+          const contactTypeId = contactTypeMap[contact.type];
+          if (contactTypeId) {
+            await tenantPool.query(
+              `
+              INSERT INTO user_contacts ("userId", "contactTypeId", value, "isPrimary", "isVerified")
+              VALUES ($1, $2, $3, $4, $5)
+            `,
+              [userId, contactTypeId, contact.value, false, false]
+            );
+          }
+        }
+      }
+
+      // Commit transaction
+      await dbClient.mainPool.query(dbTransactionKeys.COMMIT);
+    } catch (error) {
+      // Rollback transaction on error
+      await dbClient.mainPool.query(dbTransactionKeys.ROLLBACK);
+      throw error;
+    }
+  }
+
+  static async saveUserJobDetails(
+    dbClient: dbClientPool,
+    {
+      userId,
+      jobData,
+    }: {
+      userId: number;
+      jobData: SaveUserJobDetailsSchema;
+    }
+  ): Promise<void> {
+    try {
+      // Start transaction
+      await dbClient.mainPool.query(dbTransactionKeys.BEGIN);
+
+      // Get tenant ID for the user
+      const userResult = await dbClient.mainPool.query(
+        `SELECT "tenantId" FROM users WHERE id = $1`,
+        [userId]
+      );
+
+      if (userResult.rows.length === 0) {
+        throw new Error("User not found");
+      }
+
+      const tenantId = userResult.rows[0].tenantId;
+
+      // Get tenant pool for user_job_details table
+      const tenantSchemaName = schemaNames.tenantSchemaName(
+        tenantId.toString()
+      );
+      const tenantPool = await db.getSchemaPool(tenantSchemaName);
+
+      // Check if job details already exist
+      const existingJobDetails = await tenantPool.query(
+        `SELECT id FROM user_job_details WHERE "userId" = $1`,
+        [userId]
+      );
+
+      if (existingJobDetails.rows.length > 0) {
+        // Update existing job details
+        const updateFields: string[] = [];
+        const updateValues: any[] = [];
+        let paramIndex = 1;
+
+        if (jobData.hiringDate !== undefined) {
+          updateFields.push(`"hiringDate" = $${paramIndex++}`);
+          updateValues.push(jobData.hiringDate || null);
+        }
+        if (jobData.joiningDate !== undefined) {
+          updateFields.push(`"joiningDate" = $${paramIndex++}`);
+          updateValues.push(jobData.joiningDate || null);
+        }
+        if (jobData.probationPeriodMonths !== undefined) {
+          updateFields.push(`"probationPeriodMonths" = $${paramIndex++}`);
+          updateValues.push(jobData.probationPeriodMonths || null);
+        }
+        if (jobData.designation !== undefined) {
+          updateFields.push(`"designation" = $${paramIndex++}`);
+          updateValues.push(jobData.designation || null);
+        }
+        if (jobData.department !== undefined) {
+          updateFields.push(`"department" = $${paramIndex++}`);
+          updateValues.push(jobData.department || null);
+        }
+        if (jobData.employeeId !== undefined) {
+          updateFields.push(`"employeeId" = $${paramIndex++}`);
+          updateValues.push(jobData.employeeId || null);
+        }
+        if (jobData.ctc !== undefined) {
+          updateFields.push(`"ctc" = $${paramIndex++}`);
+          updateValues.push(jobData.ctc || null);
+        }
+        if (jobData.reportingManagerId !== undefined) {
+          updateFields.push(`"reportingManagerId" = $${paramIndex++}`);
+          updateValues.push(jobData.reportingManagerId || null);
+        }
+
+        updateFields.push(`"updatedAt" = NOW()`);
+        updateValues.push(userId);
+
+        if (updateFields.length > 1) {
+          await tenantPool.query(
+            `
+            UPDATE user_job_details 
+            SET ${updateFields.join(", ")} 
+            WHERE "userId" = $${paramIndex}
+          `,
+            updateValues
+          );
+        }
+      } else {
+        // Insert new job details
+        await tenantPool.query(
+          `
+          INSERT INTO user_job_details (
+            "userId",
+            "hiringDate",
+            "joiningDate",
+            "probationPeriodMonths",
+            "designation",
+            "department",
+            "employeeId",
+            "ctc",
+            "reportingManagerId"
+          )
+          VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+        `,
+          [
+            userId,
+            jobData.hiringDate || null,
+            jobData.joiningDate || null,
+            jobData.probationPeriodMonths || null,
+            jobData.designation || null,
+            jobData.department || null,
+            jobData.employeeId || null,
+            jobData.ctc || null,
+            jobData.reportingManagerId || null,
+          ]
+        );
+      }
+
+      // Commit transaction
+      await dbClient.mainPool.query(dbTransactionKeys.COMMIT);
+    } catch (error) {
+      // Rollback transaction on error
+      await dbClient.mainPool.query(dbTransactionKeys.ROLLBACK);
+      throw error;
+    } finally {
+      // Release tenant pool if created
+      // Note: Pool will be auto-released by connection pool manager
+    }
   }
 
   static async getUsers(
@@ -325,7 +589,6 @@ export default class User {
   ): Promise<UserWithTrackingSchema[]> {
     // Build WHERE conditions
     const conditions: string[] = [];
-
     if (filters?.tenantId) {
       conditions.push(`up."tenantId" = ${filters.tenantId}`);
     }
@@ -334,21 +597,22 @@ export default class User {
       conditions.push(`up."statusId" = ${filters.statusId}`);
     }
 
-    // If roleCategory is specified, filter users by role category
-    let roleJoin = "";
+    // If roleCategory is specified, add filter condition
     if (filters?.roleCategory) {
-      roleJoin = `
-        INNER JOIN user_role_xref urx ON up.id = urx."userId"
-        INNER JOIN lookups lr ON urx."roleId" = lr.id
-      `;
-      conditions.push(`lr.name LIKE '${filters.roleCategory}_%'`);
+      conditions.push(
+        `EXISTS (
+          SELECT 1 FROM user_role_xref urx
+          INNER JOIN lookups lr ON urx."roleId" = lr.id
+          WHERE urx."userId" = up.id AND lr.name LIKE '${filters.roleCategory}_%'
+        )`
+      );
     }
 
     const whereClause =
       conditions.length > 0 ? `WHERE ${conditions.join(" AND ")}` : "";
 
     const queryString = `
-        SELECT DISTINCT
+        SELECT
           up.id,
           up.title,
           up."firstName",
@@ -356,7 +620,7 @@ export default class User {
           up."middleName",
           up."maidenName",
           up.gender,
-          up.dob,
+          TO_CHAR(up.dob, 'YYYY-MM-DD') as dob,
           up."bloodGroup",
           up."marriedStatus",
           ua."authEmail",
@@ -367,17 +631,30 @@ export default class User {
           ls.label as "statusLabel",
           up."tenantId",
           up."createdAt",
-          up."updatedAt"
+          up."updatedAt",
+          COALESCE(
+            JSON_AGG(
+              JSON_BUILD_OBJECT(
+                'id', l.id,
+                'name', l.name,
+                'label', l.label,
+                'lookupTypeId', l."lookupTypeId",
+                'isSystem', l."isSystem"
+              )
+            ) FILTER (WHERE l.id IS NOT NULL), 
+            '[]'::json
+          ) as "roles"
       FROM 
         users up
-      INNER JOIN user_auths ua ON up.id = ua."userId"
+      LEFT JOIN user_auths ua ON up.id = ua."userId"
       LEFT JOIN lookups ls ON up."statusId" = ls.id
-      ${roleJoin}
+      LEFT JOIN user_role_xref urx ON up.id = urx."userId"
+      LEFT JOIN lookups l ON urx."roleId" = l.id
       ${whereClause}
+      GROUP BY up.id, ua."authEmail", up."isPlatformUser", ls.name, ls.label
       ORDER BY up."createdAt" DESC;`;
 
     const results = await dbClient.mainPool.query(queryString);
-
     return results.rows;
   }
 }

@@ -52,8 +52,7 @@ import { selectLookupTypeByName } from "@/redux/slices/lookupSlice";
 import { lookupTypeKeys } from "@/utils/constants";
 import type { AppDispatch, RootState } from "@/redux/store";
 import { EditTenantModal } from "./components/EditTenantModal";
-import { AddUserModal } from "@/components/AddUserModal";
-import { EditUserModal } from "./components/EditUserModal";
+import { UserWizard } from "@/components/UserWizard";
 import { UpdateUserPasswordModal } from "./components/UpdateUserPasswordModal";
 import { UpdateUserStatusAndRolesModal } from "./components/UpdateUserStatusAndRolesModal";
 import { LoadingIndicator } from "@/components/ui/loading-indicator";
@@ -90,11 +89,11 @@ export default function TenantDetail() {
   // Edit modal state
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
 
-  // Add user modal state
-  const [isAddUserModalOpen, setIsAddUserModalOpen] = useState(false);
+  // Add user wizard state
+  const [isAddUserWizardOpen, setIsAddUserWizardOpen] = useState(false);
 
-  // Edit user modal state
-  const [isEditUserModalOpen, setIsEditUserModalOpen] = useState(false);
+  // Edit user wizard state
+  const [isEditUserWizardOpen, setIsEditUserWizardOpen] = useState(false);
   const [selectedUserId, setSelectedUserId] = useState<number | null>(null);
 
   // Update password modal state
@@ -140,12 +139,12 @@ export default function TenantDetail() {
   };
 
   const handleAddUser = () => {
-    setIsAddUserModalOpen(true);
+    setIsAddUserWizardOpen(true);
   };
 
   const handleEditUser = (userId: number) => {
     setSelectedUserId(userId);
-    setIsEditUserModalOpen(true);
+    setIsEditUserWizardOpen(true);
   };
 
   const handleResetPassword = (userId: number) => {
@@ -460,7 +459,7 @@ export default function TenantDetail() {
                             onClick={() => handleEditUser(user.id)}
                           >
                             <Edit className="h-4 w-4 mr-2" />
-                            Edit
+                            Edit User
                           </DropdownMenuItem>
                           <DropdownMenuItem
                             onClick={() => handleResetPassword(user.id)}
@@ -493,22 +492,25 @@ export default function TenantDetail() {
         onTenantUpdated={handleTenantUpdated}
       />
 
-      {/* Add User Modal */}
+      {/* Add User Wizard */}
       {tenant && (
-        <AddUserModal
-          isOpen={isAddUserModalOpen}
-          onClose={() => setIsAddUserModalOpen(false)}
+        <UserWizard
+          mode="create"
+          isOpen={isAddUserWizardOpen}
+          onClose={() => setIsAddUserWizardOpen(false)}
           tenant={tenant}
-          onUserCreated={handleUserCreated}
+          onSuccess={handleUserCreated}
         />
       )}
 
-      {/* Edit User Modal */}
-      <EditUserModal
-        isOpen={isEditUserModalOpen}
-        onClose={() => setIsEditUserModalOpen(false)}
+      {/* Edit User Wizard */}
+      <UserWizard
+        mode="edit"
+        isOpen={isEditUserWizardOpen}
+        onClose={() => setIsEditUserWizardOpen(false)}
+        tenant={tenant}
         userId={selectedUserId}
-        onUserUpdated={handleUserUpdated}
+        onSuccess={handleUserUpdated}
       />
 
       {/* Update Password Modal */}

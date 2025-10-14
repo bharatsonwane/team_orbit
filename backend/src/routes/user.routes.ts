@@ -4,6 +4,9 @@ import {
   baseUserSchema,
   userUpdatePasswordSchema,
   createUserSchema,
+  updateUserStatusAndRolesSchema,
+  saveUserContactsSchema,
+  saveUserJobDetailsSchema,
 } from "../schemas/user.schema";
 import {
   getUserOASSchema,
@@ -20,6 +23,8 @@ import {
   updateUserProfile,
   createUser,
   updateUserStatusAndRoles,
+  saveUserContacts,
+  saveUserJobDetails,
 } from "../controllers/user.controller";
 import RouteRegistrar from "../middleware/RouteRegistrar";
 import { authRoleMiddleware } from "../middleware/authRoleMiddleware";
@@ -45,19 +50,19 @@ registrar.post("/login", {
   controller: userLogin,
 });
 
-/**@description Create User (Role-based permissions) */
-registrar.post("/create", {
+/**@description Create User with Personal Information */
+registrar.post("/personal", {
   requestSchema: { bodySchema: createUserSchema },
   responseSchemas: [{ statusCode: 201, schema: z.number() }],
   middleware: [authRoleMiddleware()],
   controller: createUser,
 });
 
-/**@description update user by id  */
-registrar.put("/:id", {
+/**@description Update user personal information by id  */
+registrar.put("/:id/personal", {
   requestSchema: {
     paramsSchema: { id: idValidation },
-    bodySchema: baseUserSchema,
+    bodySchema: baseUserSchema.partial(),
   },
   responseSchemas: [{ statusCode: 200, schema: baseUserSchema }],
   middleware: [authRoleMiddleware()],
@@ -79,13 +84,30 @@ registrar.put("/:id/update-password/", {
 registrar.put("/:id/update-status-roles/", {
   requestSchema: {
     paramsSchema: { id: idValidation },
-    bodySchema: z.object({
-      statusId: z.number(),
-      roleIds: z.array(z.number()),
-    }),
+    bodySchema: updateUserStatusAndRolesSchema,
   },
   middleware: [authRoleMiddleware()],
   controller: updateUserStatusAndRoles,
+});
+
+/**@description Save/Update user contact information  */
+registrar.post("/:id/contacts", {
+  requestSchema: {
+    paramsSchema: { id: idValidation },
+    bodySchema: saveUserContactsSchema,
+  },
+  middleware: [authRoleMiddleware()],
+  controller: saveUserContacts,
+});
+
+/**@description Save/Update user job details  */
+registrar.post("/:id/job-details", {
+  requestSchema: {
+    paramsSchema: { id: idValidation },
+    bodySchema: saveUserJobDetailsSchema,
+  },
+  middleware: [authRoleMiddleware()],
+  controller: saveUserJobDetails,
 });
 
 // /api/user/profile

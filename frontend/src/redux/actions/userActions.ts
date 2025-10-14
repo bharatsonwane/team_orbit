@@ -65,7 +65,6 @@ export const getTenantUsersAction = createAsyncThunk(
       const response = await getAxios().get<DetailedUser[]>("/api/user/list", {
         params: {
           tenantId,
-          roleCategory: "TENANT",
         },
       });
       return response.data;
@@ -75,21 +74,24 @@ export const getTenantUsersAction = createAsyncThunk(
   }
 );
 
-/** Create user action - API call only */
-export const createUserAction = createAsyncThunk(
-  "user/createUserAction",
+/** Create user with personal information - API call only */
+export const createUserPersonalAction = createAsyncThunk(
+  "user/createUserPersonalAction",
   async (userData: CreateUserRequest, { rejectWithValue }) => {
     try {
-      const response = await getAxios().post<User>(
-        "/api/user/create",
+      const response = await getAxios().post<number>(
+        "/api/user/personal",
         userData
       );
-      return response.data;
+      return response.data; // Returns userId
     } catch (error: unknown) {
       return rejectWithValue(getAppErrorMessage(error));
     }
   }
 );
+
+/** Create user action (backward compatibility) */
+export const createUserAction = createUserPersonalAction;
 
 /** Get user by ID action - API call only */
 export const getUserByIdAction = createAsyncThunk(
@@ -106,16 +108,16 @@ export const getUserByIdAction = createAsyncThunk(
   }
 );
 
-/** Update user action - API call only */
-export const updateUserAction = createAsyncThunk(
-  "user/updateUserAction",
+/** Update user personal information - API call only */
+export const updateUserPersonalAction = createAsyncThunk(
+  "user/updateUserPersonalAction",
   async (
     { userId, userData }: { userId: number; userData: UpdateUserRequest },
     { rejectWithValue }
   ) => {
     try {
       const response = await getAxios().put<DetailedUser>(
-        `/api/user/${userId}`,
+        `/api/user/${userId}/personal`,
         userData
       );
       return response.data;
@@ -124,6 +126,9 @@ export const updateUserAction = createAsyncThunk(
     }
   }
 );
+
+/** Update user action (backward compatibility) */
+export const updateUserAction = updateUserPersonalAction;
 
 /** Update user password action - API call only */
 export const updateUserPasswordAction = createAsyncThunk(
@@ -159,6 +164,74 @@ export const updateUserStatusAndRolesAction = createAsyncThunk(
       const response = await getAxios().put<DetailedUser>(
         `/api/user/${userId}/update-status-roles`,
         { statusId, roleIds }
+      );
+      return response.data;
+    } catch (error: unknown) {
+      return rejectWithValue(getAppErrorMessage(error));
+    }
+  }
+);
+
+/** Save user contacts action - API call only */
+export const saveUserContactsAction = createAsyncThunk(
+  "user/saveUserContactsAction",
+  async (
+    {
+      userId,
+      contactData,
+    }: {
+      userId: number;
+      contactData: {
+        officeEmail?: string;
+        personalEmail?: string;
+        officialPhone?: string;
+        personalPhone?: string;
+        emergencyContactName1?: string;
+        emergencyContactPhone1?: string;
+        emergencyContactName2?: string;
+        emergencyContactPhone2?: string;
+      };
+    },
+    { rejectWithValue }
+  ) => {
+    try {
+      const response = await getAxios().post(
+        `/api/user/${userId}/contacts`,
+        contactData
+      );
+      return response.data;
+    } catch (error: unknown) {
+      return rejectWithValue(getAppErrorMessage(error));
+    }
+  }
+);
+
+/** Save user job details action - API call only */
+export const saveUserJobDetailsAction = createAsyncThunk(
+  "user/saveUserJobDetailsAction",
+  async (
+    {
+      userId,
+      jobData,
+    }: {
+      userId: number;
+      jobData: {
+        hiringDate?: string;
+        joiningDate?: string;
+        probationPeriodMonths?: number;
+        designation?: string;
+        department?: string;
+        employeeId?: string;
+        ctc?: number;
+        reportingManagerId?: number;
+      };
+    },
+    { rejectWithValue }
+  ) => {
+    try {
+      const response = await getAxios().post(
+        `/api/user/${userId}/job-details`,
+        jobData
       );
       return response.data;
     } catch (error: unknown) {

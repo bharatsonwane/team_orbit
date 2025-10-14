@@ -14,7 +14,7 @@ import { Badge } from "@/components/ui/badge";
 import { Users, Plus, Mail, Phone, Edit } from "lucide-react";
 import { HeaderLayout } from "@/components/AppLayout";
 import { LoadingIndicator } from "@/components/ui/loading-indicator";
-import { AddUserModal } from "@/components/AddUserModal";
+import { UserWizard } from "@/components/UserWizard";
 import { getPlatformUsersAction } from "@/redux/actions/userActions";
 import type { AppDispatch } from "@/redux/store";
 import type { DetailedUser } from "@/schemas/user";
@@ -219,11 +219,12 @@ export default function PlatformUsers() {
         </Card>
       </div>
 
-      {/* Add Platform User Modal */}
-      <AddUserModal
+      {/* Add Platform User Wizard */}
+      <UserWizard
+        mode="create"
         isOpen={isAddUserModalOpen}
         onClose={() => setIsAddUserModalOpen(false)}
-        onUserCreated={handleUserCreated}
+        onSuccess={handleUserCreated}
       />
     </Fragment>
   );

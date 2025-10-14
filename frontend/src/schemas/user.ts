@@ -114,7 +114,6 @@ export const createUserFormSchema = z.object({
   marriedStatus: z
     .enum(["Single", "Married", "Divorced", "Widowed"])
     .optional(),
-  email: z.string().email("Invalid email"), // Will be used as userName
   phone: z
     .string()
     .min(10, "Phone must be at least 10 characters")
@@ -234,3 +233,95 @@ export interface LoginResponse {
   user: User;
   token: string;
 }
+
+// ==================== WIZARD SCHEMAS ====================
+
+// Step 1: Personal Information Schema
+export const userPersonalInformationSchema = z.object({
+  title: z
+    .string()
+    .optional()
+    .superRefine((val, ctx) => {
+      if (val && val !== "" && !["Mr", "Mrs", "Ms"].includes(val)) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "Please select a valid title",
+        });
+      }
+    }),
+  firstName: z.string().min(2, "First name must be at least 2 characters"),
+  lastName: z.string().min(2, "Last name must be at least 2 characters"),
+  middleName: z.string().min(2).optional().or(z.literal("")),
+  maidenName: z.string().min(2).optional().or(z.literal("")),
+  gender: z.enum(["Male", "Female", "Other", ""]).optional(),
+  dob: z.string().optional().or(z.literal("")),
+  bloodGroup: z
+    .enum(["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-", ""])
+    .optional(),
+  marriedStatus: z
+    .enum(["Single", "Married", "Divorced", "Widowed", ""])
+    .optional(),
+  bio: z.string().optional().or(z.literal("")),
+  tenantId: z.number().optional(),
+});
+
+export type UserPersonalInformationFormData = z.infer<
+  typeof userPersonalInformationSchema
+>;
+
+// Step 2: Contact Information Schema
+export const userContactInformationSchema = z.object({
+  officeEmail: z.string().email("Invalid email").optional().or(z.literal("")),
+  personalEmail: z.string().email("Invalid email").optional().or(z.literal("")),
+  officialPhone: z.string().optional().or(z.literal("")),
+  personalPhone: z.string().optional().or(z.literal("")),
+  emergencyContactName1: z.string().optional().or(z.literal("")),
+  emergencyContactPhone1: z.string().optional().or(z.literal("")),
+  emergencyContactName2: z.string().optional().or(z.literal("")),
+  emergencyContactPhone2: z.string().optional().or(z.literal("")),
+});
+
+export type UserContactInformationFormData = z.infer<
+  typeof userContactInformationSchema
+>;
+
+// Step 3: Job Details Schema
+export const userJobDetailsSchema = z.object({
+  hiringDate: z.string().optional().or(z.literal("")),
+  joiningDate: z.string().optional().or(z.literal("")),
+  probationPeriodMonths: z.string().optional().or(z.literal("")),
+  designation: z.string().optional().or(z.literal("")),
+  department: z.string().optional().or(z.literal("")),
+  employeeId: z.string().optional().or(z.literal("")),
+  ctc: z.string().optional().or(z.literal("")),
+  reportingManagerId: z.string().optional().or(z.literal("")),
+});
+
+export type UserJobDetailsFormData = z.infer<typeof userJobDetailsSchema>;
+
+// Combined Wizard Schema (nested structure)
+export const userWizardSchema = z.object({
+  personal: userPersonalInformationSchema,
+  contacts: userContactInformationSchema,
+  job: userJobDetailsSchema,
+});
+
+export type UserWizardFormData = z.infer<typeof userWizardSchema>;
+
+// Stricter schema for create mode
+export const createUserWizardSchema = userWizardSchema.extend({
+  contacts: userContactInformationSchema.extend({
+    officeEmail: z.string().email("Invalid email"), // Required for create
+  }),
+  personal: userPersonalInformationSchema.extend({
+    tenantId: z.number().min(1, "Tenant ID is required"),
+    title: z
+      .string()
+      .min(1, "Title is required")
+      .refine(val => ["Mr", "Mrs", "Ms"].includes(val), {
+        message: "Please select a valid title",
+      }),
+  }),
+});
+
+export type CreateUserWizardFormData = z.infer<typeof createUserWizardSchema>;

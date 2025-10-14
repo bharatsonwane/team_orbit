@@ -15,8 +15,7 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { AddUserModal } from "@/components/AddUserModal";
-import { EditUserModal } from "@/pages/platform/tenant/components/EditUserModal";
+import { UserWizard } from "@/components/UserWizard";
 import { useAuthService } from "@/contexts/AuthContextProvider";
 import { HeaderLayout } from "@/components/AppLayout";
 
@@ -220,8 +219,9 @@ export default function Employees() {
           </CardContent>
         </Card>
 
-        {/* Add Employee Modal */}
-        <AddUserModal
+        {/* Add Employee Wizard */}
+        <UserWizard
+          mode="create"
           isOpen={isAddModalOpen}
           onClose={() => setIsAddModalOpen(false)}
           tenant={{
@@ -234,16 +234,27 @@ export default function Employees() {
             updatedAt: new Date().toISOString(),
             archivedAt: null,
           }}
-          onUserCreated={handleEmployeeCreated}
+          onSuccess={handleEmployeeCreated}
         />
 
-        {/* Edit Employee Modal */}
+        {/* Edit Employee Wizard */}
         {editingEmployeeId && (
-          <EditUserModal
+          <UserWizard
+            mode="edit"
             isOpen={!!editingEmployeeId}
             onClose={() => setEditingEmployeeId(null)}
+            tenant={{
+              id: tenantId,
+              name: "Current Tenant",
+              label: "Current Tenant",
+              statusId: 1,
+              isArchived: false,
+              createdAt: new Date().toISOString(),
+              updatedAt: new Date().toISOString(),
+              archivedAt: null,
+            }}
             userId={editingEmployeeId}
-            onUserUpdated={handleEmployeeUpdated}
+            onSuccess={handleEmployeeUpdated}
           />
         )}
       </div>
