@@ -79,7 +79,7 @@ export const createUserPersonalAction = createAsyncThunk(
   "user/createUserPersonalAction",
   async (userData: CreateUserRequest, { rejectWithValue }) => {
     try {
-      const response = await getAxios().post<number>(
+      const response = await getAxios().post<{ id: number }>(
         "/api/user/personal",
         userData
       );

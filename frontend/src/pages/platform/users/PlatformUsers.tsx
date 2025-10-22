@@ -26,7 +26,8 @@ export default function PlatformUsers() {
   const [users, setUsers] = useState<DetailedUser[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [isAddUserModalOpen, setIsAddUserModalOpen] = useState(false);
+  const [isUserWizardOpen, setIsUserWizardOpen] = useState(false);
+  const [selectedUserId, setSelectedUserId] = useState<number | null>(null);
 
   // Fetch platform users
   const fetchPlatformUsers = useCallback(async () => {
@@ -48,17 +49,24 @@ export default function PlatformUsers() {
   }, [fetchPlatformUsers]);
 
   const handleAddUser = () => {
-    setIsAddUserModalOpen(true);
-  };
-
-  const handleUserCreated = () => {
-    // Refresh platform users list
-    fetchPlatformUsers();
+    setSelectedUserId(null);
+    setIsUserWizardOpen(true);
   };
 
   const handleEditUser = (userId: number) => {
-    // Navigate to edit user modal or page
-    console.log("Edit user:", userId);
+    setSelectedUserId(userId);
+    setIsUserWizardOpen(true);
+  };
+
+  const handleUserCreated = () => {
+    // Don't close modal - let user continue with remaining steps
+    fetchPlatformUsers();
+  };
+
+  const handleUserUpdated = () => {
+    setIsUserWizardOpen(false);
+    setSelectedUserId(null);
+    fetchPlatformUsers();
   };
 
   // Show loading state
@@ -219,12 +227,24 @@ export default function PlatformUsers() {
         </Card>
       </div>
 
-      {/* Add Platform User Wizard */}
+      {/* User Wizard (handles both create and edit modes) */}
       <UserWizard
-        mode="create"
-        isOpen={isAddUserModalOpen}
-        onClose={() => setIsAddUserModalOpen(false)}
-        onSuccess={handleUserCreated}
+        isOpen={isUserWizardOpen}
+        onClose={() => {
+          setIsUserWizardOpen(false);
+          setSelectedUserId(null);
+        }}
+        userId={selectedUserId}
+        onSuccess={newUserId => {
+          if (newUserId) {
+            // User was created - update selectedUserId and refresh list, but keep modal open
+            setSelectedUserId(newUserId);
+            handleUserCreated();
+          } else {
+            // User was updated - refresh list and close modal
+            handleUserUpdated();
+          }
+        }}
       />
     </Fragment>
   );

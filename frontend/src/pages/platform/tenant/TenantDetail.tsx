@@ -89,11 +89,8 @@ export default function TenantDetail() {
   // Edit modal state
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
 
-  // Add user wizard state
-  const [isAddUserWizardOpen, setIsAddUserWizardOpen] = useState(false);
-
-  // Edit user wizard state
-  const [isEditUserWizardOpen, setIsEditUserWizardOpen] = useState(false);
+  // User wizard state (handles both create and edit modes)
+  const [isUserWizardOpen, setIsUserWizardOpen] = useState(false);
   const [selectedUserId, setSelectedUserId] = useState<number | null>(null);
 
   // Update password modal state
@@ -120,7 +117,7 @@ export default function TenantDetail() {
       const tenantId = parseInt(id);
       // Fetch tenant details and users
       dispatch(getTenantAction(tenantId));
-      dispatch(getTenantUsersAction(tenantId));
+      handleGetTenantUsers();
     }
   }, [dispatch, id]);
 
@@ -139,12 +136,13 @@ export default function TenantDetail() {
   };
 
   const handleAddUser = () => {
-    setIsAddUserWizardOpen(true);
+    setSelectedUserId(null);
+    setIsUserWizardOpen(true);
   };
 
   const handleEditUser = (userId: number) => {
     setSelectedUserId(userId);
-    setIsEditUserWizardOpen(true);
+    setIsUserWizardOpen(true);
   };
 
   const handleResetPassword = (userId: number) => {
@@ -172,15 +170,8 @@ export default function TenantDetail() {
     }
   };
 
-  const handleUserCreated = () => {
-    // Refresh user list after creating a new user
-    if (id) {
-      dispatch(getTenantUsersAction(parseInt(id)));
-    }
-  };
-
-  const handleUserUpdated = () => {
-    // Refresh user list after update
+  const handleGetTenantUsers = () => {
+    // Refresh user list
     if (id) {
       dispatch(getTenantUsersAction(parseInt(id)));
     }
@@ -189,13 +180,6 @@ export default function TenantDetail() {
   const handlePasswordUpdated = () => {
     // Password update doesn't require list refresh, just close modal
     setIsUpdatePasswordModalOpen(false);
-  };
-
-  const handleStatusAndRolesUpdated = () => {
-    // Refresh user list after status/roles update
-    if (id) {
-      dispatch(getTenantUsersAction(parseInt(id)));
-    }
   };
 
   if (isLoading) {
@@ -492,26 +476,25 @@ export default function TenantDetail() {
         onTenantUpdated={handleTenantUpdated}
       />
 
-      {/* Add User Wizard */}
-      {tenant && (
+      {/* User Wizard (handles both create and edit modes) */}
+      {tenant?.id && isUserWizardOpen && (
         <UserWizard
-          mode="create"
-          isOpen={isAddUserWizardOpen}
-          onClose={() => setIsAddUserWizardOpen(false)}
+          isOpen={isUserWizardOpen}
+          onClose={() => {
+            setIsUserWizardOpen(false);
+            setSelectedUserId(null);
+            handleGetTenantUsers();
+          }}
           tenant={tenant}
-          onSuccess={handleUserCreated}
+          userId={selectedUserId}
+          onSuccess={newUserId => {
+            if (newUserId) {
+              // User was created - update selectedUserId
+              setSelectedUserId(newUserId);
+            }
+          }}
         />
       )}
-
-      {/* Edit User Wizard */}
-      <UserWizard
-        mode="edit"
-        isOpen={isEditUserWizardOpen}
-        onClose={() => setIsEditUserWizardOpen(false)}
-        tenant={tenant}
-        userId={selectedUserId}
-        onSuccess={handleUserUpdated}
-      />
 
       {/* Update Password Modal */}
       <UpdateUserPasswordModal
@@ -528,7 +511,7 @@ export default function TenantDetail() {
         onClose={() => setIsUpdateStatusAndRolesModalOpen(false)}
         userId={updateStatusAndRolesUserId}
         userName={updateStatusAndRolesUserName}
-        onUpdated={handleStatusAndRolesUpdated}
+        onUpdated={handleGetTenantUsers}
       />
     </Fragment>
   );

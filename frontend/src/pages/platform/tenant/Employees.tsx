@@ -26,8 +26,9 @@ export default function Employees() {
   const [employees, setEmployees] = useState<DetailedUser[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
-  const [editingEmployeeId, setEditingEmployeeId] = useState<number | null>(
+  // User wizard state (handles both create and edit modes)
+  const [isUserWizardOpen, setIsUserWizardOpen] = useState(false);
+  const [selectedEmployeeId, setSelectedEmployeeId] = useState<number | null>(
     null
   );
 
@@ -55,21 +56,24 @@ export default function Employees() {
   }, [fetchEmployees]);
 
   const handleAddEmployee = () => {
-    setIsAddModalOpen(true);
+    setSelectedEmployeeId(null);
+    setIsUserWizardOpen(true);
   };
 
   const handleEditEmployee = (employee: DetailedUser) => {
-    setEditingEmployeeId(employee.id);
+    setSelectedEmployeeId(employee.id);
+    setIsUserWizardOpen(true);
   };
 
   const handleEmployeeCreated = () => {
+    // Don't close modal - let user continue with remaining steps
     fetchEmployees();
-    setIsAddModalOpen(false);
   };
 
   const handleEmployeeUpdated = () => {
+    setIsUserWizardOpen(false);
+    setSelectedEmployeeId(null);
     fetchEmployees();
-    setEditingEmployeeId(null);
   };
 
   const getStatusBadge = (statusName: string) => {
@@ -219,11 +223,13 @@ export default function Employees() {
           </CardContent>
         </Card>
 
-        {/* Add Employee Wizard */}
+        {/* Employee Wizard (handles both create and edit modes) */}
         <UserWizard
-          mode="create"
-          isOpen={isAddModalOpen}
-          onClose={() => setIsAddModalOpen(false)}
+          isOpen={isUserWizardOpen}
+          onClose={() => {
+            setIsUserWizardOpen(false);
+            setSelectedEmployeeId(null);
+          }}
           tenant={{
             id: tenantId,
             name: "Current Tenant",
@@ -234,29 +240,18 @@ export default function Employees() {
             updatedAt: new Date().toISOString(),
             archivedAt: null,
           }}
-          onSuccess={handleEmployeeCreated}
+          userId={selectedEmployeeId}
+          onSuccess={newUserId => {
+            if (newUserId) {
+              // Employee was created - update selectedEmployeeId and refresh list, but keep modal open
+              setSelectedEmployeeId(newUserId);
+              handleEmployeeCreated();
+            } else {
+              // Employee was updated - refresh list and close modal
+              handleEmployeeUpdated();
+            }
+          }}
         />
-
-        {/* Edit Employee Wizard */}
-        {editingEmployeeId && (
-          <UserWizard
-            mode="edit"
-            isOpen={!!editingEmployeeId}
-            onClose={() => setEditingEmployeeId(null)}
-            tenant={{
-              id: tenantId,
-              name: "Current Tenant",
-              label: "Current Tenant",
-              statusId: 1,
-              isArchived: false,
-              createdAt: new Date().toISOString(),
-              updatedAt: new Date().toISOString(),
-              archivedAt: null,
-            }}
-            userId={editingEmployeeId}
-            onSuccess={handleEmployeeUpdated}
-          />
-        )}
       </div>
     </Fragment>
   );

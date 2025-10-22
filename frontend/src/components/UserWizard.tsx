@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
 import { useDispatch } from "react-redux";
 import {
   Drawer,
@@ -37,35 +38,41 @@ import { toast } from "sonner";
 import { XIcon, ChevronRight, ChevronLeft, Check } from "lucide-react";
 import { LoadingIndicator } from "@/components/ui/loading-indicator";
 
+const modeKeys = {
+  CREATE: "CREATE",
+  EDIT: "EDIT",
+};
+
 interface UserWizardProps {
-  mode: "create" | "edit";
   isOpen: boolean;
   onClose: () => void;
-  onSuccess?: () => void;
+  onSuccess?: (userId?: number) => void; // Callback when user is created or updated, with optional userId
   tenant?: Tenant;
-  userId?: number | null; // Required for edit mode
+  userId?: number | null; // If provided, wizard is in edit mode; if null/undefined, wizard is in create mode
+}
+
+interface WizardStep {
+  name: string;
+  title: string;
+  schema: z.ZodSchema;
+  component: React.ReactNode;
 }
 
 export const UserWizard: React.FC<UserWizardProps> = ({
-  mode,
   isOpen,
   onClose,
   onSuccess,
   tenant,
-  userId: initialUserId,
+  userId,
 }) => {
   const dispatch = useDispatch<AppDispatch>();
-  const [currentStep, setCurrentStep] = useState(1);
+  const [currentStepName, setCurrentStepName] = useState("personal");
   const [isLoading, setIsLoading] = useState(false);
   const [isFetching, setIsFetching] = useState(false);
-  const [createdUserId, setCreatedUserId] = useState<number | null>(null);
+  // Automatically detect mode based on userId
+  const mode = userId ? modeKeys.EDIT : modeKeys.CREATE;
 
   const isPlatformUser = !tenant;
-  const isCreateMode = mode === "create";
-  const isEditMode = mode === "edit";
-
-  // Use initialUserId for edit mode, createdUserId for create mode after step 1
-  const userId = isEditMode ? initialUserId : createdUserId;
 
   const {
     register,
@@ -77,11 +84,11 @@ export const UserWizard: React.FC<UserWizardProps> = ({
     formState: { errors },
   } = useForm<UserWizardFormData>({
     resolver: zodResolver(
-      isCreateMode ? createUserWizardSchema : userWizardSchema
+      mode === modeKeys.CREATE ? createUserWizardSchema : userWizardSchema
     ),
     defaultValues: {
       personal: {
-        tenantId: tenant?.id || 1,
+        tenantId: tenant?.id,
         dob: "",
         title: "",
         firstName: "",
@@ -118,9 +125,9 @@ export const UserWizard: React.FC<UserWizardProps> = ({
   });
 
   // Wizard steps configuration
-  const wizardSteps = [
+  const wizardSteps: WizardStep[] = [
     {
-      id: 1,
+      name: "personal",
       title: "Personal Information",
       schema: userPersonalInformationSchema,
       component: (
@@ -133,7 +140,7 @@ export const UserWizard: React.FC<UserWizardProps> = ({
       ),
     },
     {
-      id: 2,
+      name: "contacts",
       title: "Contact Information",
       schema: userContactInformationSchema,
       component: (
@@ -145,7 +152,7 @@ export const UserWizard: React.FC<UserWizardProps> = ({
       ),
     },
     {
-      id: 3,
+      name: "job",
       title: "Job Details",
       schema: userJobDetailsSchema,
       component: (
@@ -163,90 +170,82 @@ export const UserWizard: React.FC<UserWizardProps> = ({
 
   // Fetch user data for edit mode
   useEffect(() => {
-    const fetchUserData = async () => {
-      if (isOpen && isEditMode && initialUserId) {
-        setIsFetching(true);
-        try {
-          const result = await dispatch(
-            getUserByIdAction(initialUserId)
-          ).unwrap();
+    if (userId) {
+      fetchUserData(userId);
+    }
+  }, []);
 
-          // Populate form with user data
-          reset({
-            personal: {
-              title: (result.title || "") as
-                | ""
-                | "Mr"
-                | "Mrs"
-                | "Ms"
-                | undefined,
-              firstName: result.firstName,
-              lastName: result.lastName,
-              middleName: result.middleName || "",
-              maidenName: result.maidenName || "",
-              gender: (result.gender || "") as
-                | ""
-                | "Male"
-                | "Female"
-                | "Other"
-                | undefined,
-              dob: result.dob || "",
-              bloodGroup: (result.bloodGroup || "") as
-                | ""
-                | "A+"
-                | "A-"
-                | "B+"
-                | "B-"
-                | "AB+"
-                | "AB-"
-                | "O+"
-                | "O-"
-                | undefined,
-              marriedStatus: (result.marriedStatus || "") as
-                | ""
-                | "Single"
-                | "Married"
-                | "Divorced"
-                | "Widowed"
-                | undefined,
-              bio: result.bio || "",
-              tenantId: tenant?.id || 1,
-            },
-            contacts: {
-              // Extended contact fields (will be populated from backend)
-              officeEmail: result.email || "",
-              personalEmail: "",
-              officialPhone: result.phone || "",
-              personalPhone: "",
-              emergencyContactName1: "",
-              emergencyContactPhone1: "",
-              emergencyContactName2: "",
-              emergencyContactPhone2: "",
-            },
-            job: {
-              // Job details (will be populated from backend)
-              hiringDate: "",
-              joiningDate: "",
-              probationPeriodMonths: "",
-              designation: "",
-              department: "",
-              employeeId: "",
-              ctc: "",
-              reportingManagerId: "",
-            },
-          });
-        } catch (error) {
-          console.error("Failed to fetch user:", error);
-          toast.error("Failed to load user data");
-        } finally {
-          setIsFetching(false);
-        }
-      }
-    };
+  const fetchUserData = async (userId: number) => {
+    setIsFetching(true);
+    try {
+      const result = await dispatch(getUserByIdAction(userId)).unwrap();
 
-    fetchUserData();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isOpen, isEditMode, initialUserId, dispatch]);
+      // Populate form with user data
+      reset({
+        personal: {
+          title: (result.title || "") as "" | "Mr" | "Mrs" | "Ms" | undefined,
+          firstName: result.firstName,
+          lastName: result.lastName,
+          middleName: result.middleName || "",
+          maidenName: result.maidenName || "",
+          gender: (result.gender || "") as
+            | ""
+            | "Male"
+            | "Female"
+            | "Other"
+            | undefined,
+          dob: result.dob || "",
+          bloodGroup: (result.bloodGroup || "") as
+            | ""
+            | "A+"
+            | "A-"
+            | "B+"
+            | "B-"
+            | "AB+"
+            | "AB-"
+            | "O+"
+            | "O-"
+            | undefined,
+          marriedStatus: (result.marriedStatus || "") as
+            | ""
+            | "Single"
+            | "Married"
+            | "Divorced"
+            | "Widowed"
+            | undefined,
+          bio: result.bio || "",
+          tenantId: tenant?.id,
+        },
+        contacts: {
+          // Extended contact fields (will be populated from backend)
+          officeEmail: result.email || "",
+          personalEmail: "",
+          officialPhone: result.phone || "",
+          personalPhone: "",
+          emergencyContactName1: "",
+          emergencyContactPhone1: "",
+          emergencyContactName2: "",
+          emergencyContactPhone2: "",
+        },
+        job: {
+          // Job details (will be populated from backend)
+          hiringDate: "",
+          joiningDate: "",
+          probationPeriodMonths: "",
+          designation: "",
+          department: "",
+          employeeId: "",
+          ctc: "",
+          reportingManagerId: "",
+        },
+      });
+    } catch (error) {
+      console.error("Failed to fetch user:", error);
+      toast.error("Failed to load user data");
+    } finally {
+      setIsFetching(false);
+    }
+  };
 
   // Helper function to save personal information (Step 1)
   const savePersonalInformation = async () => {
@@ -283,20 +282,25 @@ export const UserWizard: React.FC<UserWizardProps> = ({
         | "Widowed"
         | undefined,
       bio: formData.personal.bio,
-      tenantId: tenant?.id || 1,
+      tenantId: tenant?.id || 0,
     };
 
-    if (isCreateMode) {
-      const newUserId = await dispatch(
+    if (mode === modeKeys.CREATE) {
+      const { id: newUserId } = (await dispatch(
         createUserPersonalAction(personalData)
-      ).unwrap();
-      setCreatedUserId(newUserId);
+      ).unwrap()) as { id: number };
       toast.success("Step 1 Complete", {
         description: "Personal information saved successfully",
       });
+      fetchUserData(newUserId);
+      // Notify parent component with the new user ID and refresh list
+      onSuccess?.(newUserId);
     } else if (userId) {
       await dispatch(
-        updateUserPersonalAction({ userId, userData: personalData })
+        updateUserPersonalAction({
+          userId: userId,
+          userData: personalData,
+        })
       ).unwrap();
       toast.success("Step 1 Complete", {
         description: "Personal information updated successfully",
@@ -323,7 +327,9 @@ export const UserWizard: React.FC<UserWizardProps> = ({
       emergencyContactPhone2: formData.contacts.emergencyContactPhone2,
     };
 
-    await dispatch(saveUserContactsAction({ userId, contactData })).unwrap();
+    await dispatch(
+      saveUserContactsAction({ userId: userId, contactData })
+    ).unwrap();
 
     toast.success("Step 2 Complete", {
       description: "Contact information saved successfully",
@@ -353,26 +359,53 @@ export const UserWizard: React.FC<UserWizardProps> = ({
         : undefined,
     };
 
-    await dispatch(saveUserJobDetailsAction({ userId, jobData })).unwrap();
+    await dispatch(
+      saveUserJobDetailsAction({ userId: userId, jobData })
+    ).unwrap();
 
     toast.success(
-      isCreateMode ? "User Created Successfully" : "User Updated Successfully",
+      mode === modeKeys.CREATE
+        ? "User Created Successfully"
+        : "User Updated Successfully",
       {
-        description: isCreateMode
-          ? "All details saved. Set password, status, and roles next."
-          : "All user details have been updated.",
+        description:
+          mode === modeKeys.CREATE
+            ? "All details saved. Set password, status, and roles next."
+            : "All user details have been updated.",
       }
     );
   };
 
   const handleNext = async () => {
     // Get validation fields for current step from schema (with nested path)
-    const currentStepConfig = wizardSteps[currentStep - 1];
-    const stepKey =
-      currentStep === 1 ? "personal" : currentStep === 2 ? "contacts" : "job";
-    const fieldsToValidate = Object.keys(currentStepConfig.schema.shape).map(
-      field => `${stepKey}.${field}`
+    const currentStepConfig = wizardSteps.find(
+      step => step.name === currentStepName
     );
+    if (!currentStepConfig) return;
+
+    const stepKey = currentStepConfig.name;
+
+    // Define field mappings for each step
+    const fieldMappings: Record<string, string[]> = {
+      personal: [
+        "firstName",
+        "lastName",
+        "dateOfBirth",
+        "gender",
+        "maritalStatus",
+      ],
+      contacts: [
+        "email",
+        "phoneNumber",
+        "emergencyContactName",
+        "emergencyContactPhone",
+      ],
+      job: ["hiringDate", "designation", "department", "reportingManager"],
+    };
+
+    const fieldsToValidate =
+      fieldMappings[stepKey]?.map((field: string) => `${stepKey}.${field}`) ||
+      [];
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const isValid = await trigger(fieldsToValidate as any);
@@ -380,28 +413,30 @@ export const UserWizard: React.FC<UserWizardProps> = ({
 
     setIsLoading(true);
     try {
-      // Save data based on current step
-      if (currentStep === 1) {
+      // Save data based on current step name
+      if (currentStepConfig.name === "personal") {
         await savePersonalInformation();
-      } else if (currentStep === 2) {
+      } else if (currentStepConfig.name === "contacts") {
         await saveContactInformation();
-      } else if (currentStep === 3) {
+      } else if (currentStepConfig.name === "job") {
         await saveJobInformation();
       }
 
       // Move to next step or complete wizard
-      if (currentStep < totalSteps) {
-        setCurrentStep(prev => prev + 1);
+      const currentIndex = wizardSteps.findIndex(
+        step => step.name === currentStepName
+      );
+      if (currentIndex < totalSteps - 1) {
+        setCurrentStepName(wizardSteps[currentIndex + 1].name);
       } else {
         // Final step completed - close wizard
         resetForm();
-        onSuccess?.();
         onClose();
       }
     } catch (error) {
-      console.error(`Failed to save step ${currentStep}:`, error);
+      console.error(`Failed to save step ${currentStepName}:`, error);
       toast.error(
-        `Failed to save ${wizardSteps[currentStep - 1].title}. Please try again.`
+        `Failed to save ${currentStepConfig?.title}. Please try again.`
       );
     } finally {
       setIsLoading(false);
@@ -409,15 +444,17 @@ export const UserWizard: React.FC<UserWizardProps> = ({
   };
 
   const handlePrevious = () => {
-    if (currentStep > 1) {
-      setCurrentStep(prev => prev - 1);
+    const currentIndex = wizardSteps.findIndex(
+      step => step.name === currentStepName
+    );
+    if (currentIndex > 0) {
+      setCurrentStepName(wizardSteps[currentIndex - 1].name);
     }
   };
 
   const resetForm = () => {
     reset();
-    setCurrentStep(1);
-    setCreatedUserId(null);
+    setCurrentStepName("personal");
   };
 
   const handleCancel = () => {
@@ -426,7 +463,7 @@ export const UserWizard: React.FC<UserWizardProps> = ({
   };
 
   const getModalTitle = () => {
-    if (isCreateMode) {
+    if (mode === modeKeys.CREATE) {
       return isPlatformUser
         ? "Add New Platform User"
         : `Add New User to ${tenant?.name}`;
@@ -435,16 +472,21 @@ export const UserWizard: React.FC<UserWizardProps> = ({
   };
 
   const getLoadingMessage = () => {
-    return isCreateMode ? "Creating user..." : "Updating user...";
+    return mode === modeKeys.CREATE ? "Creating user..." : "Updating user...";
   };
 
   const getSubmitButtonText = () => {
-    return isCreateMode ? "Create User" : "Update User";
+    return mode === modeKeys.CREATE ? "Create User" : "Update User";
   };
 
-  const getStepStatus = (stepId: number) => {
-    if (stepId < currentStep) return "completed";
-    if (stepId === currentStep) return "current";
+  const getStepStatus = (stepName: string) => {
+    const currentIndex = wizardSteps.findIndex(
+      step => step.name === currentStepName
+    );
+    const stepIndex = wizardSteps.findIndex(step => step.name === stepName);
+
+    if (stepIndex < currentIndex) return "completed";
+    if (stepIndex === currentIndex) return "current";
     return "upcoming";
   };
 
@@ -470,9 +512,9 @@ export const UserWizard: React.FC<UserWizardProps> = ({
             <div className="flex-shrink-0 px-6 pt-4 pb-2">
               <div className="flex items-center justify-between">
                 {wizardSteps.map((step, index) => {
-                  const status = getStepStatus(step.id);
+                  const status = getStepStatus(step.name);
                   return (
-                    <React.Fragment key={step.id}>
+                    <React.Fragment key={step.name}>
                       <div className="flex flex-col items-center flex-1">
                         <div
                           className={`w-10 h-10 rounded-full flex items-center justify-center border-2 transition-colors ${
@@ -486,7 +528,7 @@ export const UserWizard: React.FC<UserWizardProps> = ({
                           {status === "completed" ? (
                             <Check className="h-5 w-5" />
                           ) : (
-                            step.id
+                            index + 1
                           )}
                         </div>
                         <div className="text-center mt-2">
@@ -528,12 +570,17 @@ export const UserWizard: React.FC<UserWizardProps> = ({
             <div className="flex flex-col flex-1 min-h-0">
               <div className="flex-1 overflow-y-auto px-6 py-6 min-h-0">
                 {/* Render current step component */}
-                {wizardSteps[currentStep - 1]?.component}
+                {
+                  wizardSteps.find(step => step.name === currentStepName)
+                    ?.component
+                }
               </div>
 
               <DrawerFooter className="flex-shrink-0 p-6 pt-4 border-t">
                 <div className="flex gap-2">
-                  {currentStep > 1 && (
+                  {wizardSteps.findIndex(
+                    step => step.name === currentStepName
+                  ) > 0 && (
                     <Button
                       type="button"
                       variant="outline"
@@ -552,7 +599,10 @@ export const UserWizard: React.FC<UserWizardProps> = ({
                     disabled={isLoading}
                     className="flex-1"
                   >
-                    {currentStep < totalSteps ? (
+                    {wizardSteps.findIndex(
+                      step => step.name === currentStepName
+                    ) <
+                    totalSteps - 1 ? (
                       <>
                         Next
                         <ChevronRight className="h-4 w-4 ml-2" />

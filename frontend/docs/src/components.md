@@ -256,11 +256,105 @@ const isActiveLink = (href: string) => {
 
 ---
 
-### AddUserModal
+### UserWizard
 
-**Purpose**: Unified modal for creating both platform and tenant users with context-aware behavior.
+**Purpose**: Multi-step wizard for creating and editing users with comprehensive information collection.
 
-**Location**: `src/components/AddUserModal.tsx`
+**Location**: `src/components/UserWizard.tsx`
+
+#### Props
+
+```typescript
+interface UserWizardProps {
+  mode: "create" | "edit";
+  isOpen: boolean;
+  onClose: () => void;
+  onSuccess?: () => void;
+  tenant?: Tenant;
+  userId?: number | null; // Required for edit mode
+}
+```
+
+#### Features
+
+- **Multi-Step Process**: 3-step wizard (Personal Info → Contact Info → Job Details)
+- **Context-Aware**: Adapts behavior based on whether `tenant` prop is provided
+- **Platform Users**: When `tenant` is undefined, creates platform users
+- **Tenant Users**: When `tenant` is provided, creates tenant users
+- **Immediate User Creation**: User is created after Step 1 (Personal Information)
+- **List Refresh**: Calls `onSuccess` immediately after user creation to refresh lists
+- **Form Validation**: Zod schema validation for each step
+- **Loading States**: During each step save operation
+- **Progress Indicator**: Visual progress through wizard steps
+- **Error Handling**: Displays error messages for each step
+
+#### Wizard Steps
+
+1. **Personal Information** (`personal`): Basic user details (name, DOB, gender, etc.)
+2. **Contact Information** (`contacts`): Email, phone, emergency contacts
+3. **Job Details** (`job`): Employment information (hiring date, designation, etc.)
+
+#### Usage Examples
+
+**Creating Tenant Users:**
+
+```typescript
+// In TenantDetail.tsx or Employees.tsx
+<UserWizard
+  mode="create"
+  isOpen={isAddUserWizardOpen}
+  onClose={() => setIsAddUserWizardOpen(false)}
+  tenant={tenant}
+  onSuccess={handleUserCreated} // Called after Step 1 (user creation)
+/>
+```
+
+**Creating Platform Users:**
+
+```typescript
+// In PlatformUsers.tsx
+<UserWizard
+  mode="create"
+  isOpen={isAddUserWizardOpen}
+  onClose={() => setIsAddUserWizardOpen(false)}
+  // No tenant prop = platform user
+  onSuccess={handleUserCreated} // Called after Step 1 (user creation)
+/>
+```
+
+**Editing Users:**
+
+```typescript
+<UserWizard
+  mode="edit"
+  isOpen={isEditUserWizardOpen}
+  onClose={() => setIsEditUserWizardOpen(false)}
+  tenant={tenant}
+  userId={selectedUserId}
+  onSuccess={handleUserUpdated} // Called after final step completion
+/>
+```
+
+#### Key Behavior
+
+- **Create Mode**: User is created after Step 1, `onSuccess` is called immediately to refresh lists
+- **Edit Mode**: User data is updated after each step, `onSuccess` is called after final step
+- **List Refresh**: The parent component's list is refreshed as soon as the user is created (Step 1)
+- **Wizard Continuation**: User can continue through remaining steps to add more details
+
+#### API Integration
+
+- **Step 1**: `POST /api/user/create` (creates user) → calls `onSuccess`
+- **Step 2**: `PUT /api/user/:id/contacts` (updates contact info)
+- **Step 3**: `PUT /api/user/:id/job-details` (updates job info)
+
+---
+
+### AddUserModal (Deprecated)
+
+**Note**: The `AddUserModal` component has been replaced by the `UserWizard` component for a more comprehensive user creation experience.
+
+**Location**: `src/components/AddUserModal.tsx` (removed)
 
 #### Props
 

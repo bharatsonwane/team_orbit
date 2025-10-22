@@ -64,7 +64,7 @@ export const createUser = async (
   req: AuthenticatedRequest,
   res: Response,
   next: NextFunction
-): Promise<void> => {
+): Promise<{ id: number } | void> => {
   try {
     const loggedInUser = req.user;
     const userData: CreateUserSchema = req.body;
@@ -136,7 +136,7 @@ export const createUser = async (
     // Create user with roles
     const createdUserId = await User.createUser(req.db, userData);
 
-    res.status(201).json(createdUserId);
+    res.status(201).json({ id: createdUserId });
   } catch (error) {
     next(error);
   }
@@ -221,7 +221,7 @@ export const updateUserProfile = async (
       updateData,
     });
 
-    res.status(200).json(updatedUser);
+    res.status(200).json({ id: updatedUser });
   } catch (error) {
     next(error);
   }

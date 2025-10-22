@@ -53,7 +53,7 @@ registrar.post("/login", {
 /**@description Create User with Personal Information */
 registrar.post("/personal", {
   requestSchema: { bodySchema: createUserSchema },
-  responseSchemas: [{ statusCode: 201, schema: z.number() }],
+  responseSchemas: [{ statusCode: 201, schema: z.object({ id: z.number() }) }],
   middleware: [authRoleMiddleware()],
   controller: createUser,
 });
@@ -64,7 +64,7 @@ registrar.put("/:id/personal", {
     paramsSchema: { id: idValidation },
     bodySchema: baseUserSchema.partial(),
   },
-  responseSchemas: [{ statusCode: 200, schema: baseUserSchema }],
+  responseSchemas: [{ statusCode: 200, schema: z.object({ id: z.number() }) }],
   middleware: [authRoleMiddleware()],
   controller: updateUserProfile,
 });

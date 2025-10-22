@@ -488,19 +488,21 @@ export default function PlatformUsers() {
         {/* Users table */}
       </Table>
 
-      {/* Reusable modals */}
-      <AddUserModal
+      {/* User Wizard */}
+      <UserWizard
+        mode="create"
         isOpen={isAddModalOpen}
         onClose={() => setIsAddModalOpen(false)}
-        onUserCreated={fetchPlatformUsers}
+        onSuccess={fetchPlatformUsers}
       />
       
       {editingUserId && (
-        <EditUserModal
+        <UserWizard
+          mode="edit"
           isOpen={!!editingUserId}
           onClose={() => setEditingUserId(null)}
           userId={editingUserId}
-          onUserUpdated={fetchPlatformUsers}
+          onSuccess={fetchPlatformUsers}
         />
       )}
     </div>
@@ -511,8 +513,8 @@ export default function PlatformUsers() {
 ### User API Integration
 
 - **Fetch**: `getPlatformUsersAction({ roleCategory: 'PLATFORM' })`
-- **Create**: Via `AddUserModal` (tenant prop undefined for platform users)
-- **Update**: Via `EditUserModal`
+- **Create**: Via `UserWizard` (tenant prop undefined for platform users)
+- **Update**: Via `UserWizard` in edit mode
 
 ---
 
@@ -578,20 +580,23 @@ export default function Employees() {
         {/* Employees table */}
       </Table>
 
-      {/* Reusable modals */}
-      <AddUserModal
-        tenant={mockTenant}
+      {/* User Wizard */}
+      <UserWizard
+        mode="create"
         isOpen={isAddModalOpen}
         onClose={() => setIsAddModalOpen(false)}
-        onUserCreated={fetchEmployees}
+        tenant={mockTenant}
+        onSuccess={fetchEmployees}
       />
       
       {editingEmployeeId && (
-        <EditUserModal
+        <UserWizard
+          mode="edit"
           isOpen={!!editingEmployeeId}
           onClose={() => setEditingEmployeeId(null)}
+          tenant={mockTenant}
           userId={editingEmployeeId}
-          onUserUpdated={fetchEmployees}
+          onSuccess={fetchEmployees}
         />
       )}
     </div>
@@ -602,8 +607,8 @@ export default function Employees() {
 ### User API Integration
 
 - **Fetch**: `getTenantUsersAction({ tenantId, roleCategory: 'TENANT' })`
-- **Create**: Via `AddUserModal` (tenant prop provided)
-- **Update**: Via `EditUserModal`
+- **Create**: Via `UserWizard` (tenant prop provided)
+- **Update**: Via `UserWizard` in edit mode
 
 ---
 
