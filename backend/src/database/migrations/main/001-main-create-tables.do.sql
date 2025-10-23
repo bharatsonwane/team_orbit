@@ -117,6 +117,7 @@ CREATE TABLE IF NOT EXISTS user_auths (
     "userId" INT NOT NULL,
     -- Local login
     "authEmail" VARCHAR(255) UNIQUE NOT NULL,  -- Office Email for authentication/login
+    "authMobileNumber" VARCHAR(255) UNIQUE DEFAULT NULL,  -- Mobile Number for authentication/login
     "hashPassword" TEXT,        -- Store hashPassword   
     "passwordUpdatedAt" TIMESTAMP DEFAULT NULL,
     "otpCode" VARCHAR(10),
