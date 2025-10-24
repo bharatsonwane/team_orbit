@@ -47,14 +47,44 @@ interface AppUserWithAuth extends AppUser {
   userRoles: number[];
 }
 
+const lookupTypeKeys = {
+  USER_ROLE: "USER_ROLE",
+  USER_STATUS: "USER_STATUS",
+  TENANT_STATUS: "TENANT_STATUS",
+};
+
+const tenantStatusKeys = {
+  PENDING: "PENDING",
+  ACTIVE: "ACTIVE",
+  DEACTIVATED: "DEACTIVATED",
+  ARCHIVED: "ARCHIVED",
+};
+
+const userRoleKeys = {
+  ANY: "ANY",
+  PLATFORM_SUPER_ADMIN: "PLATFORM_SUPER_ADMIN",
+  PLATFORM_ADMIN: "PLATFORM_ADMIN",
+  PLATFORM_USER: "PLATFORM_USER",
+  TENANT_ADMIN: "TENANT_ADMIN",
+  TENANT_MANAGER: "TENANT_MANAGER",
+  TENANT_USER: "TENANT_USER",
+};
+
+const userStatusKeys = {
+  PENDING: "PENDING",
+  ACTIVE: "ACTIVE",
+  DEACTIVATED: "DEACTIVATED",
+  ARCHIVED: "ARCHIVED",
+};
+
 const lookupData: LookupTypeWithLookupsSchema[] = [
   {
-    name: "USER_ROLE",
+    name: lookupTypeKeys.USER_ROLE,
     label: "User Role",
     isSystem: true,
     lookups: [
       {
-        name: "PLATFORM_SUPER_ADMIN",
+        name: userRoleKeys.PLATFORM_SUPER_ADMIN,
         label: "Platform Super Admin",
         category: "PLATFORM",
         description: "Highest level administrator with full system access",
@@ -62,7 +92,7 @@ const lookupData: LookupTypeWithLookupsSchema[] = [
         sortOrder: 1,
       },
       {
-        name: "PLATFORM_ADMIN",
+        name: userRoleKeys.PLATFORM_ADMIN,
         label: "Platform Admin",
         category: "PLATFORM",
         description: "Platform administrator with administrative privileges",
@@ -70,7 +100,7 @@ const lookupData: LookupTypeWithLookupsSchema[] = [
         sortOrder: 2,
       },
       {
-        name: "PLATFORM_USER",
+        name: userRoleKeys.PLATFORM_USER,
         label: "Platform User",
         category: "PLATFORM",
         description: "Standard platform user with basic access",
@@ -78,7 +108,7 @@ const lookupData: LookupTypeWithLookupsSchema[] = [
         sortOrder: 3,
       },
       {
-        name: "TENANT_ADMIN",
+        name: userRoleKeys.TENANT_ADMIN,
         label: "Tenant Admin",
         category: "TENANT",
         description: "Tenant administrator with full tenant access",
@@ -86,7 +116,7 @@ const lookupData: LookupTypeWithLookupsSchema[] = [
         sortOrder: 4,
       },
       {
-        name: "TENANT_MANAGER",
+        name: userRoleKeys.TENANT_MANAGER,
         label: "Tenant Manager",
         category: "TENANT",
         description: "Tenant manager with limited administrative access",
@@ -94,7 +124,7 @@ const lookupData: LookupTypeWithLookupsSchema[] = [
         sortOrder: 5,
       },
       {
-        name: "TENANT_USER",
+        name: userRoleKeys.TENANT_USER,
         label: "Tenant User",
         category: "TENANT",
         description: "Standard tenant user with basic tenant access",
@@ -104,26 +134,26 @@ const lookupData: LookupTypeWithLookupsSchema[] = [
     ],
   },
   {
-    name: "USER_STATUS",
+    name: lookupTypeKeys.USER_STATUS,
     label: "User Status",
     isSystem: true,
     lookups: [
       {
-        name: "PENDING",
+        name: userStatusKeys.PENDING,
         label: "Pending",
         description: "User account is pending activation",
         isSystem: true,
         sortOrder: 1,
       },
       {
-        name: "ACTIVE",
+        name: userStatusKeys.ACTIVE,
         label: "Active",
         description: "User account is active and can access the system",
         isSystem: true,
         sortOrder: 2,
       },
       {
-        name: "DEACTIVATED",
+        name: userStatusKeys.DEACTIVATED,
         label: "Deactivated",
         description: "User account is temporarily deactivated",
         isSystem: true,
@@ -132,72 +162,30 @@ const lookupData: LookupTypeWithLookupsSchema[] = [
     ],
   },
   {
-    name: "TENANT_STATUS",
+    name: lookupTypeKeys.TENANT_STATUS,
     label: "Tenant Status",
     isSystem: true,
     lookups: [
       {
-        name: "PENDING",
+        name: tenantStatusKeys.PENDING,
         label: "Pending",
         description: "Tenant is pending approval",
         isSystem: true,
         sortOrder: 1,
       },
       {
-        name: "ACTIVE",
+        name: tenantStatusKeys.ACTIVE,
         label: "Active",
         description: "Tenant is active and operational",
         isSystem: true,
         sortOrder: 2,
       },
       {
-        name: "DEACTIVATED",
+        name: tenantStatusKeys.DEACTIVATED,
         label: "Deactivated",
         description: "Tenant is temporarily deactivated",
         isSystem: true,
         sortOrder: 3,
-      },
-    ],
-  },
-  {
-    name: "CONTACT_TYPE",
-    label: "Contact Type",
-    isSystem: true,
-    lookups: [
-      {
-        name: "OFFICIAL_EMAIL",
-        label: "Official Email",
-        description: "Official work email address",
-        isSystem: true,
-        sortOrder: 1,
-      },
-      {
-        name: "PERSONAL_EMAIL",
-        label: "Personal Email",
-        description: "Personal email address",
-        isSystem: true,
-        sortOrder: 2,
-      },
-      {
-        name: "OFFICIAL_PHONE",
-        label: "Official Phone",
-        description: "Official work phone number",
-        isSystem: true,
-        sortOrder: 3,
-      },
-      {
-        name: "PERSONAL_PHONE",
-        label: "Personal Phone",
-        description: "Personal phone number",
-        isSystem: true,
-        sortOrder: 4,
-      },
-      {
-        name: "EMERGENCY_PHONE",
-        label: "Emergency Phone",
-        description: "Emergency contact phone number",
-        isSystem: true,
-        sortOrder: 5,
       },
     ],
   },
@@ -289,14 +277,14 @@ export async function up(client: PoolClient): Promise<void> {
     await upsertAndFetchLookupData();
 
   const superAdminRoleData = await getLookupDataByLookupTypeNameAndLookupName({
-    lookupName: "PLATFORM_SUPER_ADMIN",
-    lookupTypeName: "USER_ROLE",
+    lookupName: lookupTypeKeys.USER_ROLE,
+    lookupTypeName: lookupTypeKeys.USER_ROLE,
   });
 
   const activeUserStatusData = await getLookupDataByLookupTypeNameAndLookupName(
     {
-      lookupName: "ACTIVE",
-      lookupTypeName: "USER_STATUS",
+      lookupName: userStatusKeys.ACTIVE,
+      lookupTypeName: lookupTypeKeys.USER_STATUS,
     }
   );
 
