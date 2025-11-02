@@ -128,4 +128,57 @@ export class TenantLookupService {
     const result = await dbClient.tenantPool?.query(queryString, [id]);
     return result?.rows[0] || null;
   }
+
+  /**   * Update tenant lookup type by ID
+   */
+  static async updateTenantLookupTypeById(
+    dbClient: dbClientPool,
+    id: number,
+    updatedData: Partial<{ label: string; isArchived: boolean }>
+  ): Promise<TenantLookup | null> {
+    const fields = [];
+    const values = [];
+    let index = 1;
+    for (const key in updatedData) {
+      fields.push(`"${key}" = $${index}`);
+      values.push((updatedData as any)[key]);
+      index++;
+    }
+    values.push(id);
+
+    const queryString = `
+      UPDATE tenant_lookups
+      SET ${fields.join(", ")}, "updatedAt" = NOW()
+      WHERE id = $${index}
+      RETURNING id, name, label, "isSystem", "isArchived", "createdAt", "updatedAt";
+    `;
+    const result = await dbClient.tenantPool?.query(queryString, values);
+    return result?.rows[0] || null;
+  }
+
+  /**  * Create tenant lookup type by ID */
+
+  static async createTenantLookupTypeById(
+    dbClient: dbClientPool,
+    id: number,
+    newData: Partial<{ label: string; description: string }>
+  ): Promise<TenantLookup | null> {
+    const fields = ['"lookupTypeId"'];
+    const values = [id];
+    let index = 2;
+    for (const key in newData) {
+      fields.push(`"${key}"`);
+      values.push((newData as any)[key]);
+      index++;
+    }
+    const placeholders = values.map((_, i) => `$${i + 1}`);
+
+    const queryString = `
+      INSERT INTO tenant_lookups (${fields.join(", ")})
+      VALUES (${placeholders.join(", ")})
+      RETURNING id, name, label, "isSystem", "isArchived", "createdAt", "updatedAt";
+    `;
+    const result = await dbClient.tenantPool?.query(queryString, values);
+    return result?.rows[0] || null;
+  }
 }

@@ -32,3 +32,41 @@ export const getTenantLookupList = async (
     next(error);
   }
 };
+
+export const updateTenantLookupTypeById = async (
+  req: AuthenticatedRequest,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  try {
+    const { id } = req.params;
+    const updatedData = req.body;
+    const data = await TenantLookupService.updateTenantLookupTypeById(
+      req.db,
+      parseInt(id),
+      updatedData
+    );
+    res.status(200).send(data);
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const createTenantLookupTypeById = async (
+  req: AuthenticatedRequest,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  try {
+    const { id } = req.params;
+    const newData = req.body;
+    const data = await TenantLookupService.createTenantLookupTypeById(
+      req.db,
+      parseInt(id),
+      newData
+    );
+    res.status(201).send(data);
+  } catch (error) {
+    next(error);
+  }
+};

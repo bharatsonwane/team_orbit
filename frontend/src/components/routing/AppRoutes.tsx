@@ -34,6 +34,8 @@ import TenantNotifications from "../../pages/tenant/TenantNotifications";
 import { ComingSoon } from "../ComingSoon";
 import { AppLayout } from "@/components/AppLayout";
 import type { BreadcrumbLayoutProps } from "@/components/AppLayout";
+import TenantDepartments from "@/pages/platform/tenant/TenantDepartments";
+import TenantDesignations from "@/pages/platform/tenant/TenantDesignations";
 
 export interface SidebarRouteWithChildren {
   title: string;
@@ -214,12 +216,31 @@ export const tenantSidebarNavigationItems: SidebarRouteWithChildren[] = [
           userRoleKeys.PLATFORM_ADMIN,
           userRoleKeys.PLATFORM_SUPER_ADMIN,
         ],
-        element: (
-          <ComingSoon
-            title="Departments"
-            description="Manage organizational departments and structure."
-          />
-        ),
+        element: <TenantDepartments />,
+        description: "Manage organizational departments and structure.",
+        // <ComingSoon
+        //   title="Departments"
+        //   description="Manage organizational departments and structure."
+        // />
+      },
+      {
+        title: "Designations",
+        isShownInSidebar: true,
+        icon: Building2,
+        href: "/tenant/:tenantId/designations",
+        path: "/tenant/:tenantId/designations",
+        allowedRoles: [
+          userRoleKeys.TENANT_ADMIN,
+          userRoleKeys.TENANT_MANAGER,
+          userRoleKeys.PLATFORM_ADMIN,
+          userRoleKeys.PLATFORM_SUPER_ADMIN,
+        ],
+        element: <TenantDesignations />,
+        description: "Manage organizational designations and structure.",
+        // <ComingSoon
+        //   title="Departments"
+        //   description="Manage organizational departments and structure."
+        // />
       },
       {
         title: "Teams",
