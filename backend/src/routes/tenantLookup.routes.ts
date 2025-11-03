@@ -1,19 +1,23 @@
 import RouteRegistrar from "@src/middleware/RouteRegistrar";
 import {
-  createTenantLookupTypeById,
+  createTenantLookupById,
   getTenantLookupList,
   getTenantLookupTypeById,
-  updateTenantLookupTypeById,
+  updateTenantLookupById,
 } from "@src/controllers/tenantLookup.controller";
 import { idValidation } from "@src/schemas/common.schema";
 import {
+  createTenantLookupRequestSchema,
   tenantLookupSchema,
   tenantLookupTypesListSchema,
+  tenantLookupsListSchema,
   tenantLookupsWithTypeListSchema,
+  updateTenantLookupRequestSchema,
 } from "@src/schemas/tenantLookup.schema";
 import { tenantHeaderMiddleware } from "@src/middleware/tenantHeaderMiddleware";
 import { authRoleMiddleware } from "@src/middleware/authRoleMiddleware";
 import { userRoleKeys } from "@src/utils/constants";
+import z from "zod";
 
 const registrar = new RouteRegistrar({
   basePath: "/api/tenant-lookup",
@@ -29,7 +33,7 @@ registrar.get("/list", {
   controller: getTenantLookupList,
 });
 
-/**@description Get tenant lookup type by ID */
+/**@description Get tenant lookup list by lookup type id */
 registrar.get("/type/:id", {
   requestSchema: {
     paramsSchema: { id: idValidation },
@@ -39,11 +43,13 @@ registrar.get("/type/:id", {
   controller: getTenantLookupTypeById,
 });
 
-/**@description Update tenant lookup by ID */
+/** @description Update tenant lookup by lookup ID */
 registrar.put("/:id", {
   requestSchema: {
     paramsSchema: { id: idValidation },
+    bodySchema: updateTenantLookupRequestSchema,
   },
+
   responseSchemas: [{ statusCode: 200, schema: tenantLookupSchema }],
   middlewares: [
     tenantHeaderMiddleware(),
@@ -54,15 +60,15 @@ registrar.put("/:id", {
       userRoleKeys.TENANT_ADMIN
     ),
   ],
-  controller: updateTenantLookupTypeById,
+  controller: updateTenantLookupById,
 });
 
-/**@description Create tenant lookup by ID */
-registrar.post("/:id", {
+/** @description Create tenant lookup */
+registrar.post("/", {
   requestSchema: {
-    paramsSchema: { id: idValidation },
+    bodySchema: createTenantLookupRequestSchema,
   },
-  responseSchemas: [{ statusCode: 200, schema: tenantLookupSchema }],
+  responseSchemas: [{ statusCode: 201, schema: tenantLookupSchema }],
   middlewares: [
     tenantHeaderMiddleware(),
     authRoleMiddleware(
@@ -72,7 +78,7 @@ registrar.post("/:id", {
       userRoleKeys.TENANT_ADMIN
     ),
   ],
-  controller: createTenantLookupTypeById,
+  controller: createTenantLookupById,
 });
 
 export default registrar;

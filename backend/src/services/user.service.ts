@@ -699,65 +699,104 @@ export default class User {
       roleCategory?: string;
       tenantId?: number;
       statusId?: number;
+      search?: string;
+      limit?: number;
+      offset?: number;
     }
-  ): Promise<UserWithTrackingSchema[]> {
-    // Build WHERE conditions
+  ): Promise<{
+    data: UserWithTrackingSchema[];
+    pagination: {
+      total: number;
+      page: number;
+      limit: number;
+      totalPages: number;
+    };
+  }> {
     const conditions: string[] = [];
+    const values: any[] = [];
+    let index = 1;
+
     if (filters?.tenantId) {
-      conditions.push(`up."tenantId" = ${filters.tenantId}`);
+      conditions.push(`up."tenantId" = $${index++}`);
+      values.push(filters.tenantId);
     }
 
     if (filters?.statusId) {
-      conditions.push(`up."statusId" = ${filters.statusId}`);
+      conditions.push(`up."statusId" = $${index++}`);
+      values.push(filters.statusId);
     }
 
-    // If roleCategory is specified, add filter condition
     if (filters?.roleCategory) {
       conditions.push(
         `EXISTS (
           SELECT 1 FROM user_role_xref urx
           INNER JOIN lookups lr ON urx."roleId" = lr.id
-          WHERE urx."userId" = up.id AND lr.name LIKE '${filters.roleCategory}_%'
+          WHERE urx."userId" = up.id AND lr.name LIKE $${index++}
         )`
       );
+      values.push(`${filters.roleCategory}_%`);
+    }
+
+    // 🔍 Search by first name, last name, or email
+    if (filters?.search) {
+      conditions.push(`(
+        up."firstName" ILIKE $${index} OR
+        up."lastName" ILIKE $${index} OR
+        ua."authEmail" ILIKE $${index}
+      )`);
+      values.push(`%${filters.search}%`);
+      index++;
     }
 
     const whereClause =
       conditions.length > 0 ? `WHERE ${conditions.join(" AND ")}` : "";
 
-    const queryString = `
-        SELECT
-          up.id,
-          up.title,
-          up."firstName",
-          up."lastName",
-          up."middleName",
-          up."maidenName",
-          up.gender,
-          TO_CHAR(up.dob, 'YYYY-MM-DD') as dob,
-          up."bloodGroup",
-          up."marriedStatus",
-          ua."authEmail",
-          up.bio,
-          up."isPlatformUser",
-          up."statusId",
-          ls.name as "statusName",
-          ls.label as "statusLabel",
-          up."tenantId",
-          up."createdAt",
-          up."updatedAt",
-          COALESCE(
-            JSON_AGG(
-              JSON_BUILD_OBJECT(
-                'id', l.id,
-                'name', l.name,
-                'label', l.label,
-                'lookupTypeId', l."lookupTypeId",
-                'isSystem', l."isSystem"
-              )
-            ) FILTER (WHERE l.id IS NOT NULL), 
-            '[]'::json
-          ) as "roles"
+    // 🧮 Total count query
+    const countQuery = `
+      SELECT COUNT(DISTINCT up.id) AS total
+      FROM users up
+      LEFT JOIN user_auths ua ON up.id = ua."userId"
+      LEFT JOIN user_role_xref urx ON up.id = urx."userId"
+      LEFT JOIN lookups l ON urx."roleId" = l.id
+      ${whereClause};
+    `;
+    const countResult = await dbClient.mainPool.query(countQuery, values);
+    const total = parseInt(countResult.rows[0]?.total || "0", 10);
+
+    // 📄 Main data query with pagination
+    let queryString = `
+      SELECT
+        up.id,
+        up.title,
+        up."firstName",
+        up."lastName",
+        up."middleName",
+        up."maidenName",
+        up.gender,
+        TO_CHAR(up.dob, 'YYYY-MM-DD') as dob,
+        up."bloodGroup",
+        up."marriedStatus",
+        ua."authEmail",
+        up.bio,
+        up."isPlatformUser",
+        up."statusId",
+        ls.name as "statusName",
+        ls.label as "statusLabel",
+        up."tenantId",
+        up."createdAt",
+        up."updatedAt",
+        COALESCE(
+          JSON_AGG(
+            JSON_BUILD_OBJECT(
+              'id', l.id,
+              'name', l.name,
+              'label', l.label,
+              'lookupTypeId', l."lookupTypeId",
+              'isSystem', l."isSystem"
+            )
+          ) FILTER (WHERE l.id IS NOT NULL), 
+          '[]'::json
+        ) as "roles"
       FROM 
         users up
       LEFT JOIN user_auths ua ON up.id = ua."userId"
@@ -766,9 +805,34 @@ export default class User {
       LEFT JOIN lookups l ON urx."roleId" = l.id
       ${whereClause}
       GROUP BY up.id, ua."authEmail", up."isPlatformUser", ls.name, ls.label
-      ORDER BY up."createdAt" DESC;`;
+      ORDER BY up."createdAt" DESC
+    `;
 
-    const results = await dbClient.mainPool.query(queryString);
-    return results.rows;
+    if (filters?.limit) {
+      values.push(filters.limit);
+      queryString += ` LIMIT $${values.length}`;
+    }
+    if (filters?.offset) {
+      values.push(filters.offset);
+      queryString += ` OFFSET $${values.length}`;
+    }
+
+    const results = await dbClient.mainPool.query(queryString, values);
+
+    const page =
+      filters?.offset && filters?.limit
+        ? Math.floor(filters.offset / filters.limit) + 1
+        : 1;
+    const totalPages = filters?.limit ? Math.ceil(total / filters.limit) : 1;
+
+    return {
+      data: results.rows,
+      pagination: {
+        total,
+        page,
+        limit: filters?.limit || total,
+        totalPages,
+      },
+    };
   }
 }

@@ -36,12 +36,16 @@ import { authRoleMiddleware } from "@src/middleware/authRoleMiddleware";
 import { userRoleKeys } from "@src/utils/constants";
 import { tenantHeaderMiddleware } from "@src/middleware/tenantHeaderMiddleware";
 
-/**@description Query schema for user list filtering */
+/** @description Query schema for user list filtering, pagination and search */
 const getUsersQuerySchema = z.object({
   userType: z.enum(["platform", "tenant"]).optional(),
   roleCategory: z.enum(["PLATFORM", "TENANT"]).optional(),
   tenantId: z.coerce.number().optional(),
   statusId: z.coerce.number().optional(),
+  // 🔍 Add search and pagination
+  search: z.string().trim().optional(),
+  page: z.coerce.number().int().positive().default(1),
+  limit: z.coerce.number().int().positive().max(100).default(10),
 });
 
 const registrar = new RouteRegistrar({

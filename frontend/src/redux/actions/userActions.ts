@@ -1,12 +1,13 @@
 import { createAsyncThunk } from "@reduxjs/toolkit";
 import getAxios, { getAppErrorMessage } from "../../utils/axiosApi";
-import type {
-  LoginCredentials,
-  LoginResponse,
-  User,
-  CreateUserRequest,
-  DetailedUser,
-  UpdateUserRequest,
+import {
+  type LoginCredentials,
+  type LoginResponse,
+  type User,
+  type CreateUserRequest,
+  type DetailedUser,
+  type UpdateUserRequest,
+  paginatedUserListSchema,
 } from "@/schemas/user";
 
 /** Login action - API call only */
@@ -58,22 +59,54 @@ export const getPlatformUsersAction = createAsyncThunk(
 );
 
 /** Get tenant users action - API call with query params */
-export const getTenantUsersAction = createAsyncThunk(
-  "user/getTenantUsersAction",
-  async (tenantId: number, { rejectWithValue }) => {
+// export const getTenantUsersAction = createAsyncThunk(
+//   "user/getTenantUsersAction",
+//   async (tenantId: number, { rejectWithValue }) => {
+//     try {
+//       const response = await getAxios().get<DetailedUser[]>("/api/user/list", {
+//         params: {
+//           tenantId,
+//         },
+//       });
+//       return response.data;
+//     } catch (error: unknown) {
+//       return rejectWithValue(getAppErrorMessage(error));
+//     }
+//   }
+// );
+
+interface PaginationResponse<T> {
+  data: T[];
+  pagination: {
+    page: number;
+    limit: number;
+    total: number;
+    totalPages: number;
+  };
+}
+
+export const getTenantUsersAction = createAsyncThunk<
+  PaginationResponse<DetailedUser>, // ✅ Type of returned payload
+  { tenantId: number; page?: number; limit?: number; search?: string }, // ✅ Input args
+  { rejectValue: string } // ✅ Rejection type
+>(
+  "tenant/getTenantUsers",
+  async (
+    { tenantId, page = 1, limit = 10, search = "" },
+    { rejectWithValue }
+  ) => {
     try {
-      const response = await getAxios().get<DetailedUser[]>("/api/user/list", {
-        params: {
-          tenantId,
-        },
+      const response = await getAxios().get(`api/user/list`, {
+        params: { tenantId, page, limit, search },
       });
-      return response.data;
-    } catch (error: unknown) {
-      return rejectWithValue(getAppErrorMessage(error));
+      return response.data; // ✅ Must have shape { data, pagination }
+    } catch (error: any) {
+      return rejectWithValue(
+        error.response?.data?.message || "Failed to fetch tenant users"
+      );
     }
   }
 );
-
 /** Create user with personal information - API call only */
 export const createUserPersonalAction = createAsyncThunk(
   "user/createUserPersonalAction",

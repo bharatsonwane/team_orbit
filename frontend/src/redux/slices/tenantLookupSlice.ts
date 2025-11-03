@@ -1,6 +1,10 @@
 import { createSlice } from "@reduxjs/toolkit";
 import type { LookupType } from "../../schemas/lookup";
-import { getTenantLookupListAction } from "../actions/tenantLookupActions";
+import {
+  getTenantLookupListAction,
+  getTenantLookupListByTypeIdAction,
+  createTenantLookupByIdAction,
+} from "../actions/tenantLookupActions";
 
 // Lookup state interface
 interface TenantLookupState {

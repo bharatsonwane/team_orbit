@@ -26,17 +26,14 @@ import { XIcon, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import type { AppDispatch } from "@/redux/store";
 import {
-  createTenantLookupsByTypeIdAction,
-  updateTenantLookupsByTypeIdAction,
+  createTenantLookupByIdAction,
+  getTenantLookupListByTypeIdAction,
+  updateTenantLookupByIdAction,
 } from "@/redux/actions/tenantLookupActions";
-
-// ✅ Validation schema
-const departmentSchema = z.object({
-  label: z.string().min(1, "Label is required").max(100),
-  description: z.string().min(1, "Description is required").max(200),
-});
-
-type DepartmentFormData = z.infer<typeof departmentSchema>;
+import {
+  createTenantLookupFormSchema,
+  type CreateTenantLookupFormData,
+} from "@/schemas/tenantLookup";
 
 interface DepartmentModalProps {
   mode: "create" | "update";
@@ -45,11 +42,14 @@ interface DepartmentModalProps {
   onSuccess?: () => void;
   departmentId?: number | null; // only for update
   departmentName?: string;
-  typeId?: number; // only for create
+  lookupTypeId?: number; // only for create
+  lookupType?: string;
   departmentData?: Partial<{
     id: number;
     label: string;
+    name: string;
     description?: string | null;
+    isArchived: boolean;
   }>;
 }
 
@@ -59,19 +59,21 @@ export const DepartmentModal: React.FC<DepartmentModalProps> = ({
   onClose,
   onSuccess,
   departmentId,
-  typeId,
+  lookupTypeId,
   departmentName,
   departmentData,
+  lookupType,
 }) => {
-  console.log(mode);
   const dispatch = useDispatch<AppDispatch>();
   const [isLoading, setIsLoading] = useState(false);
 
-  const form = useForm<DepartmentFormData>({
-    resolver: zodResolver(departmentSchema),
+  const form = useForm<CreateTenantLookupFormData>({
+    resolver: zodResolver(createTenantLookupFormSchema),
     defaultValues: {
-      label: departmentData?.label ?? "",
-      description: departmentData?.description ?? "",
+      name: "",
+      label: "",
+      description: "",
+      lookupTypeId: lookupTypeId ?? 0,
     },
   });
 
@@ -80,20 +82,25 @@ export const DepartmentModal: React.FC<DepartmentModalProps> = ({
     if (isOpen) {
       if (mode === "update" && departmentData) {
         form.reset({
+          name: departmentData.name ?? "",
           label: departmentData.label ?? "",
           description: departmentData.description ?? "",
+          lookupTypeId: lookupTypeId ?? 0,
+          isArchived: departmentData.isArchived ?? false,
         });
       } else if (mode === "create") {
         form.reset({
+          name: "",
           label: "",
           description: "",
+          lookupTypeId: lookupTypeId ?? 0,
         });
       }
     }
-  }, [isOpen, mode, departmentData, form]);
+  }, [isOpen, mode, departmentData, lookupTypeId, form]);
 
   // ✅ Unified submit handler
-  const onSubmit = async (data: DepartmentFormData) => {
+  const onSubmit = async (data: CreateTenantLookupFormData) => {
     setIsLoading(true);
 
     try {
@@ -104,12 +111,14 @@ export const DepartmentModal: React.FC<DepartmentModalProps> = ({
         }
 
         await dispatch(
-          updateTenantLookupsByTypeIdAction({
+          updateTenantLookupByIdAction({
             id: departmentId,
             data: {
-              // id: departmentId,
               label: data.label,
               description: data.description,
+              name: data.name,
+              lookupTypeId: lookupTypeId,
+              isArchived: data.isArchived,
             },
           })
         ).unwrap();
@@ -118,19 +127,18 @@ export const DepartmentModal: React.FC<DepartmentModalProps> = ({
           description: `${data.label} has been updated successfully.`,
         });
       } else {
-        if (!typeId) {
+        if (!lookupTypeId) {
           toast.error("Type ID not found for creation");
           return;
         }
 
         await dispatch(
-          createTenantLookupsByTypeIdAction({
-            id: typeId,
-            data: {
-              label: data.label,
-              name: (data.label || "").toLocaleUpperCase().replace(/\s+/g, "_"),
-              description: data.description,
-            },
+          createTenantLookupByIdAction({
+            label: data.label,
+            name: data.name,
+            description: data.description,
+            lookupTypeId: lookupTypeId,
+            isArchived: data?.isArchived,
           })
         ).unwrap();
 
@@ -138,6 +146,8 @@ export const DepartmentModal: React.FC<DepartmentModalProps> = ({
           description: `${data.label} has been created successfully.`,
         });
       }
+
+      await dispatch(getTenantLookupListByTypeIdAction(Number(lookupTypeId)));
 
       onSuccess?.();
       onClose();
@@ -162,26 +172,19 @@ export const DepartmentModal: React.FC<DepartmentModalProps> = ({
 
   const isUpdate = mode === "update";
 
-  console.log(isUpdate);
-
   return (
     <Drawer open={isOpen} onOpenChange={onClose} direction="right">
       <DrawerContent className="h-screen flex flex-col p-0">
         <DrawerHeader className="flex-shrink-0 p-6 pb-4 relative">
           <DrawerTitle>
-            {mode === "update"
-              ? `Edit ${departmentName || "Department"}`
-              : `Add New ${departmentName || "Department"}`}
+            {isUpdate ? "Edit" : "Add New"} {lookupType}
           </DrawerTitle>
+
           <DrawerClose className="absolute top-4 right-4 cursor-pointer opacity-70 hover:opacity-100">
             <XIcon className="h-4 w-4" />
             <span className="sr-only">Close</span>
           </DrawerClose>
-          <DrawerDescription>
-            {/* {isUpdate
-              ? `Edit details for ${departmentName || "this department"}.`
-              : `Fill out the form to create a new ${departmentName || "department"}.`} */}
-          </DrawerDescription>
+          <DrawerDescription></DrawerDescription>
         </DrawerHeader>
 
         <Form {...form}>
@@ -195,12 +198,36 @@ export const DepartmentModal: React.FC<DepartmentModalProps> = ({
                 name="label"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Name</FormLabel>
+                    <FormLabel>Label</FormLabel>
                     <FormControl>
                       <Input
                         placeholder="e.g., Sales"
                         {...field}
                         disabled={isLoading}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="name"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Name</FormLabel>
+                    <FormControl>
+                      <Input
+                        placeholder="e.g., Sales"
+                        {...field}
+                        // readOnly={mode === "update"} // 👈 only read-only when editing
+                        disabled={isLoading} // still disable when submitting
+                        // className={
+                        //   mode === "update"
+                        //     ? "bg-gray-100 cursor-not-allowed"
+                        //     : ""
+                        // }
                       />
                     </FormControl>
                     <FormMessage />
@@ -230,13 +257,11 @@ export const DepartmentModal: React.FC<DepartmentModalProps> = ({
             <DrawerFooter className="border-t p-6 flex flex-col gap-2">
               <Button type="submit" disabled={isLoading} className="w-full">
                 {isLoading && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-                {isUpdate
-                  ? isLoading
+                {isLoading
+                  ? isUpdate
                     ? "Updating..."
-                    : "Update Department"
-                  : isLoading
-                    ? "Creating..."
-                    : "Create Department"}
+                    : "Creating..."
+                  : `${isUpdate ? "Update" : "Create"} ${lookupType}`}
               </Button>
 
               <Button

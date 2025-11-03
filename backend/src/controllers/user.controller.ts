@@ -148,16 +148,24 @@ export const getUsers = async (
   next: NextFunction
 ): Promise<void> => {
   try {
-    const { userType, roleCategory, tenantId, statusId } = req.query;
+    const { userType, roleCategory, tenantId, statusId, page, limit, search } =
+      req.query;
 
-    const users = await User.getUsers(req.db, {
+    const pageNumber = page ? parseInt(page as string) : 1;
+    const pageSize = limit ? parseInt(limit as string) : 10;
+    const offset = (pageNumber - 1) * pageSize;
+
+    const result = await User.getUsers(req.db, {
       userType: userType as string | undefined,
       roleCategory: roleCategory as string | undefined,
       tenantId: tenantId ? parseInt(tenantId as string) : undefined,
       statusId: statusId ? parseInt(statusId as string) : undefined,
+      search: search as string | undefined,
+      limit: pageSize,
+      offset,
     });
 
-    res.status(200).json(users);
+    res.status(200).json(result);
   } catch (error) {
     next(error);
   }

@@ -58,6 +58,7 @@ export const createTenantLookupRequestSchema = z.object({
   label: z.string().min(1),
   description: z.string().optional(),
   isSystem: z.boolean().optional(),
+  createdBy: z.string().optional(),
 });
 
 export type CreateTenantLookupRequest = z.infer<
@@ -65,22 +66,16 @@ export type CreateTenantLookupRequest = z.infer<
 >;
 
 export const updateTenantLookupRequestSchema = z.object({
-  label: z.string().optional(),
+  lookupTypeId: z.number().min(1),
+  name: z.string().min(1),
+  label: z.string().min(1),
   description: z.string().optional(),
-  sortOrder: z.number().optional(),
+  isSystem: z.boolean().optional(),
+  createdBy: z.string().optional(),
+  updatedBy: z.string().optional(),
+  isArchived: z.boolean().optional(),
 });
 
 export type UpdateTenantLookupRequest = z.infer<
   typeof updateTenantLookupRequestSchema
 >;
-
-export const tenantLookupResponseSchema = z.object({
-  success: z.boolean(),
-  data: tenantLookupSchema,
-  message: z.string(),
-});
-
-export const deleteTenantLookupResponseSchema = z.object({
-  success: z.boolean(),
-  message: z.string(),
-});

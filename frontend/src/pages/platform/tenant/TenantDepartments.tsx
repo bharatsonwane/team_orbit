@@ -1,5 +1,5 @@
 import { useEffect, useState, Fragment, useCallback } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { Button } from "@/components/ui/button";
 import {
@@ -17,7 +17,6 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Badge } from "@/components/ui/badge";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -30,28 +29,18 @@ import {
   ArrowLeft,
   Edit,
   Plus,
-  Mail,
-  Phone,
   User,
   MoreVertical,
-  KeyRound,
-  UserCog,
-  AtSign,
 } from "lucide-react";
 import { HeaderLayout } from "@/components/AppLayout";
-import { getTenantAction } from "@/redux/actions/tenantActions";
-import { getTenantUsersAction } from "@/redux/actions/userActions";
+
 import {
   selectCurrentTenant,
-  selectTenantUsers,
   selectTenantLoading,
   selectTenantError,
 } from "@/redux/slices/tenantSlice";
-import type { AppDispatch, RootState } from "@/redux/store";
+import type { AppDispatch } from "@/redux/store";
 import { UserWizard } from "@/components/UserWizard";
-import { UpdateUserPasswordModal } from "./components/UpdateUserPasswordModal";
-import { UpdateUserStatusAndRolesModal } from "./components/UpdateUserStatusAndRolesModal";
-import { UpdateUserAuthEmailModal } from "./components/UpdateUserAuthEmailModal";
 import { LoadingIndicator } from "@/components/ui/loading-indicator";
 import { useAuthService } from "@/contexts/AuthContextProvider";
 import { getTenantLookupListByTypeIdAction } from "@/redux/actions/tenantLookupActions";
@@ -83,6 +72,7 @@ export default function TenantDepartments() {
   const tenantDepartments = lookupTypeList.find(
     item => item.label === "Department"
   );
+  const lookupType = tenantDepartments?.label;
   const departmentId = tenantDepartments?.id;
   const isLoading = useSelector(selectTenantLoading);
   const error = useSelector(selectTenantError);
@@ -97,19 +87,14 @@ export default function TenantDepartments() {
   >(undefined);
 
   const handleGetTenantDepartments = useCallback(() => {
-    // Refresh department list
-    if (tenantId) {
-      dispatch(getTenantLookupListByTypeIdAction(tenantId));
+    if (departmentId) {
+      dispatch(getTenantLookupListByTypeIdAction(departmentId));
     }
-  }, [dispatch, tenantId]);
+  }, [dispatch, departmentId]); // ✅ include departmentId, remove tenantId
 
   useEffect(() => {
-    if (tenantId) {
-      // Fetch tenant details and departments
-      dispatch(getTenantAction(tenantId));
-      handleGetTenantDepartments();
-    }
-  }, [dispatch, tenantId, handleGetTenantDepartments]);
+    handleGetTenantDepartments();
+  }, [handleGetTenantDepartments]);
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString("en-US", {
@@ -153,34 +138,6 @@ export default function TenantDepartments() {
 
   const handleEditDepartment = (departmentId: number) => {
     openModal(modalKeys.UPDATE_DEPARTMENT, departmentId);
-  };
-
-  const handleResetPassword = (departmentId: number) => {
-    openModal(modalKeys.UPDATE_PASSWORD, departmentId);
-  };
-
-  const handleUpdateStatusOrRoles = (departmentId: number) => {
-    openModal(modalKeys.UPDATE_STATUS_ROLES, departmentId);
-  };
-
-  const handleUpdateAuthEmail = (departmentId: number) => {
-    openModal(modalKeys.UPDATE_AUTH_EMAIL, departmentId);
-  };
-
-  const handlePasswordUpdated = () => {
-    // Password update doesn't require list refresh, just close modal
-    closeModal();
-  };
-
-  const handleAuthEmailUpdated = () => {
-    // Refresh user list to show updated auth email
-    handleGetTenantDepartments();
-    closeModal();
-  };
-
-  const handleStatusRolesUpdated = () => {
-    handleGetTenantDepartments();
-    closeModal();
   };
 
   if (isLoading) {
@@ -313,117 +270,89 @@ export default function TenantDepartments() {
               </div>
             </div>
           </CardHeader>
-          <CardContent>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Name</TableHead>
-                  <TableHead>System</TableHead>
-                  <TableHead>Description</TableHead>
-                  {/* <TableHead>Phone</TableHead> */}
-                  {/* <TableHead>Role</TableHead> */}
-                  {/* <TableHead>Status</TableHead> */}
-                  <TableHead>Created</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {tenantDepartments?.lookups.map(department => (
-                  <TableRow key={department.id}>
-                    <TableCell>
-                      <div className="flex items-center space-x-2">
-                        <User className="h-4 w-4 text-muted-foreground" />
-                        <div>
-                          <p className="font-medium">{department.label}</p>
-                        </div>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex items-center space-x-2">
-                        {/* <Mail className="h-4 w-4 text-muted-foreground" /> */}
-                        <span className="text-sm">
-                          {department.isSystem === true ? "Yes" : "No"}
-                        </span>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex items-center space-x-2">
-                        {/* <Phone className="h-4 w-4 text-muted-foreground" /> */}
-                        <span className="text-sm">
-                          {department.description}
-                        </span>
-                      </div>
-                    </TableCell>
-                    {/* <TableCell>
-                      <div className="flex flex-wrap gap-1">
-                        {user.userRoles.map(role => (
-                          <Badge
-                            key={role.id}
-                            variant={
-                              role.name === "TENANT_ADMIN"
-                                ? "default"
-                                : "secondary"
-                            }
-                          >
-                            {role.label}
-                          </Badge>
-                        ))}
-                      </div>
-                    </TableCell> */}
-                    {/* <TableCell>
-                      <Badge variant={getUserStatusVariant(user.statusName)}>
-                        {user.statusLabel}
-                      </Badge>
-                    </TableCell> */}
-                    <TableCell>
-                      <div className="flex items-center space-x-2">
-                        <Calendar className="h-4 w-4 text-muted-foreground" />
-                        <span className="text-sm">
-                          {formatDate(tenantDepartments.createdAt)}
-                        </span>
-                      </div>
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="sm">
-                            <MoreVertical className="h-4 w-4" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuItem
-                            onClick={() => handleEditDepartment(department.id)}
-                          >
-                            <Edit className="h-4 w-4 mr-2" />
-                            Edit Department
-                          </DropdownMenuItem>
-                          {/* <DropdownMenuItem
-                            onClick={() => handleResetPassword(department.id)}
-                          >
-                            <KeyRound className="h-4 w-4 mr-2" />
-                            Update Password
-                          </DropdownMenuItem> */}
-                          {/* <DropdownMenuItem
-                            onClick={() => handleUpdateAuthEmail(department.id)}
-                          >
-                            <AtSign className="h-4 w-4 mr-2" />
-                            Update Login Email
-                          </DropdownMenuItem>
-                          <DropdownMenuItem
-                            onClick={() =>
-                              handleUpdateStatusOrRoles(department.id)
-                            }
-                          >
-                            <UserCog className="h-4 w-4 mr-2" />
-                            Update Status & Roles
-                          </DropdownMenuItem> */}
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </TableCell>
+          <CardContent className="p-0">
+            {/* Scrollable table body container */}
+            <div className="max-h-[400px] overflow-y-auto scrollbar-hide">
+              <Table className="w-full">
+                <TableHeader className="sticky top-0 bg-background z-10 shadow-sm">
+                  <TableRow>
+                    <TableHead>Label</TableHead>
+                    <TableHead>Name</TableHead>
+                    <TableHead>System</TableHead>
+                    <TableHead>Description</TableHead>
+                    <TableHead>Created</TableHead>
+                    <TableHead className="text-right">Actions</TableHead>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+                </TableHeader>
+                <TableBody>
+                  {tenantDepartments?.lookups.map(department => (
+                    <TableRow key={department.id}>
+                      <TableCell>
+                        <div className="flex items-center space-x-2">
+                          <User className="h-4 w-4 text-muted-foreground" />
+                          <div>
+                            <p className="font-medium">{department.label}</p>
+                          </div>
+                        </div>
+                      </TableCell>
+
+                      <TableCell>
+                        <div className="flex items-center space-x-2">
+                          <User className="h-4 w-4 text-muted-foreground" />
+                          <div>
+                            <p className="font-medium">{department.name}</p>
+                          </div>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center space-x-2">
+                          {/* <Mail className="h-4 w-4 text-muted-foreground" /> */}
+                          <span className="text-sm">
+                            {department.isSystem === true ? "Yes" : "No"}
+                          </span>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center space-x-2">
+                          {/* <Phone className="h-4 w-4 text-muted-foreground" /> */}
+                          <span className="text-sm">
+                            {department.description}
+                          </span>
+                        </div>
+                      </TableCell>
+
+                      <TableCell>
+                        <div className="flex items-center space-x-2">
+                          <Calendar className="h-4 w-4 text-muted-foreground" />
+                          <span className="text-sm">
+                            {formatDate(tenantDepartments.createdAt)}
+                          </span>
+                        </div>
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" size="sm">
+                              <MoreVertical className="h-4 w-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuItem
+                              onClick={() =>
+                                handleEditDepartment(department.id)
+                              }
+                            >
+                              <Edit className="h-4 w-4 mr-2" />
+                              Edit Department
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
           </CardContent>
         </Card>
       </div>
@@ -447,36 +376,10 @@ export default function TenantDepartments() {
         />
       )}
 
-      {/* Update Password Modal */}
-      <UpdateUserPasswordModal
-        isOpen={currentModal === modalKeys.UPDATE_PASSWORD}
-        onClose={closeModal}
-        userId={departmentId || null}
-        userName={selectedDepartmentName}
-        onPasswordUpdated={handlePasswordUpdated}
-      />
-
-      {/* Update Status and Roles Modal */}
-      <UpdateUserStatusAndRolesModal
-        isOpen={currentModal === modalKeys.UPDATE_STATUS_ROLES}
-        onClose={closeModal}
-        userId={departmentId || null}
-        userName={selectedDepartmentName}
-        onUpdated={handleStatusRolesUpdated}
-      />
-
-      {/* Update User Auth Email Modal */}
-      <UpdateUserAuthEmailModal
-        isOpen={currentModal === modalKeys.UPDATE_AUTH_EMAIL}
-        onClose={closeModal}
-        userId={departmentId || null}
-        userName={selectedDepartmentName}
-        onEmailUpdated={handleAuthEmailUpdated}
-      />
-
       <DepartmentModal
         mode="create"
-        typeId={departmentId}
+        lookupTypeId={departmentId}
+        lookupType={lookupType}
         isOpen={currentModal === modalKeys.CREATE_DEPARTMENT}
         onClose={closeModal}
         departmentId={selectedDepartmentId ?? null}
@@ -489,7 +392,8 @@ export default function TenantDepartments() {
 
       <DepartmentModal
         mode="update"
-        typeId={departmentId}
+        lookupTypeId={departmentId}
+        lookupType={lookupType}
         isOpen={currentModal === modalKeys.UPDATE_DEPARTMENT}
         onClose={closeModal}
         departmentId={selectedDepartmentId ?? null}

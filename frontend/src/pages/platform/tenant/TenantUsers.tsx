@@ -81,21 +81,44 @@ export default function TenantUsers() {
   const [selectedUserName, setSelectedUserName] = useState<string | undefined>(
     undefined
   );
+  const [page, setPage] = useState(1);
+  const [limit] = useState(10);
+  const [search, setSearch] = useState("");
+  const [totalPages, setTotalPages] = useState(1);
 
-  const handleGetTenantUsers = useCallback(() => {
-    // Refresh user list
-    if (tenantId) {
-      dispatch(getTenantUsersAction(tenantId));
-    }
-  }, [dispatch, tenantId]);
+  const [debouncedSearch, setDebouncedSearch] = useState(search);
 
   useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearch(search);
+    }, 600);
+
+    return () => clearTimeout(timer);
+  }, [search]);
+  const handleGetTenantUsers = useCallback(() => {
     if (tenantId) {
-      // Fetch tenant details and users
-      dispatch(getTenantAction(tenantId));
-      handleGetTenantUsers();
+      dispatch(
+        getTenantUsersAction({ tenantId, page, limit, search: debouncedSearch })
+      )
+        .unwrap()
+        .then(res => {
+          if (res.pagination) setTotalPages(res.pagination.totalPages);
+        });
     }
-  }, [dispatch, tenantId, handleGetTenantUsers]);
+  }, [dispatch, tenantId, page, limit, debouncedSearch]);
+
+  useEffect(() => {
+    if (!tenantId) return;
+    dispatch(getTenantAction(tenantId));
+  }, [tenantId, dispatch]);
+
+  useEffect(() => {
+    if (tenantId) handleGetTenantUsers();
+  }, [tenantId, page, debouncedSearch]);
+
+  useEffect(() => {
+    handleGetTenantUsers();
+  }, [handleGetTenantUsers]);
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString("en-US", {
@@ -291,114 +314,164 @@ export default function TenantUsers() {
                   Manage users within this organization
                 </CardDescription>
               </div>
+
+              <div className="flex items-center space-x-3">
+                {/* 🔍 Search Input */}
+                <input
+                  type="text"
+                  placeholder="Search users..."
+                  value={search}
+                  onChange={e => setSearch(e.target.value)}
+                  className="border rounded-md px-3 py-1 text-sm w-48"
+                />
+                <Button onClick={handleAddUser}>
+                  <Plus className="h-4 w-4 mr-2" />
+                  Add User
+                </Button>
+              </div>
             </div>
           </CardHeader>
-          <CardContent>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Name</TableHead>
-                  <TableHead>Email</TableHead>
-                  <TableHead>Phone</TableHead>
-                  <TableHead>Role</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Created</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {users.map(user => (
-                  <TableRow key={user.id}>
-                    <TableCell>
-                      <div className="flex items-center space-x-2">
-                        <User className="h-4 w-4 text-muted-foreground" />
-                        <div>
+
+          <CardContent className="p-0">
+            {/* Scrollable body container */}
+            <div className="max-h-[400px] overflow-y-auto scrollbar-hide">
+              <Table>
+                <TableHeader className="sticky top-0 bg-background z-10">
+                  <TableRow>
+                    <TableHead>Name</TableHead>
+                    <TableHead>Email</TableHead>
+                    <TableHead>Phone</TableHead>
+                    <TableHead>Role</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead>Created</TableHead>
+                    <TableHead className="text-right">Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+
+                <TableBody>
+                  {users.map(user => (
+                    <TableRow key={user.id}>
+                      <TableCell>
+                        <div className="flex items-center space-x-2">
+                          <User className="h-4 w-4 text-muted-foreground" />
                           <p className="font-medium">
                             {user.firstName} {user.lastName}
                           </p>
                         </div>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex items-center space-x-2">
-                        <Mail className="h-4 w-4 text-muted-foreground" />
-                        <span className="text-sm">{user.email}</span>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex items-center space-x-2">
-                        <Phone className="h-4 w-4 text-muted-foreground" />
-                        <span className="text-sm">{user.phone}</span>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex flex-wrap gap-1">
-                        {user.userRoles.map(role => (
-                          <Badge
-                            key={role.id}
-                            variant={
-                              role.name === "TENANT_ADMIN"
-                                ? "default"
-                                : "secondary"
-                            }
-                          >
-                            {role.label}
-                          </Badge>
-                        ))}
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant={getUserStatusVariant(user.statusName)}>
-                        {user.statusLabel}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex items-center space-x-2">
-                        <Calendar className="h-4 w-4 text-muted-foreground" />
-                        <span className="text-sm">
-                          {formatDate(user.createdAt)}
-                        </span>
-                      </div>
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="sm">
-                            <MoreVertical className="h-4 w-4" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuItem
-                            onClick={() => handleEditUser(user.id)}
-                          >
-                            <Edit className="h-4 w-4 mr-2" />
-                            Edit User
-                          </DropdownMenuItem>
-                          <DropdownMenuItem
-                            onClick={() => handleResetPassword(user.id)}
-                          >
-                            <KeyRound className="h-4 w-4 mr-2" />
-                            Update Password
-                          </DropdownMenuItem>
-                          <DropdownMenuItem
-                            onClick={() => handleUpdateAuthEmail(user.id)}
-                          >
-                            <AtSign className="h-4 w-4 mr-2" />
-                            Update Login Email
-                          </DropdownMenuItem>
-                          <DropdownMenuItem
-                            onClick={() => handleUpdateStatusOrRoles(user.id)}
-                          >
-                            <UserCog className="h-4 w-4 mr-2" />
-                            Update Status & Roles
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+                      </TableCell>
+
+                      <TableCell>
+                        <div className="flex items-center space-x-2">
+                          <Mail className="h-4 w-4 text-muted-foreground" />
+                          <span className="text-sm">{user.email}</span>
+                        </div>
+                      </TableCell>
+
+                      <TableCell>
+                        <div className="flex items-center space-x-2">
+                          <Phone className="h-4 w-4 text-muted-foreground" />
+                          <span className="text-sm">{user.phone}</span>
+                        </div>
+                      </TableCell>
+
+                      <TableCell>
+                        <div className="flex flex-wrap gap-1">
+                          {user.userRoles.map(role => (
+                            <Badge
+                              key={role.id}
+                              variant={
+                                role.name === "TENANT_ADMIN"
+                                  ? "default"
+                                  : "secondary"
+                              }
+                            >
+                              {role.label}
+                            </Badge>
+                          ))}
+                        </div>
+                      </TableCell>
+
+                      <TableCell>
+                        <Badge variant={getUserStatusVariant(user.statusName)}>
+                          {user.statusLabel}
+                        </Badge>
+                      </TableCell>
+
+                      <TableCell>
+                        <div className="flex items-center space-x-2">
+                          <Calendar className="h-4 w-4 text-muted-foreground" />
+                          <span className="text-sm">
+                            {formatDate(user.createdAt)}
+                          </span>
+                        </div>
+                      </TableCell>
+
+                      <TableCell className="text-right">
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" size="sm">
+                              <MoreVertical className="h-4 w-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuItem
+                              onClick={() => handleEditUser(user.id)}
+                            >
+                              <Edit className="h-4 w-4 mr-2" />
+                              Edit User
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                              onClick={() => handleResetPassword(user.id)}
+                            >
+                              <KeyRound className="h-4 w-4 mr-2" />
+                              Update Password
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                              onClick={() => handleUpdateAuthEmail(user.id)}
+                            >
+                              <AtSign className="h-4 w-4 mr-2" />
+                              Update Login Email
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                              onClick={() => handleUpdateStatusOrRoles(user.id)}
+                            >
+                              <UserCog className="h-4 w-4 mr-2" />
+                              Update Status & Roles
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+
+              <div className="flex justify-between items-center p-4 border-t">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  disabled={page <= 1}
+                  onClick={() => setPage(prev => Math.max(1, prev - 1))}
+                >
+                  Previous
+                </Button>
+
+                <span className="text-sm">
+                  Page {page} of {totalPages}
+                </span>
+
+                <Button
+                  variant="outline"
+                  size="sm"
+                  disabled={page >= totalPages}
+                  onClick={() =>
+                    setPage(prev => Math.min(totalPages, prev + 1))
+                  }
+                >
+                  Next
+                </Button>
+              </div>
+            </div>
           </CardContent>
         </Card>
       </div>
