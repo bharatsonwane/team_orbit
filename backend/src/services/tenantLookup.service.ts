@@ -139,29 +139,19 @@ export class TenantLookupService {
     const query = `
       UPDATE tenant_lookups
       SET
-        label = $1,
-        name = $2,
-        description = $3,
-        "lookupTypeId" = $4,
-        "isSystem" = $5,
-        "isArchived" = $6
-      WHERE id = $7
+        label = '${lookupData.label ?? ""}',
+        name = '${lookupData.name ?? ""}',
+        description = '${lookupData.description ?? ""}',
+        "lookupTypeId" = ${lookupData.lookupTypeId ?? "NULL"},
+        "isSystem" = ${lookupData.isSystem ?? false},
+        "isArchived" = ${lookupData.isArchived ?? false}
+      WHERE id = ${id}
       RETURNING 
         id, name, label, description, "lookupTypeId",
         "isSystem", "isArchived", "createdAt", "updatedAt";
     `;
 
-    const values = [
-      lookupData.label || null,
-      lookupData.name || null,
-      lookupData.description || null,
-      lookupData.lookupTypeId ?? null,
-      lookupData.isSystem ?? false,
-      lookupData.isArchived ?? false,
-      id,
-    ];
-
-    const result = await dbClient.tenantPool?.query(query, values);
+    const result = await dbClient.tenantPool?.query(query);
     return result?.rows[0] || null;
   }
 

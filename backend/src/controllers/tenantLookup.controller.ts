@@ -8,12 +8,9 @@ export const getTenantLookupTypeById = async (
   next: NextFunction
 ): Promise<void> => {
   try {
-    const { id } = req.params;
-    const data = await TenantLookupService.getTenantLookupTypeById(
-      req.db,
-      parseInt(id)
-    );
-    res.status(200).send(data);
+    const id = Number(req.params.id);
+    const data = await TenantLookupService.getTenantLookupTypeById(req.db, id);
+    res.status(200).json(data);
   } catch (error) {
     next(error);
   }
