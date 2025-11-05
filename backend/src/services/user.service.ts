@@ -692,147 +692,138 @@ export default class User {
     }
   }
 
+  static async getUsersCount(
+    dbClient: dbClientPool,
+    {
+      tenantId,
+      searchText,
+    }: {
+      tenantId: number;
+      searchText?: string;
+    }
+  ): Promise<number> {
+    try {
+      const hasSearch = !!searchText && searchText.trim().length > 0;
+
+      let query = `
+        SELECT COUNT(*) as total
+        FROM users up
+        LEFT JOIN user_auths ua ON up.id = ua."userId"
+        WHERE up."tenantId" = ${tenantId}
+      `;
+
+      if (hasSearch) {
+        const pattern = `%${searchText!.trim().toLowerCase()}%`;
+        /* Safe SQL literal escaping for LIKE pattern to avoid injection when interpolating */
+        /*escape single quotes and wrap in quotes*/
+        const patternLiteral = `'${pattern.replace(/'/g, "''")}'`;
+        query += `
+          AND (
+            LOWER(up."firstName") LIKE ${patternLiteral} OR
+            LOWER(up."lastName") LIKE ${patternLiteral} OR
+            LOWER(up."firstName" || ' ' || up."lastName") LIKE ${patternLiteral} OR
+            LOWER(ua."authEmail") LIKE ${patternLiteral}
+          )
+        `;
+      }
+
+      const result = await dbClient.mainPool.query(query);
+      return parseInt(result.rows[0].total, 10);
+    } catch (error) {
+      throw error;
+    }
+  }
+
   static async getUsers(
     dbClient: dbClientPool,
-    filters?: {
-      userType?: string;
-      roleCategory?: string;
-      tenantId?: number;
-      statusId?: number;
-      search?: string;
+    {
+      tenantId,
+      searchText,
+      page,
+      limit,
+    }: {
+      tenantId: number;
+      searchText?: string;
+      page?: number;
       limit?: number;
-      offset?: number;
     }
-  ): Promise<{
-    data: UserWithTrackingSchema[];
-    pagination: {
-      total: number;
-      page: number;
-      limit: number;
-      totalPages: number;
-    };
-  }> {
-    const conditions: string[] = [];
-    const values: any[] = [];
-    let index = 1;
+  ): Promise<UserWithTrackingSchema[]> {
+    try {
+      const hasSearch = !!searchText && searchText.trim().length > 0;
 
-    if (filters?.tenantId) {
-      conditions.push(`up."tenantId" = $${index++}`);
-      values.push(filters.tenantId);
+      let query = `
+        SELECT
+          up.id,
+          up.title,
+          up."firstName",
+          up."lastName",
+          up."middleName",
+          up."maidenName",
+          up.gender,
+          TO_CHAR(up.dob, 'YYYY-MM-DD') AS dob,
+          up."bloodGroup",
+          up."marriedStatus",
+          ua."authEmail",
+          up.bio,
+          up."isPlatformUser",
+          up."statusId",
+          ls.name AS "statusName",
+          ls.label AS "statusLabel",
+          up."tenantId",
+          up."createdAt",
+          up."updatedAt",
+          COALESCE(
+            (
+              SELECT JSON_AGG(JSON_BUILD_OBJECT(
+                'id', r.id,
+                'name', r.name,
+                'label', r.label,
+                'lookupTypeId', r."lookupTypeId",
+                'isSystem', r."isSystem"
+              ))
+              FROM user_role_xref ur
+              JOIN lookups r ON ur."roleId" = r.id
+              WHERE ur."userId" = up.id
+            ), '[]'::json
+          ) AS roles
+        FROM users up
+        LEFT JOIN user_auths ua ON up.id = ua."userId"
+        LEFT JOIN lookups ls ON up."statusId" = ls.id
+        WHERE up."tenantId" = ${tenantId}
+      `;
+
+      if (hasSearch) {
+        const pattern = `%${searchText!.trim().toLowerCase()}%`;
+        /* Safe SQL literal escaping for LIKE pattern to avoid injection when interpolating */
+        /*escape single quotes and wrap in quotes*/
+        const patternLiteral = `'${pattern.replace(/'/g, "''")}'`;
+        query += `
+          AND (
+            LOWER(up."firstName") LIKE ${patternLiteral} OR
+            LOWER(up."lastName") LIKE ${patternLiteral} OR
+            LOWER(up."firstName" || ' ' || up."lastName") LIKE ${patternLiteral} OR
+            LOWER(ua."authEmail") LIKE ${patternLiteral}
+          )
+        `;
+      }
+
+      query += ` ORDER BY up."createdAt" DESC`;
+
+      // Optional pagination: apply only if valid page and limit are provided
+      const usePagination =
+        typeof page === "number" &&
+        page > 0 &&
+        typeof limit === "number" &&
+        limit > 0;
+      if (usePagination) {
+        const offset = (page! - 1) * limit!;
+        query += ` LIMIT ${limit} OFFSET ${offset}`;
+      }
+
+      const result = await dbClient.mainPool.query(query);
+      return result.rows;
+    } catch (error) {
+      throw error;
     }
-
-    if (filters?.statusId) {
-      conditions.push(`up."statusId" = $${index++}`);
-      values.push(filters.statusId);
-    }
-
-    if (filters?.roleCategory) {
-      conditions.push(
-        `EXISTS (
-          SELECT 1 FROM user_role_xref urx
-          INNER JOIN lookups lr ON urx."roleId" = lr.id
-          WHERE urx."userId" = up.id AND lr.name LIKE $${index++}
-        )`
-      );
-      values.push(`${filters.roleCategory}_%`);
-    }
-
-    // 🔍 Search by first name, last name, or email
-    if (filters?.search) {
-      conditions.push(`(
-        up."firstName" ILIKE $${index} OR
-        up."lastName" ILIKE $${index} OR
-        ua."authEmail" ILIKE $${index}
-      )`);
-      values.push(`%${filters.search}%`);
-      index++;
-    }
-
-    const whereClause =
-      conditions.length > 0 ? `WHERE ${conditions.join(" AND ")}` : "";
-
-    // 🧮 Total count query
-    const countQuery = `
-      SELECT COUNT(DISTINCT up.id) AS total
-      FROM users up
-      LEFT JOIN user_auths ua ON up.id = ua."userId"
-      LEFT JOIN user_role_xref urx ON up.id = urx."userId"
-      LEFT JOIN lookups l ON urx."roleId" = l.id
-      ${whereClause};
-    `;
-    const countResult = await dbClient.mainPool.query(countQuery, values);
-    const total = parseInt(countResult.rows[0]?.total || "0", 10);
-
-    // 📄 Main data query with pagination
-    let queryString = `
-      SELECT
-        up.id,
-        up.title,
-        up."firstName",
-        up."lastName",
-        up."middleName",
-        up."maidenName",
-        up.gender,
-        TO_CHAR(up.dob, 'YYYY-MM-DD') as dob,
-        up."bloodGroup",
-        up."marriedStatus",
-        ua."authEmail",
-        up.bio,
-        up."isPlatformUser",
-        up."statusId",
-        ls.name as "statusName",
-        ls.label as "statusLabel",
-        up."tenantId",
-        up."createdAt",
-        up."updatedAt",
-        COALESCE(
-          JSON_AGG(
-            JSON_BUILD_OBJECT(
-              'id', l.id,
-              'name', l.name,
-              'label', l.label,
-              'lookupTypeId', l."lookupTypeId",
-              'isSystem', l."isSystem"
-            )
-          ) FILTER (WHERE l.id IS NOT NULL), 
-          '[]'::json
-        ) as "roles"
-      FROM 
-        users up
-      LEFT JOIN user_auths ua ON up.id = ua."userId"
-      LEFT JOIN lookups ls ON up."statusId" = ls.id
-      LEFT JOIN user_role_xref urx ON up.id = urx."userId"
-      LEFT JOIN lookups l ON urx."roleId" = l.id
-      ${whereClause}
-      GROUP BY up.id, ua."authEmail", up."isPlatformUser", ls.name, ls.label
-      ORDER BY up."createdAt" DESC
-    `;
-
-    if (filters?.limit) {
-      values.push(filters.limit);
-      queryString += ` LIMIT $${values.length}`;
-    }
-    if (filters?.offset) {
-      values.push(filters.offset);
-      queryString += ` OFFSET $${values.length}`;
-    }
-
-    const results = await dbClient.mainPool.query(queryString, values);
-
-    const page =
-      filters?.offset && filters?.limit
-        ? Math.floor(filters.offset / filters.limit) + 1
-        : 1;
-    const totalPages = filters?.limit ? Math.ceil(total / filters.limit) : 1;
-
-    return {
-      data: results.rows,
-      pagination: {
-        total,
-        page,
-        limit: filters?.limit || total,
-        totalPages,
-      },
-    };
   }
 }

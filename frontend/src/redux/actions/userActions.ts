@@ -8,6 +8,7 @@ import {
   type DetailedUser,
   type UpdateUserRequest,
   paginatedUserListSchema,
+  type TenantUsersResponse,
 } from "@/schemas/user";
 
 /** Login action - API call only */
@@ -41,65 +42,38 @@ export const getUserProfileAction = createAsyncThunk(
   }
 );
 
-/** Get platform users action - API call with query params */
-export const getPlatformUsersAction = createAsyncThunk(
-  "user/getPlatformUsersAction",
-  async (_, { rejectWithValue }) => {
-    try {
-      const response = await getAxios().get<DetailedUser[]>("/api/user/list", {
-        params: {
-          roleCategory: "PLATFORM",
-        },
-      });
-      return response.data;
-    } catch (error: unknown) {
-      return rejectWithValue(getAppErrorMessage(error));
-    }
-  }
-);
-
-/** Get tenant users action - API call with query params */
-// export const getTenantUsersAction = createAsyncThunk(
-//   "user/getTenantUsersAction",
-//   async (tenantId: number, { rejectWithValue }) => {
-//     try {
-//       const response = await getAxios().get<DetailedUser[]>("/api/user/list", {
-//         params: {
-//           tenantId,
-//         },
-//       });
-//       return response.data;
-//     } catch (error: unknown) {
-//       return rejectWithValue(getAppErrorMessage(error));
-//     }
-//   }
-// );
-
-interface PaginationResponse<T> {
-  data: T[];
-  pagination: {
-    page: number;
-    limit: number;
-    total: number;
-    totalPages: number;
-  };
-}
-
-export const getTenantUsersAction = createAsyncThunk<
-  PaginationResponse<DetailedUser>, // ✅ Type of returned payload
-  { tenantId: number; page?: number; limit?: number; search?: string }, // ✅ Input args
-  { rejectValue: string } // ✅ Rejection type
->(
-  "tenant/getTenantUsers",
+/** Get users action - API call with query params */
+export const getUsersAction = createAsyncThunk(
+  "user/getUsersAction",
   async (
-    { tenantId, page = 1, limit = 10, search = "" },
+    {
+      page = 1,
+      limit = 10,
+      searchText = "",
+    }: {
+      page?: number;
+      limit?: number;
+      searchText?: string;
+    },
     { rejectWithValue }
   ) => {
+    const queryParam: { [key: string]: any } = {};
+
+    if (searchText.trim().length > 0) {
+      queryParam.searchText = searchText.trim();
+    }
+    if (page) {
+      queryParam.page = page;
+    }
+    if (limit) {
+      queryParam.limit = limit;
+    }
+
     try {
       const response = await getAxios().get(`api/user/list`, {
-        params: { tenantId, page, limit, search },
+        params: { ...queryParam },
       });
-      return response.data; // ✅ Must have shape { data, pagination }
+      return response.data as TenantUsersResponse;
     } catch (error: any) {
       return rejectWithValue(
         error.response?.data?.message || "Failed to fetch tenant users"
@@ -107,6 +81,40 @@ export const getTenantUsersAction = createAsyncThunk<
     }
   }
 );
+
+/** Get users count action - API call with optional search filter */
+export const getUsersCountAction = createAsyncThunk(
+  "user/getUsersCountAction",
+  async (
+    {
+      searchText = "",
+    }: {
+      searchText?: string;
+    },
+    { rejectWithValue }
+  ) => {
+    const queryParam: { [key: string]: any } = {};
+
+    if (searchText.trim().length > 0) {
+      queryParam.searchText = searchText.trim();
+    }
+
+    try {
+      const response = await getAxios().get<{ count: number }>(
+        `api/user/count`,
+        {
+          params: { ...queryParam },
+        }
+      );
+      return response.data;
+    } catch (error: any) {
+      return rejectWithValue(
+        error.response?.data?.message || "Failed to fetch users count"
+      );
+    }
+  }
+);
+
 /** Create user with personal information - API call only */
 export const createUserPersonalAction = createAsyncThunk(
   "user/createUserPersonalAction",

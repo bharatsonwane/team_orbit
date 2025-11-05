@@ -9,6 +9,7 @@ Successfully implemented a **unified, configuration-based wizard system** for co
 ## 📊 Before vs After
 
 ### Before
+
 ```
 ❌ AddUserModal.tsx              (~320 lines)
 ❌ EditUserModal.tsx             (~379 lines)
@@ -19,6 +20,7 @@ Total: 4 components, ~1,591 lines
 ```
 
 ### After
+
 ```
 ✅ UserWizard.tsx                (~360 lines)
 ✅ UserPersonalInformation.tsx   (~160 lines)
@@ -35,8 +37,9 @@ Total: 4 components, ~789 lines
 ## 🏗️ Architecture
 
 ### Single Unified Component
+
 ```typescript
-<UserWizard 
+<UserWizard
   mode="create" | "edit"    // ← Single prop controls behavior
   isOpen={boolean}
   onClose={() => void}
@@ -47,6 +50,7 @@ Total: 4 components, ~789 lines
 ```
 
 ### Configuration-Driven Steps
+
 ```typescript
 const wizardSteps = [
   {
@@ -65,6 +69,7 @@ const wizardSteps = [
 ## 📁 Component Structure
 
 ### Core Wizard
+
 ```
 frontend/src/components/
 └── UserWizard.tsx              ← Unified component
@@ -75,6 +80,7 @@ frontend/src/components/
 ```
 
 ### Form Components
+
 ```
 frontend/src/components/forms/
 ├── index.ts                         ← Barrel export
@@ -90,6 +96,7 @@ frontend/src/components/forms/
 ### Pages Using Wizard
 
 #### 1. TenantDetail.tsx (`/platform/tenant/:id`)
+
 ```typescript
 // Add User
 <UserWizard mode="create" tenant={tenant} ... />
@@ -99,12 +106,14 @@ frontend/src/components/forms/
 ```
 
 #### 2. PlatformUsers.tsx (`/platform/users`)
+
 ```typescript
 // Add Platform User
 <UserWizard mode="create" ... />  // No tenant = platform user
 ```
 
 #### 3. Users.tsx
+
 ```typescript
 // Add User
 <UserWizard mode="create" tenant={tenant} ... />
@@ -146,21 +155,24 @@ Step 3: Job Details
 ## ✨ Key Features
 
 ### 1. Mode-Driven Behavior
-| Feature | Create Mode | Edit Mode |
-|---------|------------|-----------|
-| **Title** | "Add New User to [Tenant]" | "Edit User" |
-| **Data** | Empty form | Pre-populated |
-| **Validation** | Strict (required) | Lenient (optional) |
-| **Action** | createUserAction | updateUserAction |
-| **Loading** | No fetch | Fetches user data |
+
+| Feature        | Create Mode                | Edit Mode          |
+| -------------- | -------------------------- | ------------------ |
+| **Title**      | "Add New User to [Tenant]" | "Edit User"        |
+| **Data**       | Empty form                 | Pre-populated      |
+| **Validation** | Strict (required)          | Lenient (optional) |
+| **Action**     | createUserAction           | updateUserAction   |
+| **Loading**    | No fetch                   | Fetches user data  |
 
 ### 2. Configuration Array
+
 - All steps defined in one array
 - Each step has component, title, description, validation
 - Automatic rendering and navigation
 - Easy to add/remove/reorder steps
 
 ### 3. Progress Indicator
+
 - Visual representation of current position
 - Completed steps (✓ checkmark)
 - Current step (highlighted)
@@ -168,12 +180,14 @@ Step 3: Job Details
 - Connecting lines showing progress
 
 ### 4. Step-by-Step Validation
+
 - Each step validates before allowing progression
 - Real-time error messages
 - Cannot proceed with invalid data
 - Validation rules defined in configuration
 
 ### 5. Responsive Design
+
 - Mobile: Single column
 - Desktop: Two column grid
 - Smooth animations
@@ -184,6 +198,7 @@ Step 3: Job Details
 ## 🚀 How to Use
 
 ### Navigate to Page
+
 ```
 1. Go to: /platform/tenant-list
 2. Click any tenant
@@ -191,6 +206,7 @@ Step 3: Job Details
 ```
 
 ### Add a User
+
 ```
 1. Click "Add User" button
 2. Complete Step 1 (Personal Info) → Next
@@ -199,6 +215,7 @@ Step 3: Job Details
 ```
 
 ### Edit a User
+
 ```
 1. Click 3-dot menu (⋮) on any user
 2. Select "Edit User"
@@ -211,6 +228,7 @@ Step 3: Job Details
 ## 📝 Code Examples
 
 ### Create Tenant User
+
 ```typescript
 <UserWizard
   mode="create"
@@ -218,13 +236,14 @@ Step 3: Job Details
   onClose={() => setIsOpen(false)}
   tenant={currentTenant}
   onSuccess={() => {
-    dispatch(getTenantUsersAction(tenantId));
+    dispatch(getUsersAction(tenantId));
     toast.success("User created!");
   }}
 />
 ```
 
 ### Create Platform User
+
 ```typescript
 <UserWizard
   mode="create"
@@ -238,6 +257,7 @@ Step 3: Job Details
 ```
 
 ### Edit User
+
 ```typescript
 <UserWizard
   mode="edit"
@@ -246,7 +266,7 @@ Step 3: Job Details
   tenant={currentTenant}
   userId={selectedUserId}
   onSuccess={() => {
-    dispatch(getTenantUsersAction(tenantId));
+    dispatch(getUsersAction(tenantId));
     toast.success("User updated!");
   }}
 />
@@ -257,18 +277,21 @@ Step 3: Job Details
 ## 🎁 Benefits Achieved
 
 ### Code Quality
+
 - ✅ **50% less code** (1,591 → 789 lines)
 - ✅ **No duplication** - DRY principle
 - ✅ **Single source of truth** - One wizard, two modes
 - ✅ **Better organization** - Clear separation of concerns
 
 ### Maintainability
+
 - ✅ **Fix once** - Changes apply to both create and edit
 - ✅ **Easy to extend** - Add step = add object to array
 - ✅ **Type-safe** - Full TypeScript validation
 - ✅ **Self-documenting** - Configuration shows all steps
 
 ### User Experience
+
 - ✅ **Consistent UX** - Same flow for create and edit
 - ✅ **Progressive disclosure** - One step at a time
 - ✅ **Clear progress** - Visual indicator
@@ -276,6 +299,7 @@ Step 3: Job Details
 - ✅ **Data persistence** - No data loss between steps
 
 ### Developer Experience
+
 - ✅ **Simple API** - Just change `mode` prop
 - ✅ **Intuitive** - Clear prop names and behavior
 - ✅ **Reusable** - Works across all pages
@@ -330,18 +354,21 @@ frontend/
 ## 🎓 What You Learned
 
 ### Design Patterns
+
 - ✅ **Configuration-driven components** - Arrays of objects
 - ✅ **Mode-based behavior** - Single component, multiple modes
 - ✅ **Composition** - Reusable form components
 - ✅ **Progressive disclosure** - Step-by-step UX
 
 ### React Best Practices
+
 - ✅ **Component reusability** - DRY principle
 - ✅ **Props-driven behavior** - Flexible components
 - ✅ **Type safety** - Full TypeScript support
 - ✅ **Form management** - React Hook Form with Zod
 
 ### Code Organization
+
 - ✅ **Modular structure** - Separated concerns
 - ✅ **Barrel exports** - Clean imports
 - ✅ **Documentation** - Well-documented code
@@ -352,6 +379,7 @@ frontend/
 ## 🚀 Ready for Production
 
 The wizard system is:
+
 - ✅ **Fully functional** - Works across all pages
 - ✅ **Type-safe** - No TypeScript errors
 - ✅ **Validated** - Per-step validation working
@@ -367,6 +395,7 @@ The wizard system is:
 To make the wizard fully operational with all fields:
 
 ### 1. Create Database Table
+
 ```sql
 CREATE TABLE IF NOT EXISTS user_job_details (
     id SERIAL PRIMARY KEY,
@@ -379,12 +408,13 @@ CREATE TABLE IF NOT EXISTS user_job_details (
     "userId" VARCHAR(100) UNIQUE,
     "ctc" DECIMAL(15, 2),
     "reportingManagerId" INT,
-    CONSTRAINT fk_user_job_details_user 
+    CONSTRAINT fk_user_job_details_user
         FOREIGN KEY ("userId") REFERENCES main.users (id) ON DELETE CASCADE
 );
 ```
 
 ### 2. Update Backend Service
+
 ```typescript
 // user.service.ts - createUser method
 // Handle extended contact fields → store in user_contacts
@@ -392,6 +422,7 @@ CREATE TABLE IF NOT EXISTS user_job_details (
 ```
 
 ### 3. Update API Schemas
+
 ```typescript
 // Accept new fields in createUserSchema and updateUserSchema
 ```
@@ -433,12 +464,14 @@ CREATE TABLE IF NOT EXISTS user_job_details (
 ## 🎉 Achievement Summary
 
 ### Components
+
 - ✅ Created **1 unified wizard** (replaces 4 components)
 - ✅ Created **3 reusable form** components
 - ✅ Deleted **4 old/duplicate** components
 - ✅ Updated **3 pages** to use new wizard
 
 ### Code Quality
+
 - ✅ **50% reduction** in total lines
 - ✅ **Zero duplication** - DRY principle applied
 - ✅ **Configuration-based** - Easy to extend
@@ -446,12 +479,14 @@ CREATE TABLE IF NOT EXISTS user_job_details (
 - ✅ **No linter errors** - Clean codebase
 
 ### Documentation
+
 - ✅ Created **6 comprehensive** guides
 - ✅ Moved docs to proper **`docs/`** folder
 - ✅ Included **code examples** for all scenarios
 - ✅ Added **visual diagrams** for clarity
 
 ### Features
+
 - ✅ **3-step wizard** with progress indicator
 - ✅ **Dual mode** (create & edit) in one component
 - ✅ **Per-step validation** with error messages
@@ -464,6 +499,7 @@ CREATE TABLE IF NOT EXISTS user_job_details (
 ## 🎯 How It Works
 
 ### Create Flow
+
 ```
 User clicks "Add User"
   ↓
@@ -479,6 +515,7 @@ Success toast & list refresh
 ```
 
 ### Edit Flow
+
 ```
 User clicks "Edit User"
   ↓
@@ -500,18 +537,21 @@ Success toast & list refresh
 ## 💡 Design Decisions
 
 ### Why Unified Component?
+
 - **Consistency**: Same UX for create and edit
 - **Maintainability**: Fix bugs once, benefits both modes
 - **Code Reuse**: Eliminate ~800 lines of duplication
 - **Flexibility**: Mode prop controls all differences
 
 ### Why Configuration Array?
+
 - **Scalability**: Add new steps by adding objects
 - **Clarity**: All steps visible at a glance
 - **Dynamic**: Total steps auto-calculated
 - **Validation**: Per-step fields defined in config
 
 ### Why Separate Form Components?
+
 - **Reusability**: Used in both wizard and simple forms
 - **Modularity**: Each section independent
 - **Testability**: Can test forms in isolation
@@ -522,6 +562,7 @@ Success toast & list refresh
 ## 🔮 Future Enhancements
 
 Easy to add:
+
 - ✅ Address information step
 - ✅ Document upload step
 - ✅ Bank details step
@@ -538,21 +579,25 @@ Just add object to `wizardSteps` array!
 ## 📖 Quick Reference
 
 ### Import
+
 ```typescript
 import { UserWizard } from "@/components/UserWizard";
 ```
 
 ### Create User
+
 ```typescript
 <UserWizard mode="create" tenant={tenant} onSuccess={refresh} />
 ```
 
 ### Edit User
+
 ```typescript
 <UserWizard mode="edit" userId={id} tenant={tenant} onSuccess={refresh} />
 ```
 
 ### Platform User (No Tenant)
+
 ```typescript
 <UserWizard mode="create" onSuccess={refresh} />
 ```
@@ -562,7 +607,7 @@ import { UserWizard } from "@/components/UserWizard";
 ## 📊 Metrics
 
 - **Components Created**: 4
-- **Components Deleted**: 4  
+- **Components Deleted**: 4
 - **Pages Updated**: 3
 - **Docs Created**: 6
 - **Lines Reduced**: ~800 (~50%)
@@ -590,9 +635,9 @@ You now have a **production-ready, enterprise-grade wizard system** that is:
 ## 📞 Support
 
 Refer to documentation:
+
 - **Quick Start**: `WIZARD_QUICK_START.md`
 - **Unified Component**: `WIZARD_UNIFIED_COMPONENT.md`
 - **Configuration**: `WIZARD_CONFIGURATION.md`
 - **Usage Guide**: `WIZARD_USAGE.md`
 - **UI Integration**: `WIZARD_UI_INTEGRATION.md`
-

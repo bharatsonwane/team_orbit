@@ -16,12 +16,15 @@ interface DocConfig {
   security?: Array<Record<string, string[]>>;
 }
 
-// Query schema for user list filtering (for Swagger documentation)
-const getUsersQuerySchema = z.object({
+/** @description Query schema for user list filtering, pagination and search */
+export const getUsersQuerySchema = z.object({
   userType: z.enum(["platform", "tenant"]).optional(),
   roleCategory: z.enum(["PLATFORM", "TENANT"]).optional(),
-  tenantId: z.coerce.number().optional(),
   statusId: z.coerce.number().optional(),
+  // 🔍 Add search and pagination
+  searchText: z.string().trim().optional(),
+  page: z.coerce.number().int().positive().optional(),
+  limit: z.coerce.number().int().positive().max(100).optional(),
 });
 
 /**@description Get User open api specification */

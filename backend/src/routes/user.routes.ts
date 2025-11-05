@@ -8,10 +8,13 @@ import {
   saveUserContactsSchema,
   saveUserJobDetailsSchema,
   updateUserAuthEmailSchema,
+  getUsersCountQuerySchema,
+  getUsersCountResponseSchema,
 } from "@src/schemas/user.schema";
 import {
   getUserOASSchema,
   getUserProfileOASSchema,
+  getUsersQuerySchema,
   updateUserPasswordOASSchema,
 } from "@src/openApiSpecification/oasDoc/user.oas";
 import { idValidation } from "@src/schemas/common.schema";
@@ -20,6 +23,7 @@ import {
   getUserProfile,
   getUserContacts,
   getUsers,
+  getUsersCount,
   userLogin,
   getUserAuthEmail,
   updateUserAuthEmail,
@@ -35,18 +39,6 @@ import RouteRegistrar from "@src/middleware/RouteRegistrar";
 import { authRoleMiddleware } from "@src/middleware/authRoleMiddleware";
 import { userRoleKeys } from "@src/utils/constants";
 import { tenantHeaderMiddleware } from "@src/middleware/tenantHeaderMiddleware";
-
-/** @description Query schema for user list filtering, pagination and search */
-const getUsersQuerySchema = z.object({
-  userType: z.enum(["platform", "tenant"]).optional(),
-  roleCategory: z.enum(["PLATFORM", "TENANT"]).optional(),
-  tenantId: z.coerce.number().optional(),
-  statusId: z.coerce.number().optional(),
-  // 🔍 Add search and pagination
-  search: z.string().trim().optional(),
-  page: z.coerce.number().int().positive().default(1),
-  limit: z.coerce.number().int().positive().max(100).default(10),
-});
 
 const registrar = new RouteRegistrar({
   basePath: "/api/user",
@@ -101,8 +93,23 @@ registrar.put("/:id/auth-email/", {
 registrar.get("/list", {
   oasSchema: getUserOASSchema,
   requestSchema: { querySchema: getUsersQuerySchema },
-  middlewares: [authRoleMiddleware()],
+  middlewares: [tenantHeaderMiddleware(), authRoleMiddleware()],
   controller: getUsers,
+});
+
+/**@description get users count with optional search filtering */
+registrar.get("/count", {
+  requestSchema: {
+    querySchema: getUsersCountQuerySchema,
+  },
+  responseSchemas: [
+    {
+      statusCode: 200,
+      schema: getUsersCountResponseSchema,
+    },
+  ],
+  middlewares: [tenantHeaderMiddleware(), authRoleMiddleware()],
+  controller: getUsersCount,
 });
 
 /**@description get user authentication email  */

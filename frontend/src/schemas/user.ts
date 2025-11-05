@@ -336,3 +336,38 @@ export const createUserWizardSchema = userWizardSchema.extend({
 });
 
 export type CreateUserWizardFormData = z.infer<typeof createUserWizardSchema>;
+
+// Tenant User Role schema
+export const tenantUserRoleSchema = z.object({
+  id: z.number(),
+  name: z.string(),
+  label: z.string(),
+  lookupTypeId: z.number(),
+});
+
+export type TenantUserRole = z.infer<typeof tenantUserRoleSchema>;
+
+// Tenant User schema
+export const tenantUserSchema = z.object({
+  id: z.number(),
+  authEmail: z.string(), // Email for authentication/login
+  email: z.string().optional(), // From user_contacts
+  firstName: z.string(),
+  lastName: z.string(),
+  phone: z.string().optional(), // From user_contacts
+  isPlatformUser: z.boolean().default(false),
+  tenantId: z.number(),
+  statusId: z.number(),
+  statusName: z.string(),
+  statusLabel: z.string(),
+  createdAt: z.string(),
+  updatedAt: z.string(),
+  roles: z.array(tenantUserRoleSchema),
+});
+
+export type TenantUser = z.infer<typeof tenantUserSchema>;
+
+// Tenant Users response schema - direct array response
+export const tenantUsersResponseSchema = z.array(tenantUserSchema);
+
+export type TenantUsersResponse = z.infer<typeof tenantUsersResponseSchema>;

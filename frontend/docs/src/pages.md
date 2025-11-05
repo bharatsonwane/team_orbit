@@ -495,7 +495,7 @@ export default function PlatformUsers() {
         onClose={() => setIsAddModalOpen(false)}
         onSuccess={fetchPlatformUsers}
       />
-      
+
       {editingUserId && (
         <UserWizard
           mode="edit"
@@ -554,7 +554,7 @@ export default function Users() {
   const fetchUsers = async () => {
     try {
       const result = await dispatch(
-        getTenantUsersAction({
+        getUsersAction({
           tenantId: tenantId!,
           roleCategory: 'TENANT',
         })
@@ -588,7 +588,7 @@ export default function Users() {
         tenant={mockTenant}
         onSuccess={fetchUsers}
       />
-      
+
       {editingUserId && (
         <UserWizard
           mode="edit"
@@ -606,7 +606,7 @@ export default function Users() {
 
 ### User API Integration
 
-- **Fetch**: `getTenantUsersAction({ tenantId, roleCategory: 'TENANT' })`
+- **Fetch**: `getUsersAction({ tenantId, roleCategory: 'TENANT' })`
 - **Create**: Via `UserWizard` (tenant prop provided)
 - **Update**: Via `UserWizard` in edit mode
 
