@@ -148,16 +148,63 @@ export const getUsers = async (
   next: NextFunction
 ): Promise<void> => {
   try {
-    const { userType, roleCategory, tenantId, statusId } = req.query;
+    const xTenant = req.headers["x-tenant"] as string;
+    const tenantId = parseInt(xTenant);
 
-    const users = await User.getUsers(req.db, {
-      userType: userType as string | undefined,
-      roleCategory: roleCategory as string | undefined,
-      tenantId: tenantId ? parseInt(tenantId as string) : undefined,
-      statusId: statusId ? parseInt(statusId as string) : undefined,
+    if (!tenantId || isNaN(tenantId)) {
+      throw {
+        statusCode: 400,
+        message: "Invalid tenant ID",
+      };
+    }
+    const { page, limit, searchText } = req.query;
+
+    // Only apply pagination if page and limit are explicitly provided as valid numbers
+    const pageNumber =
+      page !== undefined && page !== null && !isNaN(parseInt(page as string))
+        ? parseInt(page as string)
+        : undefined;
+    const pageSize =
+      limit !== undefined && limit !== null && !isNaN(parseInt(limit as string))
+        ? parseInt(limit as string)
+        : undefined;
+
+    const result = await User.getUsers(req.db, {
+      tenantId,
+      searchText: searchText as string | undefined,
+      page: pageNumber,
+      limit: pageSize,
     });
 
-    res.status(200).json(users);
+    res.status(200).json(result);
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const getUsersCount = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  try {
+    const xTenant = req.headers["x-tenant"] as string;
+    const tenantId = parseInt(xTenant);
+
+    if (!tenantId || isNaN(tenantId)) {
+      throw {
+        statusCode: 400,
+        message: "Invalid tenant ID",
+      };
+    }
+    const { searchText } = req.query;
+
+    const count = await User.getUsersCount(req.db, {
+      tenantId,
+      searchText: searchText as string | undefined,
+    });
+
+    res.status(200).json({ count });
   } catch (error) {
     next(error);
   }

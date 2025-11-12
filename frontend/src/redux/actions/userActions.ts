@@ -1,12 +1,14 @@
 import { createAsyncThunk } from "@reduxjs/toolkit";
 import getAxios, { getAppErrorMessage } from "../../utils/axiosApi";
-import type {
-  LoginCredentials,
-  LoginResponse,
-  User,
-  CreateUserRequest,
-  DetailedUser,
-  UpdateUserRequest,
+import {
+  type LoginCredentials,
+  type LoginResponse,
+  type User,
+  type CreateUserRequest,
+  type DetailedUser,
+  type UpdateUserRequest,
+  paginatedUserListSchema,
+  type TenantUsersResponse,
 } from "@/schemas/user";
 
 /** Login action - API call only */
@@ -40,36 +42,75 @@ export const getUserProfileAction = createAsyncThunk(
   }
 );
 
-/** Get platform users action - API call with query params */
-export const getPlatformUsersAction = createAsyncThunk(
-  "user/getPlatformUsersAction",
-  async (_, { rejectWithValue }) => {
+/** Get users action - API call with query params */
+export const getUsersAction = createAsyncThunk(
+  "user/getUsersAction",
+  async (
+    {
+      page = 1,
+      limit = 10,
+      searchText = "",
+    }: {
+      page?: number;
+      limit?: number;
+      searchText?: string;
+    },
+    { rejectWithValue }
+  ) => {
+    const queryParam: { [key: string]: any } = {};
+
+    if (searchText.trim().length > 0) {
+      queryParam.searchText = searchText.trim();
+    }
+    if (page) {
+      queryParam.page = page;
+    }
+    if (limit) {
+      queryParam.limit = limit;
+    }
+
     try {
-      const response = await getAxios().get<DetailedUser[]>("/api/user/list", {
-        params: {
-          roleCategory: "PLATFORM",
-        },
+      const response = await getAxios().get(`api/user/list`, {
+        params: { ...queryParam },
       });
-      return response.data;
-    } catch (error: unknown) {
-      return rejectWithValue(getAppErrorMessage(error));
+      return response.data as TenantUsersResponse;
+    } catch (error: any) {
+      return rejectWithValue(
+        error.response?.data?.message || "Failed to fetch tenant users"
+      );
     }
   }
 );
 
-/** Get tenant users action - API call with query params */
-export const getTenantUsersAction = createAsyncThunk(
-  "user/getTenantUsersAction",
-  async (tenantId: number, { rejectWithValue }) => {
+/** Get users count action - API call with optional search filter */
+export const getUsersCountAction = createAsyncThunk(
+  "user/getUsersCountAction",
+  async (
+    {
+      searchText = "",
+    }: {
+      searchText?: string;
+    },
+    { rejectWithValue }
+  ) => {
+    const queryParam: { [key: string]: any } = {};
+
+    if (searchText.trim().length > 0) {
+      queryParam.searchText = searchText.trim();
+    }
+
     try {
-      const response = await getAxios().get<DetailedUser[]>("/api/user/list", {
-        params: {
-          tenantId,
-        },
-      });
+      const response = await getAxios().get<{ count: number }>(
+        `api/user/count`,
+        {
+          params: { ...queryParam },
+        }
+      );
       return response.data;
-    } catch (error: unknown) {
-      return rejectWithValue(getAppErrorMessage(error));
+    } catch (error: any) {
+      return rejectWithValue(
+        error.response?.data?.message || "Failed to fetch users count"
+      );
     }
   }
 );

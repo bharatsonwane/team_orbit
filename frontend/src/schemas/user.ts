@@ -4,7 +4,7 @@ import { userRoleName } from "@/utils/constants";
 
 // User schema
 export const userSchema = z.object({
-  id: z.string(),
+  id: z.number(), // changed from string → number for consistency
   email: z.string().email(),
   firstName: z.string(),
   lastName: z.string(),
@@ -14,11 +14,25 @@ export const userSchema = z.object({
       name: userRoleName,
     })
   ),
-  created_at: z.string(),
-  updated_at: z.string(),
+  createdAt: z.string(), // use camelCase consistently
+  updatedAt: z.string(),
 });
 
 export type User = z.infer<typeof userSchema>;
+
+export const paginationSchema = z.object({
+  page: z.number(),
+  limit: z.number(),
+  total: z.number(),
+  totalPages: z.number(),
+});
+
+export const paginatedUserListSchema = z.object({
+  data: z.array(userSchema),
+  pagination: paginationSchema,
+});
+
+export type PaginatedUserList = z.infer<typeof paginatedUserListSchema>;
 
 // Detailed user schema (for GET /api/user/:id)
 export const detailedUserSchema = z.object({
@@ -322,3 +336,38 @@ export const createUserWizardSchema = userWizardSchema.extend({
 });
 
 export type CreateUserWizardFormData = z.infer<typeof createUserWizardSchema>;
+
+// Tenant User Role schema
+export const tenantUserRoleSchema = z.object({
+  id: z.number(),
+  name: z.string(),
+  label: z.string(),
+  lookupTypeId: z.number(),
+});
+
+export type TenantUserRole = z.infer<typeof tenantUserRoleSchema>;
+
+// Tenant User schema
+export const tenantUserSchema = z.object({
+  id: z.number(),
+  authEmail: z.string(), // Email for authentication/login
+  email: z.string().optional(), // From user_contacts
+  firstName: z.string(),
+  lastName: z.string(),
+  phone: z.string().optional(), // From user_contacts
+  isPlatformUser: z.boolean().default(false),
+  tenantId: z.number(),
+  statusId: z.number(),
+  statusName: z.string(),
+  statusLabel: z.string(),
+  createdAt: z.string(),
+  updatedAt: z.string(),
+  roles: z.array(tenantUserRoleSchema),
+});
+
+export type TenantUser = z.infer<typeof tenantUserSchema>;
+
+// Tenant Users response schema - direct array response
+export const tenantUsersResponseSchema = z.array(tenantUserSchema);
+
+export type TenantUsersResponse = z.infer<typeof tenantUsersResponseSchema>;

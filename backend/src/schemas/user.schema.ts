@@ -109,6 +109,14 @@ export const updateUserAuthEmailSchema = z.object({
   authEmail: z.string().email("Invalid email format"),
 });
 
+export const getUsersCountQuerySchema = z.object({
+  searchText: z.string().trim().optional(),
+});
+
+export const getUsersCountResponseSchema = z.object({
+  count: z.number(),
+});
+
 /**
  * @description SCHEMAS TYPES
  */
@@ -131,6 +139,10 @@ export type SaveUserJobDetailsSchema = z.infer<typeof saveUserJobDetailsSchema>;
 export type UpdateUserAuthEmailSchema = z.infer<
   typeof updateUserAuthEmailSchema
 >;
+export type GetUsersCountQuerySchema = z.infer<typeof getUsersCountQuerySchema>;
+export type GetUsersCountResponseSchema = z.infer<
+  typeof getUsersCountResponseSchema
+>;
 
 /**
  * @description OPENAPI SCHEMAS REGISTRATION
@@ -151,5 +163,13 @@ oasRegisterSchemas([
   {
     schemaName: "UpdateUserAuthEmailSchema",
     schema: updateUserAuthEmailSchema,
+  },
+  {
+    schemaName: "GetUsersCountQuerySchema",
+    schema: getUsersCountQuerySchema,
+  },
+  {
+    schemaName: "GetUsersCountResponseSchema",
+    schema: getUsersCountResponseSchema,
   },
 ]);

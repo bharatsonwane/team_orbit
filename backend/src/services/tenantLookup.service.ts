@@ -1,4 +1,6 @@
 import { dbClientPool } from "@src/middleware/dbClientMiddleware";
+import { CreateTenantLookupRequest } from "@src/schemas/tenantLookup.schema";
+import { UpdateTenantLookupRequest } from "@src/schemas/tenantLookup.schema";
 
 interface TenantLookupType {
   id: number;
@@ -65,7 +67,7 @@ export class TenantLookupService {
   }
 
   /**
-   * Get all tenant lookups with their type information
+   * Get all tenant lookups by lookupType Id
    */
   static async getTenantLookupList(
     dbClient: dbClientPool
@@ -84,7 +86,7 @@ export class TenantLookupService {
        WHERE l."isArchived" = false
        ORDER BY lt."sortOrder", l."sortOrder" ASC`
     );
-    return result?.rows || [];
+    return result?.rows[0] || [];
   }
 
   /**
@@ -126,6 +128,59 @@ export class TenantLookupService {
     `;
 
     const result = await dbClient.tenantPool?.query(queryString, [id]);
+    return result?.rows[0] || null;
+  }
+
+  static async updateTenantLookupById(
+    dbClient: dbClientPool,
+    id: number,
+    lookupData: UpdateTenantLookupRequest
+  ): Promise<TenantLookup | null> {
+    const query = `
+      UPDATE tenant_lookups
+      SET
+        label = '${lookupData.label ?? ""}',
+        name = '${lookupData.name ?? ""}',
+        description = '${lookupData.description ?? ""}',
+        "lookupTypeId" = ${lookupData.lookupTypeId ?? "NULL"},
+        "isSystem" = ${lookupData.isSystem ?? false},
+        "isArchived" = ${lookupData.isArchived ?? false}
+      WHERE id = ${id}
+      RETURNING 
+        id, name, label, description, "lookupTypeId",
+        "isSystem", "isArchived", "createdAt", "updatedAt";
+    `;
+
+    const result = await dbClient.tenantPool?.query(query);
+    return result?.rows[0] || null;
+  }
+
+  /**  * Create tenant lookup */
+
+  static async createTenantLookup(
+    dbClient: dbClientPool,
+    lookupData: CreateTenantLookupRequest
+  ): Promise<TenantLookup | null> {
+    const queryString = `
+      INSERT INTO tenant_lookups (
+        "lookupTypeId",
+        name,
+        label,
+        description,
+        "createdBy"
+      )
+      VALUES (
+      ${lookupData.lookupTypeId},
+      '${lookupData.name}',
+      '${lookupData.label}',
+      ${lookupData.description ? `'${lookupData.description}'` : "NULL"},
+      ${lookupData.createdBy ? `'${lookupData.createdBy}'` : "NULL"})
+      RETURNING 
+        id, name, label, description, "lookupTypeId",
+        "isSystem", "isArchived", "createdAt", "updatedAt";
+    `;
+
+    const result = await dbClient.tenantPool?.query(queryString);
     return result?.rows[0] || null;
   }
 }

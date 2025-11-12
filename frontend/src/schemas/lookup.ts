@@ -11,6 +11,7 @@ export const lookupItemSchema = z.object({
   sortOrder: z.number(),
   createdBy: z.number().nullable(),
   lookupTypeId: z.number(),
+  isArchived: z.boolean(),
 });
 
 // Lookup type schema (contains array of lookups)

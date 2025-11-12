@@ -7,8 +7,9 @@ The `UserWizard` component is a **unified, mode-driven wizard** that handles bot
 ## 📐 Component Architecture
 
 ### Single Component, Dual Mode
+
 ```typescript
-<UserWizard 
+<UserWizard
   mode="create"    // or "edit"
   isOpen={isOpen}
   onClose={onClose}
@@ -22,12 +23,12 @@ The `UserWizard` component is a **unified, mode-driven wizard** that handles bot
 
 ```typescript
 interface UserWizardProps {
-  mode: "create" | "edit";           // REQUIRED: Determines wizard behavior
-  isOpen: boolean;                   // REQUIRED: Controls drawer visibility
-  onClose: () => void;              // REQUIRED: Callback when closed
-  onSuccess?: () => void;           // OPTIONAL: Callback after successful operation
-  tenant?: Tenant;                  // OPTIONAL: Tenant context (if null, creates platform user)
-  userId?: number | null;           // REQUIRED for edit mode: User ID to edit
+  mode: "create" | "edit"; // REQUIRED: Determines wizard behavior
+  isOpen: boolean; // REQUIRED: Controls drawer visibility
+  onClose: () => void; // REQUIRED: Callback when closed
+  onSuccess?: () => void; // OPTIONAL: Callback after successful operation
+  tenant?: Tenant; // OPTIONAL: Tenant context (if null, creates platform user)
+  userId?: number | null; // REQUIRED for edit mode: User ID to edit
 }
 ```
 
@@ -36,6 +37,7 @@ interface UserWizardProps {
 ### Create Mode
 
 #### For Tenant Users
+
 ```typescript
 <UserWizard
   mode="create"
@@ -44,12 +46,13 @@ interface UserWizardProps {
   tenant={currentTenant}
   onSuccess={() => {
     // Refresh user list
-    dispatch(getTenantUsersAction(tenantId));
+    dispatch(getUsersAction(tenantId));
   }}
 />
 ```
 
 #### For Platform Users
+
 ```typescript
 <UserWizard
   mode="create"
@@ -74,21 +77,21 @@ interface UserWizardProps {
   userId={selectedUserId}
   onSuccess={() => {
     // Refresh user list
-    dispatch(getTenantUsersAction(tenantId));
+    dispatch(getUsersAction(tenantId));
   }}
 />
 ```
 
 ## 🔄 Mode-Specific Behavior
 
-| Feature | Create Mode | Edit Mode |
-|---------|------------|-----------|
-| **Title** | "Add New User to [Tenant]" | "Edit User" |
-| **Data Loading** | No data fetch | Fetches user data on open |
-| **Validation** | Stricter (required fields) | More lenient (optional fields) |
-| **Submit Action** | `createUserAction` | `updateUserAction` |
-| **Success Message** | "User Created Successfully" | "User Updated Successfully" |
-| **Form Reset** | Always resets on close | Resets on close |
+| Feature             | Create Mode                 | Edit Mode                      |
+| ------------------- | --------------------------- | ------------------------------ |
+| **Title**           | "Add New User to [Tenant]"  | "Edit User"                    |
+| **Data Loading**    | No data fetch               | Fetches user data on open      |
+| **Validation**      | Stricter (required fields)  | More lenient (optional fields) |
+| **Submit Action**   | `createUserAction`          | `updateUserAction`             |
+| **Success Message** | "User Created Successfully" | "User Updated Successfully"    |
+| **Form Reset**      | Always resets on close      | Resets on close                |
 
 ## 🎯 Configuration Array
 
@@ -123,17 +126,17 @@ const wizardSteps = [
 ## ✨ Key Features
 
 ### 1. **Automatic Mode Detection**
+
 ```typescript
 const isCreateMode = mode === "create";
 const isEditMode = mode === "edit";
 
 // Different schemas based on mode
-resolver: zodResolver(
-  isCreateMode ? createUserWizardSchema : userWizardSchema
-)
+resolver: zodResolver(isCreateMode ? createUserWizardSchema : userWizardSchema);
 ```
 
 ### 2. **Conditional Data Fetching**
+
 ```typescript
 useEffect(() => {
   if (isOpen && isEditMode && userId) {
@@ -143,11 +146,12 @@ useEffect(() => {
 ```
 
 ### 3. **Dynamic Titles and Messages**
+
 ```typescript
 const getModalTitle = () => {
   if (isCreateMode) {
-    return isPlatformUser 
-      ? "Add New Platform User" 
+    return isPlatformUser
+      ? "Add New Platform User"
       : `Add New User to ${tenant?.name}`;
   }
   return "Edit User";
@@ -159,16 +163,19 @@ const getSubmitButtonText = () => {
 ```
 
 ### 4. **Unified Submit Handler**
+
 ```typescript
 const onSubmit = async (data: UserWizardFormData) => {
   if (isCreateMode) {
     await dispatch(createUserAction(transformedData)).unwrap();
     toast.success("User Created Successfully");
   } else {
-    await dispatch(updateUserAction({ userId, userData: transformedData })).unwrap();
+    await dispatch(
+      updateUserAction({ userId, userData: transformedData })
+    ).unwrap();
     toast.success("User Updated Successfully");
   }
-  
+
   resetForm();
   onSuccess?.();
   onClose();
@@ -177,18 +184,19 @@ const onSubmit = async (data: UserWizardFormData) => {
 
 ## 📊 Benefits of Unified Component
 
-| Benefit | Description |
-|---------|-------------|
-| **DRY** | Single source of truth - no duplication |
+| Benefit             | Description                               |
+| ------------------- | ----------------------------------------- |
+| **DRY**             | Single source of truth - no duplication   |
 | **Maintainability** | Fix once, applies to both create and edit |
-| **Consistency** | Guaranteed same UX for both modes |
-| **Smaller Bundle** | Less code = faster load times |
-| **Easier Testing** | Test one component instead of two |
-| **Flexibility** | Easy to add mode-specific behavior |
+| **Consistency**     | Guaranteed same UX for both modes         |
+| **Smaller Bundle**  | Less code = faster load times             |
+| **Easier Testing**  | Test one component instead of two         |
+| **Flexibility**     | Easy to add mode-specific behavior        |
 
 ## 🔧 How to Add Mode-Specific Logic
 
 ### Example: Conditional Step
+
 ```typescript
 const wizardSteps = [
   personalInfoStep,
@@ -200,13 +208,13 @@ const wizardSteps = [
 ```
 
 ### Example: Different Validation
+
 ```typescript
-const schema = isCreateMode 
-  ? strictSchemaForCreate 
-  : lenientSchemaForEdit;
+const schema = isCreateMode ? strictSchemaForCreate : lenientSchemaForEdit;
 ```
 
 ### Example: Conditional Field Requirements
+
 ```typescript
 officeEmail: isCreateMode
   ? z.string().email("Invalid email") // Required
@@ -216,6 +224,7 @@ officeEmail: isCreateMode
 ## 📁 File Structure
 
 ### Before (Duplicated)
+
 ```
 frontend/src/components/
 ├── UserFormWizard.tsx       (~400 lines) ❌
@@ -224,6 +233,7 @@ frontend/src/components/
 ```
 
 ### After (Unified)
+
 ```
 frontend/src/components/
 ├── UserWizard.tsx           (~360 lines) ✅
@@ -235,6 +245,7 @@ frontend/src/components/
 ## 🎯 Usage Across Application
 
 ### TenantDetail.tsx
+
 ```typescript
 // Create
 <UserWizard mode="create" tenant={tenant} ... />
@@ -244,6 +255,7 @@ frontend/src/components/
 ```
 
 ### PlatformUsers.tsx
+
 ```typescript
 // Create platform user
 <UserWizard mode="create" ... />
@@ -251,6 +263,7 @@ frontend/src/components/
 ```
 
 ### Users.tsx
+
 ```typescript
 // Create
 <UserWizard mode="create" tenant={tenantContext} ... />
@@ -264,6 +277,7 @@ frontend/src/components/
 ### From Old Components
 
 **Before:**
+
 ```typescript
 import { UserFormWizard } from "@/components/UserFormWizard";
 import { EditUserWizard } from "@/components/EditUserWizard";
@@ -284,6 +298,7 @@ import { EditUserWizard } from "@/components/EditUserWizard";
 ```
 
 **After:**
+
 ```typescript
 import { UserWizard } from "@/components/UserWizard";
 
@@ -306,6 +321,7 @@ import { UserWizard } from "@/components/UserWizard";
 ```
 
 ### Key Differences
+
 1. ✅ Import only one component
 2. ✅ Add `mode` prop ("create" or "edit")
 3. ✅ Rename callback: `onUserCreated`/`onUserUpdated` → `onSuccess`
@@ -314,6 +330,7 @@ import { UserWizard } from "@/components/UserWizard";
 ## 💡 Best Practices
 
 ### 1. Always Specify Mode
+
 ```typescript
 // ✅ Good
 <UserWizard mode="create" ... />
@@ -324,6 +341,7 @@ import { UserWizard } from "@/components/UserWizard";
 ```
 
 ### 2. Pass userId for Edit Mode
+
 ```typescript
 // ✅ Good
 <UserWizard mode="edit" userId={selectedUserId} ... />
@@ -333,6 +351,7 @@ import { UserWizard } from "@/components/UserWizard";
 ```
 
 ### 3. Use onSuccess for Both
+
 ```typescript
 // ✅ Good - consistent callback name
 onSuccess={() => refreshUsers()}
@@ -344,11 +363,13 @@ onUserCreated / onUserUpdated
 ## 🔍 Internal Implementation Highlights
 
 ### Schema Selection
+
 ```typescript
 const schema = isCreateMode ? createUserWizardSchema : userWizardSchema;
 ```
 
 ### Conditional Data Fetching
+
 ```typescript
 useEffect(() => {
   if (isEditMode && userId) {
@@ -358,6 +379,7 @@ useEffect(() => {
 ```
 
 ### Dynamic API Calls
+
 ```typescript
 if (isCreateMode) {
   await dispatch(createUserAction(data)).unwrap();
@@ -375,6 +397,7 @@ if (isCreateMode) {
 ## 🎉 Summary
 
 The unified `UserWizard` component:
+
 - ✅ **Reduces code** by ~40% (520 lines → 360 lines)
 - ✅ **Eliminates duplication** - DRY principle
 - ✅ **Simplifies imports** - One component for both operations
@@ -384,4 +407,3 @@ The unified `UserWizard` component:
 - ✅ **Type-safe** - Full TypeScript support with proper validation
 
 Perfect for scalable, maintainable applications! 🚀
-

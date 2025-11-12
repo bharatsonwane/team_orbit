@@ -1,5 +1,5 @@
-import { useEffect, useState, Fragment, useCallback } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useState, Fragment, useEffect, useRef } from "react";
+import { useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { Button } from "@/components/ui/button";
 import {
@@ -37,23 +37,26 @@ import {
   KeyRound,
   UserCog,
   AtSign,
+  Search,
 } from "lucide-react";
 import { HeaderLayout } from "@/components/AppLayout";
-import { getTenantAction } from "@/redux/actions/tenantActions";
-import { getTenantUsersAction } from "@/redux/actions/userActions";
+import {
+  getUsersAction,
+  getUsersCountAction,
+} from "@/redux/actions/userActions";
 import {
   selectCurrentTenant,
-  selectTenantUsers,
   selectTenantLoading,
   selectTenantError,
 } from "@/redux/slices/tenantSlice";
-import type { AppDispatch, RootState } from "@/redux/store";
+import type { AppDispatch } from "@/redux/store";
 import { UserWizard } from "@/components/UserWizard";
 import { UpdateUserPasswordModal } from "./components/UpdateUserPasswordModal";
 import { UpdateUserStatusAndRolesModal } from "./components/UpdateUserStatusAndRolesModal";
 import { UpdateUserAuthEmailModal } from "./components/UpdateUserAuthEmailModal";
 import { LoadingIndicator } from "@/components/ui/loading-indicator";
 import { useAuthService } from "@/contexts/AuthContextProvider";
+import type { TenantUser, TenantUsersResponse } from "@/schemas/user";
 
 // Modal keys for this page
 const modalKeys = {
@@ -71,31 +74,76 @@ export default function TenantUsers() {
   const navigate = useNavigate();
   const dispatch = useDispatch<AppDispatch>();
   const tenant = useSelector(selectCurrentTenant);
-  const users = useSelector(selectTenantUsers);
   const isLoading = useSelector(selectTenantLoading);
   const error = useSelector(selectTenantError);
 
+  const [users, setUsers] = useState<TenantUser[]>([]);
+  const [totalUsersCount, setTotalUsersCount] = useState<number>(0);
   // Single modal state management
   const [currentModal, setCurrentModal] = useState<ModalName>(null);
   const [selectedUserId, setSelectedUserId] = useState<number | null>(null);
   const [selectedUserName, setSelectedUserName] = useState<string | undefined>(
     undefined
   );
+  const [page, setPage] = useState(1);
+  const [limit] = useState(10);
+  const [searchText, setSearchText] = useState("");
 
-  const handleGetTenantUsers = useCallback(() => {
-    // Refresh user list
-    if (tenantId) {
-      dispatch(getTenantUsersAction(tenantId));
-    }
-  }, [dispatch, tenantId]);
+  // Pagination calculation
+  const pagination = {
+    page,
+    limit,
+    totalPages: Math.ceil(totalUsersCount / limit),
+  };
 
+  // Debounce timer via ref (no re-renders)
+  const searchTimerRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Load tenant once when tenantId appears
   useEffect(() => {
-    if (tenantId) {
-      // Fetch tenant details and users
-      dispatch(getTenantAction(tenantId));
-      handleGetTenantUsers();
-    }
-  }, [dispatch, tenantId, handleGetTenantUsers]);
+    // Initial user load at page 1 with current search
+    fetchUsers();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [dispatch]);
+
+  // Fetch helpers use explicit params to avoid stale state
+  const fetchUsers = async ({
+    pageNum = page,
+    searchTextValue = searchText,
+  }: { pageNum?: number; searchTextValue?: string } = {}) => {
+    try {
+      const userList: TenantUsersResponse = await dispatch(
+        getUsersAction({
+          page: pageNum,
+          limit,
+          searchText: searchTextValue.trim(), // backend expects 'search'
+        })
+      ).unwrap();
+      setUsers(userList);
+
+      // Fetch total users count for pagination
+      const countResult = await dispatch(
+        getUsersCountAction({
+          searchText: searchTextValue.trim(),
+        })
+      ).unwrap();
+      setTotalUsersCount(countResult.count);
+    } catch (error) {}
+  };
+
+  const handleSearchChange = (value: string) => {
+    setSearchText(value);
+    if (searchTimerRef.current) clearTimeout(searchTimerRef.current);
+    searchTimerRef.current = setTimeout(() => {
+      setPage(1);
+      fetchUsers({ pageNum: 1, searchTextValue: value.trim() });
+    }, 600);
+  };
+
+  const handlePageChange = (newPage: number) => {
+    setPage(newPage);
+    fetchUsers({ pageNum: newPage, searchTextValue: searchText });
+  };
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString("en-US", {
@@ -107,7 +155,6 @@ export default function TenantUsers() {
     });
   };
 
-  // Helper function to get user status badge variant
   const getUserStatusVariant = (statusName: string) => {
     if (statusName === "ACTIVE") return "default";
     if (statusName === "PENDING") return "secondary";
@@ -132,43 +179,17 @@ export default function TenantUsers() {
     setSelectedUserName(undefined);
   };
 
-  const handleAddUser = () => {
-    openModal(modalKeys.USER_WIZARD);
-  };
-
-  const handleEditUser = (userId: number) => {
-    openModal(modalKeys.USER_WIZARD, userId);
-  };
-
-  const handleResetPassword = (userId: number) => {
-    openModal(modalKeys.UPDATE_PASSWORD, userId);
-  };
-
-  const handleUpdateStatusOrRoles = (userId: number) => {
-    openModal(modalKeys.UPDATE_STATUS_ROLES, userId);
-  };
-
-  const handleUpdateAuthEmail = (userId: number) => {
-    openModal(modalKeys.UPDATE_AUTH_EMAIL, userId);
-  };
-
-  const handlePasswordUpdated = () => {
-    // Password update doesn't require list refresh, just close modal
-    closeModal();
-  };
-
+  const handlePasswordUpdated = () => closeModal();
   const handleAuthEmailUpdated = () => {
-    // Refresh user list to show updated auth email
-    handleGetTenantUsers();
+    fetchUsers();
     closeModal();
   };
-
   const handleStatusRolesUpdated = () => {
-    handleGetTenantUsers();
+    fetchUsers();
     closeModal();
   };
 
-  if (isLoading) {
+  if (isLoading && users.length === 0) {
     return (
       <Fragment>
         <HeaderLayout
@@ -270,12 +291,10 @@ export default function TenantUsers() {
               </p>
             </div>
           </div>
-          <div className="flex items-center space-x-2">
-            <Button onClick={handleAddUser}>
-              <Plus className="h-4 w-4 mr-2" />
-              Add User
-            </Button>
-          </div>
+          <Button onClick={() => openModal(modalKeys.USER_WIZARD)}>
+            <Plus className="h-4 w-4 mr-2" />
+            Add User
+          </Button>
         </div>
 
         {/* Users Section */}
@@ -285,120 +304,196 @@ export default function TenantUsers() {
               <div>
                 <CardTitle className="flex items-center gap-2">
                   <Users className="h-5 w-5" />
-                  Tenant Users ({users.length})
+                  Tenant Users
                 </CardTitle>
                 <CardDescription>
                   Manage users within this organization
                 </CardDescription>
               </div>
+
+              <div className="flex items-center space-x-3">
+                <div className="relative">
+                  <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                  <input
+                    type="text"
+                    placeholder="Search users..."
+                    value={searchText}
+                    onChange={e => handleSearchChange(e.target.value)}
+                    className="border rounded-md pl-9 pr-3 py-1.5 text-sm w-64"
+                  />
+                </div>
+              </div>
             </div>
           </CardHeader>
-          <CardContent>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Name</TableHead>
-                  <TableHead>Email</TableHead>
-                  <TableHead>Phone</TableHead>
-                  <TableHead>Role</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Created</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {users.map(user => (
-                  <TableRow key={user.id}>
-                    <TableCell>
-                      <div className="flex items-center space-x-2">
-                        <User className="h-4 w-4 text-muted-foreground" />
-                        <div>
-                          <p className="font-medium">
-                            {user.firstName} {user.lastName}
-                          </p>
-                        </div>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex items-center space-x-2">
-                        <Mail className="h-4 w-4 text-muted-foreground" />
-                        <span className="text-sm">{user.email}</span>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex items-center space-x-2">
-                        <Phone className="h-4 w-4 text-muted-foreground" />
-                        <span className="text-sm">{user.phone}</span>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex flex-wrap gap-1">
-                        {user.userRoles.map(role => (
-                          <Badge
-                            key={role.id}
-                            variant={
-                              role.name === "TENANT_ADMIN"
-                                ? "default"
-                                : "secondary"
-                            }
-                          >
-                            {role.label}
-                          </Badge>
-                        ))}
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant={getUserStatusVariant(user.statusName)}>
-                        {user.statusLabel}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex items-center space-x-2">
-                        <Calendar className="h-4 w-4 text-muted-foreground" />
-                        <span className="text-sm">
-                          {formatDate(user.createdAt)}
-                        </span>
-                      </div>
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="sm">
-                            <MoreVertical className="h-4 w-4" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuItem
-                            onClick={() => handleEditUser(user.id)}
-                          >
-                            <Edit className="h-4 w-4 mr-2" />
-                            Edit User
-                          </DropdownMenuItem>
-                          <DropdownMenuItem
-                            onClick={() => handleResetPassword(user.id)}
-                          >
-                            <KeyRound className="h-4 w-4 mr-2" />
-                            Update Password
-                          </DropdownMenuItem>
-                          <DropdownMenuItem
-                            onClick={() => handleUpdateAuthEmail(user.id)}
-                          >
-                            <AtSign className="h-4 w-4 mr-2" />
-                            Update Login Email
-                          </DropdownMenuItem>
-                          <DropdownMenuItem
-                            onClick={() => handleUpdateStatusOrRoles(user.id)}
-                          >
-                            <UserCog className="h-4 w-4 mr-2" />
-                            Update Status & Roles
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </TableCell>
+
+          <CardContent className="p-0">
+            <div className="max-h-[400px] overflow-y-auto scrollbar-hide">
+              <Table>
+                <TableHeader className="sticky top-0 bg-background z-10">
+                  <TableRow>
+                    <TableHead>Name</TableHead>
+                    <TableHead>Email</TableHead>
+                    <TableHead>Phone</TableHead>
+                    <TableHead>Role</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead>Created</TableHead>
+                    <TableHead className="text-right">Actions</TableHead>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+                </TableHeader>
+
+                <TableBody>
+                  {users.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={7} className="text-center py-8">
+                        <div className="text-muted-foreground">
+                          {searchText.trim()
+                            ? "No users found matching your search"
+                            : "No users found"}
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ) : (
+                    users.map(user => (
+                      <TableRow key={user.id}>
+                        <TableCell>
+                          <div className="flex items-center space-x-2">
+                            <User className="h-4 w-4 text-muted-foreground" />
+                            <p className="font-medium">
+                              {user.firstName} {user.lastName}
+                            </p>
+                          </div>
+                        </TableCell>
+
+                        <TableCell>
+                          <div className="flex items-center space-x-2">
+                            <Mail className="h-4 w-4 text-muted-foreground" />
+                            <span className="text-sm">{user.email}</span>
+                          </div>
+                        </TableCell>
+
+                        <TableCell>
+                          <div className="flex items-center space-x-2">
+                            <Phone className="h-4 w-4 text-muted-foreground" />
+                            <span className="text-sm">{user.phone || "-"}</span>
+                          </div>
+                        </TableCell>
+
+                        <TableCell>
+                          <div className="flex flex-wrap gap-1">
+                            {user.roles.map(role => (
+                              <Badge
+                                key={role.id}
+                                variant={
+                                  role.name === "TENANT_ADMIN"
+                                    ? "default"
+                                    : "secondary"
+                                }
+                              >
+                                {role.label}
+                              </Badge>
+                            ))}
+                          </div>
+                        </TableCell>
+
+                        <TableCell>
+                          <Badge
+                            variant={getUserStatusVariant(user.statusName)}
+                          >
+                            {user.statusLabel}
+                          </Badge>
+                        </TableCell>
+
+                        <TableCell>
+                          <div className="flex items-center space-x-2">
+                            <Calendar className="h-4 w-4 text-muted-foreground" />
+                            <span className="text-sm">
+                              {formatDate(user.createdAt)}
+                            </span>
+                          </div>
+                        </TableCell>
+
+                        <TableCell className="text-right">
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="ghost" size="sm">
+                                <MoreVertical className="h-4 w-4" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                              <DropdownMenuItem
+                                onClick={() =>
+                                  openModal(modalKeys.USER_WIZARD, user.id)
+                                }
+                              >
+                                <Edit className="h-4 w-4 mr-2" />
+                                Edit User
+                              </DropdownMenuItem>
+                              <DropdownMenuItem
+                                onClick={() =>
+                                  openModal(modalKeys.UPDATE_PASSWORD, user.id)
+                                }
+                              >
+                                <KeyRound className="h-4 w-4 mr-2" />
+                                Update Password
+                              </DropdownMenuItem>
+                              <DropdownMenuItem
+                                onClick={() =>
+                                  openModal(
+                                    modalKeys.UPDATE_AUTH_EMAIL,
+                                    user.id
+                                  )
+                                }
+                              >
+                                <AtSign className="h-4 w-4 mr-2" />
+                                Update Login Email
+                              </DropdownMenuItem>
+                              <DropdownMenuItem
+                                onClick={() =>
+                                  openModal(
+                                    modalKeys.UPDATE_STATUS_ROLES,
+                                    user.id
+                                  )
+                                }
+                              >
+                                <UserCog className="h-4 w-4 mr-2" />
+                                Update Status & Roles
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  )}
+                </TableBody>
+              </Table>
+            </div>
+
+            {/* Pagination Controls */}
+            {pagination && (
+              <div className="flex justify-between items-center p-4 border-t">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  disabled={page <= 1}
+                  onClick={() => handlePageChange(page - 1)}
+                >
+                  Previous
+                </Button>
+
+                <span className="text-sm">
+                  Page {pagination.page} of {pagination.totalPages}
+                </span>
+
+                <Button
+                  variant="outline"
+                  size="sm"
+                  disabled={page >= pagination.totalPages}
+                  onClick={() => handlePageChange(page + 1)}
+                >
+                  Next
+                </Button>
+              </div>
+            )}
           </CardContent>
         </Card>
       </div>
@@ -409,13 +504,12 @@ export default function TenantUsers() {
           isOpen={true}
           onClose={() => {
             closeModal();
-            handleGetTenantUsers();
+            fetchUsers();
           }}
           tenant={tenant}
           userId={selectedUserId}
           onSuccess={newUserId => {
             if (newUserId) {
-              // User was created - update selectedUserId
               setSelectedUserId(newUserId);
             }
           }}
