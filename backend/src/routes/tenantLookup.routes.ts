@@ -11,12 +11,12 @@ import {
 import { tenantHeaderMiddleware } from "@src/middleware/tenantHeaderMiddleware";
 
 const registrar = new RouteRegistrar({
-  basePath: "/api/tenant-lookup",
+  basePath: "/api",
   tags: ["Tenant Lookup"],
 });
 
 /**@description Get all tenant lookups */
-registrar.get("/list", {
+registrar.get("/tenant-lookup/list", {
   responseSchemas: [
     { statusCode: 200, schema: tenantLookupsWithTypeListSchema },
   ],
@@ -25,7 +25,7 @@ registrar.get("/list", {
 });
 
 /**@description Get tenant lookup type by ID */
-registrar.get("/type/:id", {
+registrar.get("/tenant-lookup/type/:id", {
   requestSchema: {
     paramsSchema: { id: idValidation },
   },

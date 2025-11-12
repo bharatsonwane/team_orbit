@@ -7,16 +7,16 @@ import { tenantHeaderMiddleware } from "@src/middleware/tenantHeaderMiddleware";
 import { authRoleMiddleware } from "@src/middleware/authRoleMiddleware";
 
 const registrar = new RouteRegistrar({
-  basePath: "/api/chat",
+  basePath: "/api",
   tags: ["Chat"],
 });
 
-registrar.get("/chat/:senderId/:receiverId", {
+registrar.get("/chat/messages/:senderId/:receiverId", {
   controller: getMessagesByChatChannel,
   middlewares: [tenantHeaderMiddleware(), authRoleMiddleware()],
 });
 /**@description send chat */
-registrar.post("/send", {
+registrar.post("/chat/send", {
   controller: sendMessage,
   middlewares: [tenantHeaderMiddleware(), authRoleMiddleware()],
 });

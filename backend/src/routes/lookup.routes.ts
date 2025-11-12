@@ -10,16 +10,16 @@ import {
 import { idValidation, nameValidation } from "@src/schemas/common.schema";
 
 const registrar = new RouteRegistrar({
-  basePath: "/api/lookup",
+  basePath: "/api",
   tags: ["Lookup"],
 });
 
-registrar.get("/list", {
+registrar.get("/lookup/list", {
   responseSchemas: [{ statusCode: 200, schema: lookupListSchema }],
   controller: retrieveLookupList,
 });
 
-registrar.get("/type/:id", {
+registrar.get("/lookup/type/:id", {
   requestSchema: {
     paramsSchema: { id: idValidation },
   },

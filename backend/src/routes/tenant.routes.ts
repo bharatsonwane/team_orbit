@@ -15,12 +15,12 @@ import { authRoleMiddleware } from "@src/middleware/authRoleMiddleware";
 import { userRoleKeys } from "@src/utils/constants";
 
 const registrar = new RouteRegistrar({
-  basePath: "/api/tenant",
+  basePath: "/api",
   tags: ["Tenant"],
 });
 
 /**@description Create new tenant with Tenant Admin */
-registrar.post("/create", {
+registrar.post("/tenant/create", {
   requestSchema: { bodySchema: createTenantSchema },
   responseSchemas: [{ statusCode: 201, schema: tenantWithTrackingSchema }],
   middlewares: [
@@ -34,7 +34,7 @@ registrar.post("/create", {
 });
 
 /**@description Update tenant */
-registrar.put("/:id", {
+registrar.put("/tenant/:id", {
   requestSchema: {
     paramsSchema: { id: idValidation },
     bodySchema: updateTenantSchema,
@@ -51,7 +51,7 @@ registrar.put("/:id", {
 });
 
 /**@description Get all tenants */
-registrar.get("/list", {
+registrar.get("/tenant/list", {
   middlewares: [
     authRoleMiddleware(
       userRoleKeys.PLATFORM_SUPER_ADMIN,
@@ -63,7 +63,7 @@ registrar.get("/list", {
 });
 
 /**@description Get tenant by ID */
-registrar.get("/:id", {
+registrar.get("/tenant/:id", {
   requestSchema: { paramsSchema: { id: idValidation } },
   responseSchemas: [{ statusCode: 200, schema: tenantWithTrackingSchema }],
   middlewares: [

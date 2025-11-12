@@ -45,26 +45,26 @@ const getUsersQuerySchema = z.object({
 });
 
 const registrar = new RouteRegistrar({
-  basePath: "/api/user",
+  basePath: "/api",
   tags: ["User"],
 });
 
 /**@description user login  */
-registrar.post("/login", {
+registrar.post("/user/login", {
   requestSchema: { bodySchema: userLoginSchema },
   responseSchemas: [{ statusCode: 200, schema: baseUserSchema }],
   controller: userLogin,
 });
 
 /**@description get user profile  */
-registrar.get("/profile", {
+registrar.get("/user/profile", {
   middlewares: [authRoleMiddleware()],
   controller: getUserProfile,
   oasSchema: getUserProfileOASSchema,
 });
 
 /**@description update user password  */
-registrar.put("/:id/password/", {
+registrar.put("/user/:id/password/", {
   oasSchema: updateUserPasswordOASSchema,
   requestSchema: {
     paramsSchema: { id: idValidation },
@@ -75,7 +75,7 @@ registrar.put("/:id/password/", {
 });
 
 /**@description update user authentication email  */
-registrar.put("/:id/auth-email/", {
+registrar.put("/user/:id/auth-email/", {
   requestSchema: {
     paramsSchema: { id: idValidation },
     bodySchema: updateUserAuthEmailSchema,
@@ -94,7 +94,7 @@ registrar.put("/:id/auth-email/", {
 });
 
 /**@description get all users with optional filtering */
-registrar.get("/list", {
+registrar.get("/user/list", {
   oasSchema: getUserOASSchema,
   requestSchema: { querySchema: getUsersQuerySchema },
   middlewares: [authRoleMiddleware()],
@@ -102,7 +102,7 @@ registrar.get("/list", {
 });
 
 /**@description get user authentication email  */
-registrar.get("/:id/auth-email/", {
+registrar.get("/user/:id/auth-email/", {
   requestSchema: {
     paramsSchema: { id: idValidation },
   },
@@ -119,7 +119,7 @@ registrar.get("/:id/auth-email/", {
 });
 
 /**@description update user status and roles  */
-registrar.put("/:id/status-roles/", {
+registrar.put("/user/:id/status-roles/", {
   requestSchema: {
     paramsSchema: { id: idValidation },
     bodySchema: updateUserStatusAndRolesSchema,
@@ -129,7 +129,7 @@ registrar.put("/:id/status-roles/", {
 });
 
 /**@description Create User with Personal Information */
-registrar.post("/personal", {
+registrar.post("/user/personal", {
   requestSchema: { bodySchema: createUserSchema },
   responseSchemas: [{ statusCode: 201, schema: z.object({ id: z.number() }) }],
   middlewares: [authRoleMiddleware()],
@@ -137,7 +137,7 @@ registrar.post("/personal", {
 });
 
 /**@description Update user personal information by id  */
-registrar.put("/:id/personal", {
+registrar.put("/user/:id/personal", {
   requestSchema: {
     paramsSchema: { id: idValidation },
     bodySchema: baseUserSchema.partial(),
@@ -148,21 +148,21 @@ registrar.put("/:id/personal", {
 });
 
 /**@description get user by id  */
-registrar.get("/:id/personal", {
+registrar.get("/user/:id/personal", {
   requestSchema: { paramsSchema: { id: idValidation } },
   middlewares: [authRoleMiddleware()],
   controller: getUserById,
 });
 
 /**@description get user contacts by id  */
-registrar.get("/:id/contacts", {
+registrar.get("/user/:id/contacts", {
   requestSchema: { paramsSchema: { id: idValidation } },
   middlewares: [authRoleMiddleware(), tenantHeaderMiddleware()],
   controller: getUserContacts,
 });
 
 /**@description Save/Update user contact information  */
-registrar.put("/:id/contacts", {
+registrar.put("/user/:id/contacts", {
   requestSchema: {
     paramsSchema: { id: idValidation },
     bodySchema: saveUserContactsSchema,
@@ -172,7 +172,7 @@ registrar.put("/:id/contacts", {
 });
 
 /**@description Save/Update user job details  */
-registrar.post("/:id/job-details", {
+registrar.post("/user/:id/job-details", {
   requestSchema: {
     paramsSchema: { id: idValidation },
     bodySchema: saveUserJobDetailsSchema,
@@ -182,7 +182,7 @@ registrar.post("/:id/job-details", {
 });
 
 /**@description Get user job details  */
-registrar.get("/:id/job-details", {
+registrar.get("/user/:id/job-details", {
   requestSchema: {
     paramsSchema: { id: idValidation },
   },
@@ -190,7 +190,7 @@ registrar.get("/:id/job-details", {
   controller: getUserJobDetails,
 });
 
-// registrar.get("/test-query", {
+// registrar.get("/user/test-query", {
 //   oasSchema: testQueryOASSchema,
 //   requestSchema: { querySchema: TestQuerySchema },
 //   controller: (req, res) => {
