@@ -38,7 +38,7 @@ interface AppUser {
 
 interface UserAuth {
   authEmail: string;
-  hashPassword: string;
+  password: string;
   passwordUpdatedAt?: Date;
 }
 
@@ -354,7 +354,7 @@ export async function up(
         tenantId: platformTenantId,
         userAuth: {
           authEmail: "superadmin@gmail.com", // Official email as authEmail
-          hashPassword: "Super@123",
+          password: "Super@123",
           passwordUpdatedAt: new Date(),
         },
         userRoles: [superAdminRoleData.id as number],
@@ -365,7 +365,7 @@ export async function up(
       /** Hash the password using bcrypt directly */
       const saltRounds = 10;
       const hashPassword = await bcrypt.hash(
-        userData.userAuth.hashPassword,
+        userData.userAuth.password,
         saltRounds
       );
 
