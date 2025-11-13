@@ -16,24 +16,28 @@ CREATE TABLE IF NOT EXISTS lookup_types (
 -- lookups Table
 CREATE TABLE IF NOT EXISTS lookups (
     id SERIAL PRIMARY KEY,
-    name VARCHAR(100) NOT NULL,              -- Internal name (e.g., 'USER_ROLE_PLATFORM_ADMIN', 'USER_STATUS_ACTIVE')
-    label VARCHAR(255) NOT NULL,             -- Display label (e.g., 'Platform Admin', 'Active')
-    category VARCHAR(100) DEFAULT NULL,      -- Category of the lookup value (e.g., 'PLATFORM', 'TENANT')
-    description TEXT,                        -- Optional description for the lookup value
-    "isSystem" BOOLEAN DEFAULT FALSE NOT NULL, -- System values that cannot be deleted
-    "sortOrder" INT DEFAULT 0 NOT NULL,      -- For ordering items within a type
-    "isArchived" BOOLEAN DEFAULT FALSE NOT NULL, -- Soft delete instead of hard delete
-    "createdAt" TIMESTAMP DEFAULT NOW() NOT NULL,
-    "updatedAt" TIMESTAMP DEFAULT NOW() NOT NULL,
-    "archivedAt" TIMESTAMP DEFAULT NULL,
+    "lookupTypeId" INT NOT NULL REFERENCES lookup_types (id) ON DELETE CASCADE,
+
+    name VARCHAR(100) NOT NULL,         -- Internal name (e.g., 'USER_ROLE_ADMIN')
+    label VARCHAR(255) NOT NULL,        -- Display label (e.g., 'Admin')
+    category VARCHAR(100),              -- Optional grouping (e.g., 'PLATFORM', 'TENANT')
+    description TEXT,                   -- Optional details or tooltip text
+
+    "sortOrder" INT DEFAULT 0 NOT NULL, -- Used for ordering
+    "isSystem" BOOLEAN DEFAULT FALSE,   -- System-managed (non-deletable)
+    "isArchived" BOOLEAN DEFAULT FALSE, -- Soft delete flag
+
     "createdBy" INT DEFAULT NULL,
     "updatedBy" INT DEFAULT NULL,
     "archivedBy" INT DEFAULT NULL,
-    "lookupTypeId" INT NOT NULL,
-    CONSTRAINT fk_lookups_lookup_types FOREIGN KEY ("lookupTypeId") REFERENCES lookup_types (id) ON DELETE CASCADE,
-    CONSTRAINT unique_lookup_type_id_name UNIQUE ("lookupTypeId", name),                        -- Unique constraint for lookup type and name
-    CONSTRAINT unique_lookup_type_id_label UNIQUE ("lookupTypeId", label)                       -- Unique constraint for lookup type and label
+    "createdAt" TIMESTAMP DEFAULT NOW() NOT NULL,
+    "updatedAt" TIMESTAMP DEFAULT NOW() NOT NULL,
+    "archivedAt" TIMESTAMP DEFAULT NULL,
+
+    CONSTRAINT unique_lookup_name_per_type UNIQUE ("lookupTypeId", name),
+    CONSTRAINT unique_lookup_label_per_type UNIQUE ("lookupTypeId", label)
 );
+
 
 -- tenants Table
 CREATE TABLE IF NOT EXISTS tenants (
@@ -41,15 +45,14 @@ CREATE TABLE IF NOT EXISTS tenants (
     name VARCHAR(255) NOT NULL UNIQUE,
     label VARCHAR(255) NOT NULL UNIQUE,
     description TEXT,
-    "statusId" INT NOT NULL,
+    "statusId" INT NOT NULL REFERENCES lookups (id) ON DELETE CASCADE,
     "isArchived" BOOLEAN DEFAULT FALSE NOT NULL,
     "createdAt" TIMESTAMP DEFAULT NOW() NOT NULL,
     "updatedAt" TIMESTAMP DEFAULT NOW() NOT NULL,
     "archivedAt" TIMESTAMP DEFAULT NULL,
     "createdBy" INT DEFAULT NULL,
     "updatedBy" INT DEFAULT NULL,
-    "archivedBy" INT DEFAULT NULL,
-    CONSTRAINT fk_tenants_status FOREIGN KEY ("statusId") REFERENCES lookups (id)
+    "archivedBy" INT DEFAULT NULL
 );
 
 -- title_enum Type
@@ -87,6 +90,7 @@ END $$;
 -- users Table
 CREATE TABLE IF NOT EXISTS users (
     id SERIAL PRIMARY KEY,
+    "tenantId" INT NOT NULL REFERENCES tenants (id) ON DELETE CASCADE,
     title title_enum, -- Use ENUM type
     "firstName" VARCHAR(255) NOT NULL,
     "lastName" VARCHAR(255) NOT NULL,
@@ -99,22 +103,19 @@ CREATE TABLE IF NOT EXISTS users (
     bio TEXT, -- User biography
     "isPlatformUser" BOOLEAN DEFAULT FALSE NOT NULL,
     "isArchived" BOOLEAN DEFAULT FALSE NOT NULL,
-    "statusId" INT NOT NULL, -- Use "lookupId"
-    "tenantId" INT NOT NULL,
+    "statusId" INT NOT NULL REFERENCES lookups (id) ON DELETE CASCADE,
     "createdAt" TIMESTAMP DEFAULT NOW() NOT NULL,
     "updatedAt" TIMESTAMP DEFAULT NOW() NOT NULL,
     "archivedAt" TIMESTAMP DEFAULT NULL,
     "createdBy" INT DEFAULT NULL,
     "updatedBy" INT DEFAULT NULL,
-    "archivedBy" INT DEFAULT NULL,
-    CONSTRAINT fk_users_tenants FOREIGN KEY ("tenantId") REFERENCES tenants (id),
-    CONSTRAINT fk_users_status FOREIGN KEY ("statusId") REFERENCES lookups (id)
+    "archivedBy" INT DEFAULT NULL
 );
 
 -- user_auths Table
 CREATE TABLE IF NOT EXISTS user_auths (
     id SERIAL PRIMARY KEY,    
-    "userId" INT NOT NULL,
+    "userId" INT NOT NULL REFERENCES users (id) ON DELETE CASCADE UNIQUE,
     -- Local login
     "authEmail" VARCHAR(255) UNIQUE NOT NULL,  -- Office Email for authentication/login
     "authMobileNumber" VARCHAR(255) UNIQUE DEFAULT NULL,  -- Mobile Number for authentication/login
@@ -131,18 +132,14 @@ CREATE TABLE IF NOT EXISTS user_auths (
     -- Audit
     "lastLoginAt" TIMESTAMP,
     "createdAt" TIMESTAMP DEFAULT NOW(),
-    "updatedAt" TIMESTAMP DEFAULT NOW(),
-    CONSTRAINT fk_user_auths_users FOREIGN KEY ("userId") REFERENCES users (id) ON DELETE CASCADE,
-    CONSTRAINT unique_user_auth_user UNIQUE ("userId")  -- One auth record per user
+    "updatedAt" TIMESTAMP DEFAULT NOW()
 );
 
 -- user_role_xref Table (junction table, kept singular for relationship clarity)
 CREATE TABLE IF NOT EXISTS user_role_xref (
     id SERIAL PRIMARY KEY,
-    "userId" INT NOT NULL,
-    "roleId" INT NOT NULL,
+    "userId" INT NOT NULL REFERENCES users (id) ON DELETE CASCADE,
+    "roleId" INT NOT NULL REFERENCES lookups (id) ON DELETE CASCADE,
     "createdAt" TIMESTAMP DEFAULT NOW() NOT NULL,
-    "updatedAt" TIMESTAMP DEFAULT NOW() NOT NULL,
-    CONSTRAINT fk_user_role_xref_users FOREIGN KEY ("userId") REFERENCES users (id),
-    CONSTRAINT fk_user_role_xref_lookups FOREIGN KEY ("roleId") REFERENCES lookups (id)
+    "updatedAt" TIMESTAMP DEFAULT NOW() NOT NULL
 );
