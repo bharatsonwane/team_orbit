@@ -10,6 +10,9 @@ const envVariableSchema = z.object({
   API_HOST: z.string().url({ message: "API_HOST must be a valid URL" }),
   API_PORT: z.number().int().positive(),
 
+  /* app */
+  FRONTEND_URL: z.string().url({ message: "FRONTEND_URL must be a valid URL" }),
+
   /* database */
   DB_HOST: z.string().min(3, "DB_HOST is mandatory"),
   DB_USER: z.string().min(3, "DB_USER is mandatory"),
@@ -33,6 +36,7 @@ const getEnvVariable = (): EnvVariable => {
       NODE_ENV: process.env.NODE_ENV as EnvVariable["NODE_ENV"],
       API_HOST: process.env.API_HOST!,
       API_PORT: Number(process.env.API_PORT) || 5100,
+      FRONTEND_URL: process.env.FRONTEND_URL!,
       DB_HOST: process.env.DB_HOST!,
       DB_USER: process.env.DB_USER!,
       DB_PASSWORD: process.env.DB_PASSWORD!,

@@ -3,7 +3,6 @@ import cors from "cors";
 import helmet from "helmet";
 import morgan from "morgan";
 import http from "http";
-// import { Server } from 'socket.io';
 import logger from "./utils/logger";
 import { displayServerInfo } from "./utils/terminalUtils";
 
@@ -15,39 +14,15 @@ import {
   routeNotFoundMiddleware,
 } from "./middleware/errorMiddleware";
 import { dbClientMiddleware } from "./middleware/dbClientMiddleware";
+import { socketManager } from "./socket/socketManager";
 
 async function main() {
   const app = express();
   const server = http.createServer(app);
 
-  // const io = new Server(server, {
-  //   cors: {
-  //     origin: "http://localhost:5173",
-  //     credentials: true,
-  //   },
-  // });
-
-  // io.on("connection", (socket) => {
-  //   console.log("User connected:", socket.id);
-
-  //   socket.on("joinChannel", ({ userId }) => {
-  //     socket.join(userId); // joining channel using user ID
-  //   });
-
-  //   socket.on("sendMessage", async (data) => {
-  //     const { senderId, receiverId, message, mediaUrl } = data;
-
-  //     // TODO: Implement Chat service when converted to TypeScript
-  //     // const savedMessage = await Chat.saveMessage({ senderId, receiverId, message, mediaUrl });
-  //     // io.to(receiverId).emit("receiveMessage", savedMessage);
-
-  //     console.log("Message received:", { senderId, receiverId, message, mediaUrl });
-  //   });
-
-  //   socket.on("disconnect", () => {
-  //     console.log("User disconnected:", socket.id);
-  //   });
-  // });
+  // Initialize Socket.IO server (includes all managers and event listeners)
+  socketManager.initialize(server);
+  logger.info("Socket.IO server and all managers initialized");
 
   const PORT = envVariable.API_PORT;
 
