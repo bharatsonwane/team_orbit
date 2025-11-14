@@ -15,6 +15,7 @@ import {
   Hash,
   FileText,
   BarChart3,
+  User,
   type LucideIcon,
 } from "lucide-react";
 import { type AuthRoute, RouteGuardRenderer } from "./RouteGuardRenderer";
@@ -36,6 +37,8 @@ import { AppLayout } from "@/components/AppLayout";
 import type { BreadcrumbLayoutProps } from "@/components/AppLayout";
 import TenantDepartments from "@/pages/platform/tenant/TenantDepartments";
 import TenantDesignations from "@/pages/platform/tenant/TenantDesignations";
+import OneToOneChat from "@/pages/tenant/chat/OneToOneChat";
+import GroupChat from "@/pages/tenant/chat/GroupChat";
 
 export interface SidebarRouteWithChildren {
   title: string;
@@ -509,52 +512,28 @@ export const tenantSidebarNavigationItems: SidebarRouteWithChildren[] = [
     ],
   },
   {
-    title: "Team Chat",
+    title: "Chats",
     isShownInSidebar: true,
     icon: MessageSquare,
     allowedRoles: [userRoleKeys.ANY],
     childItems: [
       {
-        title: "Messages",
+        title: "One-to-One Chats",
         isShownInSidebar: true,
-        icon: MessageSquare,
-        href: "/tenant/:tenantId/chat/messages",
-        path: "/tenant/:tenantId/chat/messages",
+        icon: User,
+        href: "/tenant/:tenantId/chat/one-to-one",
+        path: "/tenant/:tenantId/chat/one-to-one",
         allowedRoles: [userRoleKeys.ANY],
-        element: (
-          <ComingSoon
-            title="Messages"
-            description="Send and receive private messages with colleagues."
-          />
-        ),
+        element: <OneToOneChat />,
       },
       {
-        title: "Team Channels",
+        title: "Group Chat",
         isShownInSidebar: true,
-        icon: Hash,
-        href: "/tenant/:tenantId/chat/channels",
-        path: "/tenant/:tenantId/chat/channels",
+        icon: Users,
+        href: "/tenant/:tenantId/chat/group",
+        path: "/tenant/:tenantId/chat/group",
         allowedRoles: [userRoleKeys.ANY],
-        element: (
-          <ComingSoon
-            title="Team Channels"
-            description="Join team channels and group conversations."
-          />
-        ),
-      },
-      {
-        title: "File Sharing",
-        isShownInSidebar: true,
-        icon: FileText,
-        href: "/tenant/:tenantId/chat/files",
-        path: "/tenant/:tenantId/chat/files",
-        allowedRoles: [userRoleKeys.ANY],
-        element: (
-          <ComingSoon
-            title="File Sharing"
-            description="Share and access files with your team."
-          />
-        ),
+        element: <GroupChat />,
       },
     ],
   },
