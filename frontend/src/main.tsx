@@ -3,10 +3,11 @@ import { createRoot } from "react-dom/client";
 import { BrowserRouter as Router } from "react-router-dom";
 import { Provider } from "react-redux";
 import "./index.css";
-import App from "./App.tsx";
+import App from "./App";
 import { ThemeProvider } from "./components/theme-provider";
-import { AuthProvider } from "./contexts/AuthContextProvider.tsx";
+import { AuthProvider } from "./contexts/AuthContextProvider";
 import { store } from "./redux/store";
+import { SocketProvider } from "./contexts/SocketProvider";
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
@@ -14,7 +15,9 @@ createRoot(document.getElementById("root")!).render(
       <Router>
         <ThemeProvider defaultTheme="system">
           <AuthProvider>
-            <App />
+            <SocketProvider>
+              <App />
+            </SocketProvider>
           </AuthProvider>
         </ThemeProvider>
       </Router>

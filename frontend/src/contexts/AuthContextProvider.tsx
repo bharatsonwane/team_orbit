@@ -16,7 +16,10 @@ import type {
 import { envVariable } from "../config/envVariable";
 import { publicRouteList } from "../components/routing/AppRoutes";
 import getAxios from "../utils/axiosApi";
-import { loginAction } from "../redux/actions/userActions";
+import {
+  getUserProfileAction,
+  loginAction,
+} from "../redux/actions/userActions";
 import { store, type AppDispatch } from "../redux/store";
 import { platformRoleList } from "@/utils/constants";
 import { getTenantIdFromUrl } from "@/utils/tenantHelper";
@@ -129,11 +132,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     if (token) {
       if (!loggedInUser) {
         try {
-          /* Call API to get user details using the token */
-          const response = await getAxios().get<User>("/api/user/profile");
+          /* Get user details using the token */
+          const userData = await dispatch(getUserProfileAction()).unwrap();
 
-          if (response.data && response.data) {
-            setLoggedInUser(response.data);
+          if (userData && userData) {
+            setLoggedInUser(userData);
           }
         } catch (error: unknown) {
           /* Token might be invalid/expired, remove it */

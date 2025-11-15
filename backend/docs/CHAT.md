@@ -121,7 +121,7 @@ This document provides comprehensive documentation for the chat system, includin
 
 **Solution:** Add indexes on:
 - `chat_message.chatChannelId`
-- `chat_message.senderId`
+- `chat_message.senderUserId`
 - `chat_message.createdAt`
 - `chat_message.replyToMessageId`
 - `chat_channel_user_mapping.chatChannelId`
@@ -171,7 +171,7 @@ Add `lastReadMessageId` field to `chat_channel_user_mapping` table:
 SELECT COUNT(*)
 FROM chat_message cm
 WHERE cm."chatChannelId" = $1
-    AND cm."senderId" != $2
+    AND cm."senderUserId" != $2
     AND cm."isDeleted" = false
     AND cm.id > (
         SELECT "lastReadMessageId" 
@@ -317,7 +317,7 @@ const unreadCount = await db.query(`
     SELECT COUNT(*)
     FROM chat_message cm
     WHERE cm."chatChannelId" = $1
-        AND cm."senderId" != $2
+        AND cm."senderUserId" != $2
         AND cm."isDeleted" = false
         AND cm.id > (
             SELECT "lastReadMessageId" 
@@ -450,7 +450,7 @@ LEFT JOIN chat_message_status cmr ON
     AND cmr."userId" = ccu."userId"
 WHERE ccu."userId" = $1 
     AND cm."isDeleted" = false
-    AND cm."senderId" != $1
+    AND cm."senderUserId" != $1
     AND cmr."readAt" IS NULL
 GROUP BY ccu."chatChannelId";
 ```
@@ -465,7 +465,7 @@ SELECT
     u.name as last_message_sender_name
 FROM chat_channel cc
 LEFT JOIN chat_message cm ON cc."lastMessageId" = cm.id
-LEFT JOIN main.users u ON cm."senderId" = u.id
+LEFT JOIN main.users u ON cm."senderUserId" = u.id
 WHERE cc.id IN (
     SELECT "chatChannelId" FROM chat_channel_user_mapping 
     WHERE "userId" = $1 AND "isActive" = true

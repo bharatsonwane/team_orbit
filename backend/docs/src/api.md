@@ -282,7 +282,7 @@ _Create a new tenant organization._ <br>
 
 ### Chat
 
-- **GET** `/api/chat/chat/:senderId/:receiverId` - Get messages
+- **GET** `/api/chat/chat/:senderUserId/:receiverId` - Get messages
 - **POST** `/api/chat/send` - Send message
 
 ### System

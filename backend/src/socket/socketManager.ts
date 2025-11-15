@@ -176,7 +176,6 @@ class SocketManager implements ChannelTracker {
       this.authenticateSocket(socket, next);
     });
 
-    // Handle connections
     this.socketIo.on("connection", (socket: Socket) => {
       this.handleConnection(socket as AuthenticatedSocket);
     });

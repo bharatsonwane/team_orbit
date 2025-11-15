@@ -14,16 +14,13 @@ import {
   routeNotFoundMiddleware,
 } from "./middleware/errorMiddleware";
 import { dbClientMiddleware } from "./middleware/dbClientMiddleware";
-import { initializeSocketManagers } from "./socket/registerSocketManagers";
+import { initializeSocket } from "./socket/socket";
 
 async function main() {
   const app = express();
   const server = http.createServer(app);
 
-  initializeSocketManagers(server);
-  logger.info("Socket.IO server and all managers initialized");
-
-  const PORT = envVariable.API_PORT;
+  initializeSocket(server);
 
   // Middleware
   app.use(helmet());
@@ -52,9 +49,9 @@ async function main() {
   app.use(globalErrorMiddleware);
 
   /** Start server */
-  server.listen(PORT, () => {
+  server.listen(envVariable.API_PORT, () => {
     displayServerInfo({
-      port: PORT,
+      port: envVariable.API_PORT,
       host: envVariable.API_HOST,
       appName: "📚 Team Orbit Backend",
       docsPath: "/docs",

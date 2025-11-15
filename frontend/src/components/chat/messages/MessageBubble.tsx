@@ -27,7 +27,7 @@ export function MessageBubble({
   const [isEditing, setIsEditing] = useState(false);
   const [editText, setEditText] = useState(message.text || "");
 
-  const isCurrentUser = message.senderId === 1; // Current user ID (should come from auth context)
+  const isCurrentUser = message.senderUserId === 1; // Current user ID (should come from auth context)
   const isDeleted = message.isDeleted;
 
   const handleEdit = () => {

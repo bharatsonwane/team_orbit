@@ -2,16 +2,18 @@ import RouteRegistrar from "@src/middleware/RouteRegistrar";
 import {
   createChannel,
   getChannelsForUser,
-  getMessagesByChatChannel,
-  sendMessage,
+  saveChannelMessage,
 } from "@src/controllers/chat.controller";
 import {
   chatChannelListQuerySchema,
   chatChannelListResponseSchema,
+  chatMessageSchema,
   createChatChannelSchema,
+  sendChatMessageSchema,
 } from "@src/schemas/chat.schema";
 import { ensureTenantMiddleware } from "@src/middleware/ensureTenantMiddleware";
 import { authRoleMiddleware } from "@src/middleware/authRoleMiddleware";
+import { idValidation } from "@src/schemas/common.schema";
 
 const registrar = new RouteRegistrar({
   basePath: "/api",
@@ -36,14 +38,14 @@ registrar.get("/chat/channel/list", {
   controller: getChannelsForUser,
 });
 
-registrar.get("/chat/messages/:senderId/:receiverId", {
-  controller: getMessagesByChatChannel,
+registrar.post("/chat/channel/:channelId/message", {
   middlewares: [ensureTenantMiddleware(), authRoleMiddleware()],
-});
-/**@description send chat */
-registrar.post("/chat/send", {
-  controller: sendMessage,
-  middlewares: [ensureTenantMiddleware(), authRoleMiddleware()],
+  requestSchema: {
+    paramsSchema: { channelId: idValidation },
+    bodySchema: sendChatMessageSchema,
+  },
+  responseSchemas: [{ statusCode: 201, schema: chatMessageSchema }],
+  controller: saveChannelMessage,
 });
 
 export default registrar;

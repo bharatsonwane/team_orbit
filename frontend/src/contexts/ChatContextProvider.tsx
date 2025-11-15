@@ -238,7 +238,7 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
       id: tempId,
       messageCreatedAt: now,
       channelId: data.channelId,
-      senderId: 1, // Current user ID (should come from auth context)
+      senderUserId: 1, // Current user ID (should come from auth context)
       sender: {
         id: 1,
         name: "You",
@@ -455,7 +455,7 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
         id: newChannelId * 1000,
         messageCreatedAt: now,
         channelId: newChannelId,
-        senderId: 1,
+        senderUserId: 1,
         sender: {
           id: 1,
           name: "You",

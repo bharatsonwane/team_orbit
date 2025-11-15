@@ -40,7 +40,7 @@ export function ChatMessageList({ channelId }: ChatMessageListProps) {
               const prevMessage = index > 0 ? dateMessages[index - 1] : null;
               const showAvatar =
                 !prevMessage ||
-                prevMessage.senderId !== message.senderId ||
+                prevMessage.senderUserId !== message.senderUserId ||
                 new Date(message.createdAt).getTime() -
                   new Date(prevMessage.createdAt).getTime() >
                   300000; // 5 minutes

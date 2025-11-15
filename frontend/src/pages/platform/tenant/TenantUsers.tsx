@@ -122,13 +122,15 @@ export default function TenantUsers() {
       setUsers(userList);
 
       // Fetch total users count for pagination
-      const countResult = await dispatch(
-        getUsersCountAction({
-          searchText: searchTextValue.trim(),
-        })
-      ).unwrap();
-      setTotalUsersCount(countResult.count);
-    } catch (error) {}
+      // const countResult = await dispatch(
+      //   getUsersCountAction({
+      //     searchText: searchTextValue.trim(),
+      //   })
+      // ).unwrap();
+      // setTotalUsersCount(countResult.count);
+    } catch (error) {
+      console.error(error);
+    }
   };
 
   const handleSearchChange = (value: string) => {

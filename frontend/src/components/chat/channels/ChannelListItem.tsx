@@ -62,7 +62,9 @@ export function ChannelListItem({
             <div className="flex items-center gap-2 flex-1 min-w-0">
               <p className="text-sm text-muted-foreground truncate">
                 <span className="font-medium">
-                  {lastMessage.senderId === 1 ? "You" : lastMessage.sender.name}
+                  {lastMessage.senderUserId === 1
+                    ? "You"
+                    : lastMessage.sender.name}
                   :
                 </span>{" "}
                 {lastMessage.isDeleted ? (

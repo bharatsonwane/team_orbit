@@ -1,10 +1,12 @@
 import { NextFunction, Request, Response } from "express";
 import Chat from "@src/services/chat.service";
+import { chatSocket } from "@src/socket/chat.socket";
 import {
   ChatChannelListQuerySchema,
   chatChannelListQuerySchema,
-  ChatMessageSchema,
   CreateChatChannelSchema,
+  SendChatMessageSchema,
+  sendChatMessageSchema,
 } from "@src/schemas/chat.schema";
 import { AuthenticatedRequest } from "@src/middleware/authRoleMiddleware";
 
@@ -50,37 +52,32 @@ export const getChannelsForUser = async (
   }
 };
 
-export const sendMessage = async (
-  req: Request<{}, {}, ChatMessageSchema>,
+export const saveChannelMessage = async (
+  req: AuthenticatedRequest,
   res: Response,
   next: NextFunction
 ): Promise<void> => {
   try {
-    const {
-      text,
-      media,
-      senderUserId,
+    const userId = req.user.userId;
+    const channelId = Number(req.params.channelId);
+    const payload = req.body as SendChatMessageSchema;
+
+    const isMember = await Chat.isUserChannelMember(req.db, channelId, userId);
+    if (!isMember) {
+      throw {
+        statusCode: 403,
+        message: "You are not a member of this channel",
+      };
+    }
+
+    const message = await Chat.saveChannelMessage(req.db, {
       channelId,
-      deliveredTo,
-      readBy,
-      reaction,
-    } = req.body;
+      senderUserId: userId,
+      ...payload,
+    });
 
-    res.status(201).json({});
-  } catch (error) {
-    next(error);
-  }
-};
-
-export const getMessagesByChatChannel = async (
-  req: Request,
-  res: Response,
-  next: NextFunction
-): Promise<void> => {
-  try {
-    const { channelId } = req.params as { channelId: string };
-
-    res.status(200).json({});
+    res.status(201).json(message);
+    chatSocket.emitNewMessage(channelId, message);
   } catch (error) {
     next(error);
   }

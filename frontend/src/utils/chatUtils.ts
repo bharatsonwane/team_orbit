@@ -61,7 +61,7 @@ export const generateMockConversations = (): Conversation[] => {
       id: 1000 + index,
       messageCreatedAt: lastMessageTime.toISOString(),
       channelId,
-      senderId: index % 2 === 0 ? user.id : 1, // Alternate sender
+      senderUserId: index % 2 === 0 ? user.id : 1, // Alternate sender
       sender: index % 2 === 0 ? user : mockUsers[0],
       text:
         index % 2 === 0
@@ -127,19 +127,19 @@ export const generateMockMessages = (
       ];
 
   for (let i = 0; i < messageCount; i++) {
-    let senderId: number;
+    let senderUserId: number;
     let sender: ChatUser;
 
     if (isGroupChat) {
       // For group chats, randomly select from multiple users
       const randomIndex = Math.floor(Math.random() * groupChatUsers.length);
       const selectedUser = groupChatUsers[randomIndex];
-      senderId = selectedUser.id;
+      senderUserId = selectedUser.id;
       sender = selectedUser;
     } else {
       // For direct, alternate between participant and current user
       const isFromParticipant = i % 3 !== 0; // 2/3 messages from participant
-      senderId = isFromParticipant ? participantId : 1;
+      senderUserId = isFromParticipant ? participantId : 1;
       sender = isFromParticipant ? participant : groupChatUsers[0];
     }
 
@@ -166,17 +166,17 @@ export const generateMockMessages = (
       readBy =
         i >= messageCount - 3
           ? [1, ...mockUsers.slice(0, 3).map(u => u.id)]
-          : [senderId];
+          : [senderUserId];
     } else {
       // For direct, last 3 messages read by both participants
-      readBy = i >= messageCount - 3 ? [1, participantId] : [senderId];
+      readBy = i >= messageCount - 3 ? [1, participantId] : [senderUserId];
     }
 
     const message: ChatMessage = {
       id: channelId * 1000 + i,
       messageCreatedAt: messageTime.toISOString(),
       channelId,
-      senderId,
+      senderUserId,
       sender,
       text: messageTexts[i % messageTexts.length],
       isEdited: false,
@@ -184,7 +184,7 @@ export const generateMockMessages = (
       createdAt: messageTime.toISOString(),
       updatedAt: messageTime.toISOString(),
       reactions:
-        i % 5 === 0 && senderId !== 1 // Add reactions to messages from other users
+        i % 5 === 0 && senderUserId !== 1 // Add reactions to messages from other users
           ? [
               {
                 id: i * 10,
@@ -313,7 +313,7 @@ export const generateMockChannels = (): ChatChannel[] => {
         id: 2001,
         messageCreatedAt: new Date(baseTime - 3600000).toISOString(),
         channelId: 101,
-        senderId: 2,
+        senderUserId: 2,
         sender: mockUsers[0],
         text: "Has everyone reviewed the new design?",
         isEdited: false,
@@ -338,7 +338,7 @@ export const generateMockChannels = (): ChatChannel[] => {
         id: 2002,
         messageCreatedAt: new Date(baseTime - 1800000).toISOString(),
         channelId: 102,
-        senderId: 3,
+        senderUserId: 3,
         sender: mockUsers[1],
         text: "The bug fix has been deployed!",
         isEdited: false,
@@ -363,7 +363,7 @@ export const generateMockChannels = (): ChatChannel[] => {
         id: 2003,
         messageCreatedAt: new Date(baseTime - 7200000).toISOString(),
         channelId: 103,
-        senderId: 4,
+        senderUserId: 4,
         sender: mockUsers[2],
         text: "New design mockups are ready for review",
         isEdited: false,
@@ -388,7 +388,7 @@ export const generateMockChannels = (): ChatChannel[] => {
         id: 2004,
         messageCreatedAt: new Date(baseTime - 5400000).toISOString(),
         channelId: 104,
-        senderId: 5,
+        senderUserId: 5,
         sender: mockUsers[3],
         text: "Campaign launch is scheduled for next week",
         isEdited: false,
@@ -413,7 +413,7 @@ export const generateMockChannels = (): ChatChannel[] => {
         id: 2005,
         messageCreatedAt: new Date(baseTime - 10800000).toISOString(),
         channelId: 105,
-        senderId: 6,
+        senderUserId: 6,
         sender: mockUsers[4],
         text: "Who's up for lunch?",
         isEdited: false,

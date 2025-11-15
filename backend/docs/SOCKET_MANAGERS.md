@@ -84,7 +84,7 @@ chatManager.emitNewMessage(channelId, {
   messageId: 123,
   messageCreatedAt: "2024-01-01T00:00:00Z",
   channelId: 456,
-  senderId: 789,
+  senderUserId: 789,
   message: "Hello!",
 });
 

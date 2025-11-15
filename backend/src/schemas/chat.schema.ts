@@ -52,10 +52,27 @@ export const chatChannelListItemSchema = z.object({
 
 export const chatChannelListResponseSchema = z.array(chatChannelListItemSchema);
 
+export const sendChatMessageSchema = z
+  .object({
+    text: z
+      .string()
+      .trim()
+      .min(1, "Message must contain at least 1 character")
+      .max(5000, "Message is too long")
+      .optional(),
+    mediaUrl: z.string().url().max(1000).optional(),
+    replyToMessageId: z.number().int().positive().optional(),
+  })
+  .refine(data => data.text || data.mediaUrl, {
+    message: "Either text or mediaUrl is required",
+    path: ["text"],
+  });
+
 export const chatMessageSchema = z.object({
   id: z.number().int().optional(),
-  text: z.string().min(1, "Message is required"),
-  media: z.string().url().optional(),
+  text: z.string().min(1, "Message is required").optional(),
+  mediaUrl: z.string().url().optional(),
+  replyToMessageId: z.number().int().optional(),
   reaction: z.record(z.string(), z.any()).optional(),
   channelId: z.number().int().optional(),
   senderUserId: z.number().int().optional(),
@@ -75,12 +92,14 @@ export type ChatChannelListQuerySchema = z.infer<
 export type ChatChannelListItemSchema = z.infer<
   typeof chatChannelListItemSchema
 >;
+export type SendChatMessageSchema = z.infer<typeof sendChatMessageSchema>;
 
 /** @description OPENAPI SCHEMAS REGISTRATION */
 oasRegisterSchemas([
   { schemaName: "CreateChatChannelSchema", schema: createChatChannelSchema },
   { schemaName: "ChatChannelSchema", schema: chatChannelSchema },
   { schemaName: "ChatMessageSchema", schema: chatMessageSchema },
+  { schemaName: "SendChatMessageSchema", schema: sendChatMessageSchema },
   {
     schemaName: "ChatChannelListQuerySchema",
     schema: chatChannelListQuerySchema,

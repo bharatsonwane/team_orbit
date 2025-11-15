@@ -42,7 +42,7 @@ CREATE TABLE IF NOT EXISTS chat_channel_user_mapping (
 CREATE TABLE IF NOT EXISTS chat_message (
     id BIGSERIAL,
     "chatChannelId" INT NOT NULL REFERENCES chat_channel (id) ON DELETE CASCADE,
-    "senderId" INT NOT NULL REFERENCES main.users (id) ON DELETE CASCADE,
+    "senderUserId" INT NOT NULL REFERENCES main.users (id) ON DELETE CASCADE,
     "replyToMessageId" BIGINT,
     text TEXT,
     "mediaUrl" VARCHAR(500),

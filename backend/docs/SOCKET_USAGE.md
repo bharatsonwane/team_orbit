@@ -61,7 +61,7 @@ socket.emit("chat:send_message", {
 // New message received
 socket.on("chat:new_message", (data) => {
   console.log("New message:", data);
-  // data: { messageId, messageCreatedAt, channelId, senderId, message, mediaUrl, createdAt }
+  // data: { messageId, messageCreatedAt, channelId, senderUserId, message, mediaUrl, createdAt }
 });
 
 // User joined channel
@@ -88,7 +88,7 @@ eventHandler.emitToCategory(
     messageId: 123,
     messageCreatedAt: "2024-01-01T00:00:00Z",
     channelId: 456,
-    senderId: 789,
+    senderUserId: 789,
     message: "Hello!",
   },
   { channelId: 456 }

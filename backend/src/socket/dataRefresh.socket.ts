@@ -5,7 +5,7 @@ import logger from "../utils/logger";
  * Data Refresh Manager
  * Manages all data refresh-related Socket.IO functionality
  */
-class DataRefreshManager {
+class DataRefreshSocket {
   /**
    * Register data refresh event listeners
    */
@@ -267,5 +267,5 @@ class DataRefreshManager {
 }
 
 // Export singleton instance
-export const dataRefreshManager = new DataRefreshManager();
-export default dataRefreshManager;
+export const dataRefreshSocket = new DataRefreshSocket();
+export default dataRefreshSocket;

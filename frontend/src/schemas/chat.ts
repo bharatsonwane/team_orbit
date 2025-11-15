@@ -51,7 +51,7 @@ const chatMessageSchemaBase = z.object({
   id: z.number(),
   messageCreatedAt: z.string(), // For composite key with backend
   channelId: z.number(),
-  senderId: z.number(),
+  senderUserId: z.number(),
   sender: chatUserSchema,
   replyToMessageId: z.number().optional(),
   text: z.string().optional(),

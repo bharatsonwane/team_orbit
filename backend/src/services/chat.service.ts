@@ -3,7 +3,9 @@ import {
   ChatChannelSchema,
   ChatChannelListItemSchema,
   ChatChannelListQuerySchema,
+  ChatMessageSchema,
   CreateChatChannelSchema,
+  SendChatMessageSchema,
 } from "@src/schemas/chat.schema";
 import { dbTransactionKeys } from "@src/utils/constants";
 
@@ -11,7 +13,31 @@ interface CreateChannelParams extends CreateChatChannelSchema {
   createdBy: number;
 }
 
+interface SendChatMessageParams extends SendChatMessageSchema {
+  channelId: number;
+  senderUserId: number;
+}
+
 export default class Chat {
+  static async isUserChannelMember(
+    dbClient: dbClientPool,
+    channelId: number,
+    userId: number
+  ): Promise<boolean> {
+    const membership = await dbClient.tenantPool!.query(
+      `
+        SELECT 1
+        FROM chat_channel_user_mapping
+        WHERE "chatChannelId" = $1
+          AND "userId" = $2
+          AND "isActive" = TRUE;
+      `,
+      [channelId, userId]
+    );
+
+    return (membership?.rowCount ?? 0) > 0;
+  }
+
   static async createChannel(
     dbClient: dbClientPool,
     {
@@ -150,5 +176,64 @@ export default class Chat {
     );
 
     return channels;
+  }
+
+  static async saveChannelMessage(
+    dbClient: dbClientPool,
+    {
+      channelId,
+      senderUserId,
+      text,
+      mediaUrl,
+      replyToMessageId,
+    }: SendChatMessageParams
+  ): Promise<ChatMessageSchema> {
+    const tenantPool = dbClient.tenantPool!;
+
+    const insertQuery = `
+      INSERT INTO chat_message (
+        "chatChannelId",
+        "senderUserId",
+        "replyToMessageId",
+        text,
+        "mediaUrl",
+        "createdAt",
+        "updatedAt"
+      )
+      VALUES ($1, $2, $3, $4, $5, NOW(), NOW())
+      RETURNING
+        id,
+        "chatChannelId" AS "channelId",
+        "senderUserId",
+        "replyToMessageId",
+        text,
+        "mediaUrl",
+        "createdAt",
+        "updatedAt";
+    `;
+
+    const values = [
+      channelId,
+      senderUserId,
+      replyToMessageId ?? null,
+      text ?? null,
+      mediaUrl ?? null,
+    ];
+
+    const result = await tenantPool.query(insertQuery, values);
+    const row = result.rows[0];
+
+    return {
+      id: row.id,
+      channelId: row.channelId,
+      senderUserId: row.senderUserId,
+      text: row.text ?? undefined,
+      mediaUrl: row.mediaUrl ?? undefined,
+      replyToMessageId: row.replyToMessageId ?? undefined,
+      deliveredTo: [],
+      readBy: [],
+      createdAt: row.createdAt,
+      updatedAt: row.updatedAt,
+    };
   }
 }

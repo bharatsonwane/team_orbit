@@ -430,7 +430,7 @@ Manages chat messages and channels.
 
 #### Methods
 
-**`getMessagesByChatChannel(senderId: string, receiverId: string, tenantPool: Pool): Promise<Message[]>`**
+**`getMessagesByChatChannel(senderUserId: string, receiverId: string, tenantPool: Pool): Promise<Message[]>`**
 
 - Retrieves messages between users
 - Orders by timestamp

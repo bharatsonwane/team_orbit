@@ -5,7 +5,7 @@ import logger from "../utils/logger";
  * Notification Manager
  * Manages all notification-related Socket.IO functionality
  */
-class NotificationManager {
+class NotificationSocket {
   /**
    * Register notification event listeners
    */
@@ -245,5 +245,5 @@ class NotificationManager {
 }
 
 // Export singleton instance
-export const notificationManager = new NotificationManager();
-export default notificationManager;
+export const notificationSocket = new NotificationSocket();
+export default notificationSocket;

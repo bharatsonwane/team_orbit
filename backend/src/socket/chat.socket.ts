@@ -10,7 +10,7 @@ interface ChannelTracker {
  * Chat Manager
  * Manages all chat-related Socket.IO functionality
  */
-class ChatManager {
+class ChatSocket {
   /**
    * Register chat event listeners
    */
@@ -156,7 +156,7 @@ class ChatManager {
     //   messageId,
     //   messageCreatedAt,
     //   channelId,
-    //   senderId: socket.userId,
+    //   senderUserId: socket.userId,
     //   message,
     //   mediaUrl,
     //   createdAt: new Date().toISOString(),
@@ -501,5 +501,5 @@ class ChatManager {
 }
 
 // Export singleton instance
-export const chatManager = new ChatManager();
-export default chatManager;
+export const chatSocket = new ChatSocket();
+export default chatSocket;
