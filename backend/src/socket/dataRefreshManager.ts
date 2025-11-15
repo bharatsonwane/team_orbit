@@ -1,5 +1,4 @@
-import { Server } from "socket.io";
-import { AuthenticatedSocket } from "./socketManager";
+import { AuthenticatedSocket, requireSocketServer } from "./socketManager";
 import logger from "../utils/logger";
 
 /**
@@ -7,15 +6,6 @@ import logger from "../utils/logger";
  * Manages all data refresh-related Socket.IO functionality
  */
 class DataRefreshManager {
-  private io: Server | null = null;
-
-  /**
-   * Set Socket.IO server instance
-   */
-  setIO(io: Server): void {
-    this.io = io;
-  }
-
   /**
    * Register data refresh event listeners
    */
@@ -189,7 +179,8 @@ class DataRefreshManager {
       room?: string;
     }
   ): void {
-    if (!this.io && !target?.room) {
+    const io = requireSocketServer();
+    if (!io && !target?.room) {
       logger.warn(
         "Attempted to emit entity refresh before Socket.IO initialization"
       );
@@ -206,16 +197,16 @@ class DataRefreshManager {
 
     if (target?.room) {
       // Emit to specific room
-      this.io!.to(target.room).emit(eventName, eventData);
+      io?.to(target.room).emit(eventName, eventData);
     } else if (target?.channelId) {
       // Emit to channel room
-      this.io!.to(`channel_${target.channelId}`).emit(eventName, eventData);
+      io?.to(`channel_${target.channelId}`).emit(eventName, eventData);
     } else if (target?.userId) {
       // Emit to specific user
-      this.io!.to(`user_${target.userId}`).emit(eventName, eventData);
+      io?.to(`user_${target.userId}`).emit(eventName, eventData);
     } else {
       // Broadcast to all connected clients
-      this.io!.emit(eventName, eventData);
+      io?.emit(eventName, eventData);
     }
 
     logger.info("Entity refresh emitted", {

@@ -14,14 +14,13 @@ import {
   routeNotFoundMiddleware,
 } from "./middleware/errorMiddleware";
 import { dbClientMiddleware } from "./middleware/dbClientMiddleware";
-import { socketManager } from "./socket/socketManager";
+import { initializeSocketManagers } from "./socket/registerSocketManagers";
 
 async function main() {
   const app = express();
   const server = http.createServer(app);
 
-  // Initialize Socket.IO server (includes all managers and event listeners)
-  socketManager.initialize(server);
+  initializeSocketManagers(server);
   logger.info("Socket.IO server and all managers initialized");
 
   const PORT = envVariable.API_PORT;

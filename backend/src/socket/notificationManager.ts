@@ -1,5 +1,4 @@
-import { Server } from "socket.io";
-import { AuthenticatedSocket } from "./socketManager";
+import { AuthenticatedSocket, requireSocketServer } from "./socketManager";
 import logger from "../utils/logger";
 
 /**
@@ -7,15 +6,6 @@ import logger from "../utils/logger";
  * Manages all notification-related Socket.IO functionality
  */
 class NotificationManager {
-  private io: Server | null = null;
-
-  /**
-   * Set Socket.IO server instance
-   */
-  setIO(io: Server): void {
-    this.io = io;
-  }
-
   /**
    * Register notification event listeners
    */
@@ -111,7 +101,8 @@ class NotificationManager {
       data?: any;
     }
   ): void {
-    if (!this.io) {
+    const io = requireSocketServer();
+    if (!io) {
       logger.warn(
         "Attempted to send notification before Socket.IO initialization"
       );
@@ -119,7 +110,7 @@ class NotificationManager {
     }
 
     const userRoom = `user_${userId}`;
-    this.io.to(userRoom).emit("notification:new_notification", {
+    io.to(userRoom).emit("notification:new_notification", {
       ...notification,
       userId,
       timestamp: new Date().toISOString(),
@@ -145,7 +136,8 @@ class NotificationManager {
       data?: any;
     }
   ): void {
-    if (!this.io) {
+    const io = requireSocketServer();
+    if (!io) {
       logger.warn(
         "Attempted to send notifications before Socket.IO initialization"
       );
@@ -174,14 +166,15 @@ class NotificationManager {
     actionUrl?: string;
     data?: any;
   }): void {
-    if (!this.io) {
+    const io = requireSocketServer();
+    if (!io) {
       logger.warn(
         "Attempted to broadcast notification before Socket.IO initialization"
       );
       return;
     }
 
-    this.io.emit("notification:new_notification", {
+    io.emit("notification:new_notification", {
       ...notification,
       timestamp: new Date().toISOString(),
     });
@@ -195,7 +188,8 @@ class NotificationManager {
    * Emit notification marked as read
    */
   emitNotificationRead(userId: number, notificationId: number): void {
-    if (!this.io) {
+    const io = requireSocketServer();
+    if (!io) {
       logger.warn(
         "Attempted to emit notification read before Socket.IO initialization"
       );
@@ -203,7 +197,7 @@ class NotificationManager {
     }
 
     const userRoom = `user_${userId}`;
-    this.io.to(userRoom).emit("notification:marked_read", {
+    io.to(userRoom).emit("notification:marked_read", {
       userId,
       notificationId,
       timestamp: new Date().toISOString(),
@@ -214,7 +208,8 @@ class NotificationManager {
    * Emit unread count update to user
    */
   emitUnreadCount(userId: number, count: number): void {
-    if (!this.io) {
+    const io = requireSocketServer();
+    if (!io) {
       logger.warn(
         "Attempted to emit unread count before Socket.IO initialization"
       );
@@ -222,7 +217,7 @@ class NotificationManager {
     }
 
     const userRoom = `user_${userId}`;
-    this.io.to(userRoom).emit("notification:unread_count", {
+    io.to(userRoom).emit("notification:unread_count", {
       userId,
       count,
       timestamp: new Date().toISOString(),
@@ -233,7 +228,8 @@ class NotificationManager {
    * Emit all notifications read
    */
   emitAllNotificationsRead(userId: number): void {
-    if (!this.io) {
+    const io = requireSocketServer();
+    if (!io) {
       logger.warn(
         "Attempted to emit all notifications read before Socket.IO initialization"
       );
@@ -241,7 +237,7 @@ class NotificationManager {
     }
 
     const userRoom = `user_${userId}`;
-    this.io.to(userRoom).emit("notification:all_read", {
+    io.to(userRoom).emit("notification:all_read", {
       userId,
       timestamp: new Date().toISOString(),
     });

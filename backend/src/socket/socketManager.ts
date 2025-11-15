@@ -5,10 +5,6 @@ import { validateJwtToken } from "../utils/authHelper";
 import { JwtTokenPayload } from "../middleware/authRoleMiddleware";
 import logger from "../utils/logger";
 import { envVariable } from "../config/envVariable";
-import { chatManager } from "./chatManager";
-import { notificationManager } from "./notificationManager";
-import { dataRefreshManager } from "./dataRefreshManager";
-
 /**
  * Extended Socket interface with authenticated user data
  */
@@ -35,11 +31,26 @@ interface SocketConnection {
 type ActiveConnections = Map<number, SocketConnection>;
 
 /**
- * Connection Manager for Socket.IO
- * Tracks active connections and manages user-to-socket mapping
+ * Socket Manager (tracks connections + server)
  */
-class ConnectionManager {
+export interface ChannelTracker {
+  addChannelToUser(socket: AuthenticatedSocket, channelId: number): void;
+  removeChannelFromUser(socket: AuthenticatedSocket, channelId: number): void;
+}
+
+type ManagerRegistration = (
+  socket: AuthenticatedSocket,
+  tracker: ChannelTracker
+) => void;
+
+class SocketManager implements ChannelTracker {
+  private socketIo: Server | null = null;
   private connections: ActiveConnections = new Map();
+  private registrations: ManagerRegistration[] = [];
+
+  addRegistration(handler: ManagerRegistration): void {
+    this.registrations.push(handler);
+  }
 
   addConnection(socket: AuthenticatedSocket): void {
     if (!socket.userId) {
@@ -139,82 +150,6 @@ class ConnectionManager {
   getAllConnections(): ActiveConnections {
     return new Map(this.connections);
   }
-}
-
-/**
- * Socket.IO Authentication Middleware
- */
-const socketAuthMiddleware = (
-  io: Server,
-  socket: Socket,
-  next: (err?: ExtendedError) => void
-): void => {
-  try {
-    // Try to get token from handshake auth
-    const tokenFromAuth = socket.handshake.auth?.token;
-
-    // Try to get token from query parameters (fallback)
-    const tokenFromQuery = socket.handshake.query?.token as string | undefined;
-
-    // Try to get token from Authorization header (if sent as query)
-    const authHeader = socket.handshake.headers?.authorization;
-    const tokenFromHeader = authHeader
-      ? authHeader.split(" ")?.[1] || authHeader
-      : undefined;
-
-    // Get token from any of the sources
-    const token = tokenFromAuth || tokenFromQuery || tokenFromHeader;
-
-    if (!token) {
-      logger.warn("Socket.IO connection attempt without token", {
-        socketId: socket.id,
-      });
-      return next(new Error("Authentication token required"));
-    }
-
-    // Validate JWT token
-    const decodedToken = validateJwtToken(token) as JwtTokenPayload;
-
-    if (!decodedToken || !decodedToken.userId) {
-      logger.warn("Socket.IO connection with invalid token", {
-        socketId: socket.id,
-      });
-      return next(new Error("Invalid authentication token"));
-    }
-
-    // Attach user data to socket
-    const authenticatedSocket = socket as AuthenticatedSocket;
-    authenticatedSocket.user = decodedToken;
-    authenticatedSocket.userId = decodedToken.userId;
-    authenticatedSocket.tenantId = decodedToken.tenantId;
-
-    logger.info("Socket.IO authenticated successfully", {
-      socketId: socket.id,
-      userId: decodedToken.userId,
-      tenantId: decodedToken.tenantId,
-    });
-
-    next();
-  } catch (error) {
-    logger.error("Socket.IO authentication error", {
-      socketId: socket.id,
-      error: error instanceof Error ? error.message : String(error),
-    });
-    next(new Error("Authentication failed"));
-  }
-};
-
-/**
- * Main Socket Manager
- * Manages common Socket.IO functionality and coordinates all managers
- */
-class SocketManager {
-  private io: Server | null = null;
-  private connectionManager: ConnectionManager;
-
-  constructor() {
-    this.connectionManager = new ConnectionManager();
-  }
 
   /**
    * Initialize Socket.IO server
@@ -226,7 +161,7 @@ class SocketManager {
       envVariable.API_HOST ||
       "http://localhost:5173";
 
-    this.io = new Server(server, {
+    this.socketIo = new Server(server, {
       cors: {
         origin: frontendUrl,
         credentials: true,
@@ -237,17 +172,12 @@ class SocketManager {
     });
 
     // Apply authentication middleware
-    this.io.use((socket, next) => {
-      socketAuthMiddleware(this.io!, socket, next);
+    this.socketIo.use((socket, next) => {
+      this.authenticateSocket(socket, next);
     });
 
-    // Initialize all feature managers with IO instance
-    chatManager.setIO(this.io);
-    notificationManager.setIO(this.io);
-    dataRefreshManager.setIO(this.io);
-
     // Handle connections
-    this.io.on("connection", (socket: Socket) => {
+    this.socketIo.on("connection", (socket: Socket) => {
       this.handleConnection(socket as AuthenticatedSocket);
     });
 
@@ -255,7 +185,7 @@ class SocketManager {
       frontendUrl,
     });
 
-    return this.io;
+    return this.socketIo;
   }
 
   /**
@@ -274,7 +204,7 @@ class SocketManager {
     }
 
     // Add to connection manager
-    this.connectionManager.addConnection(socket);
+    this.addConnection(socket);
 
     // Join user-specific room for notifications and user-specific events
     const userRoom = `user_${userId}`;
@@ -295,8 +225,7 @@ class SocketManager {
       timestamp: new Date().toISOString(),
     });
 
-    // Register event listeners from feature managers
-    this.registerEventListeners(socket);
+    this.registrations.forEach(handler => handler(socket, this));
 
     // Handle disconnection
     socket.on("disconnect", reason => {
@@ -328,7 +257,7 @@ class SocketManager {
     const userId = socket.userId;
 
     // Remove from connection manager
-    this.connectionManager.removeConnection(socket);
+    this.removeConnection(socket);
 
     logger.info("User disconnected from Socket.IO", {
       socketId: socket.id,
@@ -338,7 +267,7 @@ class SocketManager {
 
     // Emit user offline event to relevant channels
     if (userId) {
-      const connection = this.connectionManager.getConnection(userId);
+      const connection = this.connections.get(userId);
       if (connection && connection.channels.size > 0) {
         connection.channels.forEach(channelId => {
           socket.to(`channel_${channelId}`).emit("presence:user_offline", {
@@ -351,39 +280,17 @@ class SocketManager {
   }
 
   /**
-   * Register event listeners from feature managers
-   */
-  private registerEventListeners(socket: AuthenticatedSocket): void {
-    // Pass room manager to socket for data refresh manager
-    (socket as any).roomManager = {
-      joinRoom: (s: AuthenticatedSocket, room: string) =>
-        this.joinRoom(s, room),
-      leaveRoom: (s: AuthenticatedSocket, room: string) =>
-        this.leaveRoom(s, room),
-    };
-
-    // Register chat event listeners
-    chatManager.registerListeners(socket, this.connectionManager);
-
-    // Register notification event listeners
-    notificationManager.registerListeners(socket);
-
-    // Register data refresh event listeners
-    dataRefreshManager.registerListeners(socket);
-  }
-
-  /**
    * Get Socket.IO server instance
    */
   getIO(): Server | null {
-    return this.io;
+    return this.socketIo;
   }
 
-  /**
-   * Get connection manager
-   */
-  getConnectionManager(): ConnectionManager {
-    return this.connectionManager;
+  requireIO(): Server {
+    if (!this.socketIo) {
+      throw new Error("Socket.IO server has not been initialized");
+    }
+    return this.socketIo;
   }
 
   /**
@@ -414,12 +321,12 @@ class SocketManager {
    * Emit event to a room
    */
   emitToRoom(roomName: string, event: string, data: any): void {
-    if (!this.io) {
+    if (!this.socketIo) {
       logger.warn("Attempted to emit to room before Socket.IO initialization");
       return;
     }
 
-    this.io.to(roomName).emit(event, {
+    this.socketIo.to(roomName).emit(event, {
       ...data,
       timestamp: new Date().toISOString(),
     });
@@ -429,14 +336,14 @@ class SocketManager {
    * Emit event to a specific user
    */
   emitToUser(userId: number, event: string, data: any): void {
-    if (!this.io) {
+    if (!this.socketIo) {
       logger.warn("Attempted to emit to user before Socket.IO initialization");
       return;
     }
 
-    const connection = this.connectionManager.getConnection(userId);
+    const connection = this.connections.get(userId);
     if (connection) {
-      this.io.to(connection.socketId).emit(event, {
+      this.socketIo.to(connection.socketId).emit(event, {
         ...data,
         timestamp: new Date().toISOString(),
       });
@@ -447,15 +354,63 @@ class SocketManager {
    * Broadcast event to all connected clients
    */
   broadcast(event: string, data: any): void {
-    if (!this.io) {
+    if (!this.socketIo) {
       logger.warn("Attempted to broadcast before Socket.IO initialization");
       return;
     }
 
-    this.io.emit(event, {
+    this.socketIo.emit(event, {
       ...data,
       timestamp: new Date().toISOString(),
     });
+  }
+
+  private authenticateSocket(
+    socket: Socket,
+    next: (err?: ExtendedError) => void
+  ): void {
+    try {
+      const token =
+        socket.handshake.auth?.token ||
+        (socket.handshake.query?.token as string | undefined) ||
+        socket.handshake.headers?.authorization?.split(" ")?.[1] ||
+        socket.handshake.headers?.authorization;
+
+      if (!token) {
+        logger.warn("Socket.IO connection attempt without token", {
+          socketId: socket.id,
+        });
+        return next(new Error("Authentication token required"));
+      }
+
+      const decodedToken = validateJwtToken(token) as JwtTokenPayload;
+
+      if (!decodedToken || !decodedToken.userId) {
+        logger.warn("Socket.IO connection with invalid token", {
+          socketId: socket.id,
+        });
+        return next(new Error("Invalid authentication token"));
+      }
+
+      const authenticatedSocket = socket as AuthenticatedSocket;
+      authenticatedSocket.user = decodedToken;
+      authenticatedSocket.userId = decodedToken.userId;
+      authenticatedSocket.tenantId = decodedToken.tenantId;
+
+      logger.info("Socket.IO authenticated successfully", {
+        socketId: socket.id,
+        userId: decodedToken.userId,
+        tenantId: decodedToken.tenantId,
+      });
+
+      next();
+    } catch (error) {
+      logger.error("Socket.IO authentication error", {
+        socketId: socket.id,
+        error: error instanceof Error ? error.message : String(error),
+      });
+      next(new Error("Authentication failed"));
+    }
   }
 }
 
@@ -463,7 +418,6 @@ class SocketManager {
 export const socketManager = new SocketManager();
 export default socketManager;
 
-// Internal types (exported for use by managers)
-export type { SocketConnection };
-export type { ActiveConnections };
-export type { ConnectionManager };
+export const getSocketServer = (): Server | null => socketManager.getIO();
+
+export const requireSocketServer = (): Server => socketManager.requireIO();

@@ -1,27 +1,22 @@
-import { Server } from "socket.io";
-import { AuthenticatedSocket, ConnectionManager } from "./socketManager";
+import { AuthenticatedSocket, requireSocketServer } from "./socketManager";
 import logger from "../utils/logger";
+
+interface ChannelTracker {
+  addChannelToUser(socket: AuthenticatedSocket, channelId: number): void;
+  removeChannelFromUser(socket: AuthenticatedSocket, channelId: number): void;
+}
 
 /**
  * Chat Manager
  * Manages all chat-related Socket.IO functionality
  */
 class ChatManager {
-  private io: Server | null = null;
-
-  /**
-   * Set Socket.IO server instance
-   */
-  setIO(io: Server): void {
-    this.io = io;
-  }
-
   /**
    * Register chat event listeners
    */
   registerListeners(
     socket: AuthenticatedSocket,
-    connectionManager: ConnectionManager
+    connectionManager: ChannelTracker
   ): void {
     // Join channel
     socket.on("chat:join_channel", async data => {
@@ -75,7 +70,7 @@ class ChatManager {
   private async handleJoinChannel(
     socket: AuthenticatedSocket,
     data: any,
-    connectionManager: ConnectionManager
+    connectionManager: ChannelTracker
   ): Promise<void> {
     const { channelId } = data;
 
@@ -105,7 +100,7 @@ class ChatManager {
   private async handleLeaveChannel(
     socket: AuthenticatedSocket,
     data: any,
-    connectionManager: ConnectionManager
+    connectionManager: ChannelTracker
   ): Promise<void> {
     const { channelId } = data;
 
@@ -326,13 +321,8 @@ class ChatManager {
   joinChannel(
     socket: AuthenticatedSocket,
     channelId: number,
-    connectionManager: ConnectionManager
+    connectionManager: ChannelTracker
   ): void {
-    if (!this.io) {
-      logger.warn("Attempted to join channel before Socket.IO initialization");
-      return;
-    }
-
     const roomName = `channel_${channelId}`;
     socket.join(roomName);
 
@@ -360,13 +350,8 @@ class ChatManager {
   leaveChannel(
     socket: AuthenticatedSocket,
     channelId: number,
-    connectionManager: ConnectionManager
+    connectionManager: ChannelTracker
   ): void {
-    if (!this.io) {
-      logger.warn("Attempted to leave channel before Socket.IO initialization");
-      return;
-    }
-
     const roomName = `channel_${channelId}`;
     socket.leave(roomName);
 
@@ -392,12 +377,13 @@ class ChatManager {
    * Emit new message to channel
    */
   emitNewMessage(channelId: number, messageData: any): void {
-    if (!this.io) {
+    const io = requireSocketServer();
+    if (!io) {
       logger.warn("Attempted to emit message before Socket.IO initialization");
       return;
     }
 
-    this.io.to(`channel_${channelId}`).emit("chat:new_message", {
+    io.to(`channel_${channelId}`).emit("chat:new_message", {
       ...messageData,
       timestamp: new Date().toISOString(),
     });
@@ -407,14 +393,15 @@ class ChatManager {
    * Emit message edited to channel
    */
   emitMessageEdited(channelId: number, messageData: any): void {
-    if (!this.io) {
+    const io = requireSocketServer();
+    if (!io) {
       logger.warn(
         "Attempted to emit message edit before Socket.IO initialization"
       );
       return;
     }
 
-    this.io.to(`channel_${channelId}`).emit("chat:message_edited", {
+    io.to(`channel_${channelId}`).emit("chat:message_edited", {
       ...messageData,
       timestamp: new Date().toISOString(),
     });
@@ -424,14 +411,15 @@ class ChatManager {
    * Emit message deleted to channel
    */
   emitMessageDeleted(channelId: number, messageData: any): void {
-    if (!this.io) {
+    const io = requireSocketServer();
+    if (!io) {
       logger.warn(
         "Attempted to emit message delete before Socket.IO initialization"
       );
       return;
     }
 
-    this.io.to(`channel_${channelId}`).emit("chat:message_deleted", {
+    io.to(`channel_${channelId}`).emit("chat:message_deleted", {
       ...messageData,
       timestamp: new Date().toISOString(),
     });
@@ -441,12 +429,13 @@ class ChatManager {
    * Emit typing indicator to channel
    */
   emitTyping(channelId: number, userId: number, isTyping: boolean): void {
-    if (!this.io) {
+    const io = requireSocketServer();
+    if (!io) {
       logger.warn("Attempted to emit typing before Socket.IO initialization");
       return;
     }
 
-    this.io.to(`channel_${channelId}`).emit("chat:typing", {
+    io.to(`channel_${channelId}`).emit("chat:typing", {
       userId,
       channelId,
       isTyping,
@@ -458,14 +447,15 @@ class ChatManager {
    * Emit read receipt to channel
    */
   emitReadReceipt(channelId: number, userId: number, messageId: number): void {
-    if (!this.io) {
+    const io = requireSocketServer();
+    if (!io) {
       logger.warn(
         "Attempted to emit read receipt before Socket.IO initialization"
       );
       return;
     }
 
-    this.io.to(`channel_${channelId}`).emit("chat:read_receipt", {
+    io.to(`channel_${channelId}`).emit("chat:read_receipt", {
       userId,
       channelId,
       messageId,
@@ -477,12 +467,13 @@ class ChatManager {
    * Emit reaction to channel
    */
   emitReaction(channelId: number, reactionData: any): void {
-    if (!this.io) {
+    const io = requireSocketServer();
+    if (!io) {
       logger.warn("Attempted to emit reaction before Socket.IO initialization");
       return;
     }
 
-    this.io.to(`channel_${channelId}`).emit("chat:reaction", {
+    io.to(`channel_${channelId}`).emit("chat:reaction", {
       ...reactionData,
       channelId,
       timestamp: new Date().toISOString(),
@@ -493,14 +484,15 @@ class ChatManager {
    * Emit channel updated to all channel members
    */
   emitChannelUpdated(channelId: number, channelData: any): void {
-    if (!this.io) {
+    const io = requireSocketServer();
+    if (!io) {
       logger.warn(
         "Attempted to emit channel update before Socket.IO initialization"
       );
       return;
     }
 
-    this.io.to(`channel_${channelId}`).emit("chat:channel_updated", {
+    io.to(`channel_${channelId}`).emit("chat:channel_updated", {
       ...channelData,
       channelId,
       timestamp: new Date().toISOString(),
