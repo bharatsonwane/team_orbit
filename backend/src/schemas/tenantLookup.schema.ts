@@ -1,7 +1,7 @@
+import { oasRegisterSchemas } from "@src/openApiSpecification/openAPIDocumentGenerator";
 import { z } from "zod";
 
-// ==================== TENANT LOOKUP TYPE SCHEMAS ====================
-
+/** @description ZOD SCHEMAS */
 export const tenantLookupTypeSchema = z.object({
   id: z.number(),
   name: z.string(),
@@ -11,10 +11,6 @@ export const tenantLookupTypeSchema = z.object({
   createdAt: z.date(),
   updatedAt: z.date(),
 });
-
-export type TenantLookupType = z.infer<typeof tenantLookupTypeSchema>;
-
-// ==================== TENANT LOOKUP SCHEMAS ====================
 
 export const tenantLookupSchema = z.object({
   id: z.number(),
@@ -26,16 +22,10 @@ export const tenantLookupSchema = z.object({
   lookupTypeId: z.number(),
 });
 
-export type TenantLookup = z.infer<typeof tenantLookupSchema>;
-
 export const tenantLookupWithTypeSchema = tenantLookupSchema.extend({
   lookupTypeName: z.string(),
   lookupTypeLabel: z.string(),
 });
-
-export type TenantLookupWithType = z.infer<typeof tenantLookupWithTypeSchema>;
-
-// ==================== REQUEST/RESPONSE SCHEMAS ====================
 
 export const tenantLookupTypesListSchema = z.object({
   success: z.boolean(),
@@ -61,10 +51,6 @@ export const createTenantLookupRequestSchema = z.object({
   createdBy: z.string().optional(),
 });
 
-export type CreateTenantLookupRequest = z.infer<
-  typeof createTenantLookupRequestSchema
->;
-
 export const updateTenantLookupRequestSchema = z.object({
   lookupTypeId: z.number().min(1),
   name: z.string().min(1),
@@ -76,6 +62,40 @@ export const updateTenantLookupRequestSchema = z.object({
   isArchived: z.boolean().optional(),
 });
 
+/** @description SCHEMAS TYPES */
+export type TenantLookupType = z.infer<typeof tenantLookupTypeSchema>;
+export type TenantLookup = z.infer<typeof tenantLookupSchema>;
+export type TenantLookupWithType = z.infer<typeof tenantLookupWithTypeSchema>;
+export type CreateTenantLookupRequest = z.infer<
+  typeof createTenantLookupRequestSchema
+>;
 export type UpdateTenantLookupRequest = z.infer<
   typeof updateTenantLookupRequestSchema
 >;
+
+/** @description OPENAPI SCHEMAS REGISTRATION */
+oasRegisterSchemas([
+  { schemaName: "TenantLookupTypeSchema", schema: tenantLookupTypeSchema },
+  { schemaName: "TenantLookupSchema", schema: tenantLookupSchema },
+  {
+    schemaName: "TenantLookupWithTypeSchema",
+    schema: tenantLookupWithTypeSchema,
+  },
+  {
+    schemaName: "TenantLookupTypesListSchema",
+    schema: tenantLookupTypesListSchema,
+  },
+  { schemaName: "TenantLookupsListSchema", schema: tenantLookupsListSchema },
+  {
+    schemaName: "TenantLookupsWithTypeListSchema",
+    schema: tenantLookupsWithTypeListSchema,
+  },
+  {
+    schemaName: "CreateTenantLookupRequestSchema",
+    schema: createTenantLookupRequestSchema,
+  },
+  {
+    schemaName: "UpdateTenantLookupRequestSchema",
+    schema: updateTenantLookupRequestSchema,
+  },
+]);

@@ -1,14 +1,28 @@
-import express, { Router, RequestHandler } from "express";
+import express, {
+  Router,
+  RequestHandler,
+  Response,
+  NextFunction,
+} from "express";
 import { validateRequest } from "@src/middleware/validationMiddleware";
 import {
   bearerAuth,
   tenantSchemaHeader,
 } from "@src/openApiSpecification/openAPIDocumentGenerator";
 import { commonDocCreator } from "@src/openApiSpecification/openAPIDocumentGenerator";
+import type { AuthenticatedRequest } from "@src/middleware/authRoleMiddleware";
+
+type AuthAwareHandler = (
+  req: AuthenticatedRequest,
+  res: Response,
+  next: NextFunction
+) => void | Promise<void>;
+
+type ControllerHandler = RequestHandler | AuthAwareHandler;
+type MiddlewareHandler = RequestHandler | AuthAwareHandler;
 
 interface RouteOptions {
-  middlewares?: RequestHandler[];
-  controller: RequestHandler;
+  middlewares?: MiddlewareHandler[];
   oasSchema?: (config: OpenApiDocConfig) => void;
   requestSchema?: {
     bodySchema?: any;
@@ -16,6 +30,7 @@ interface RouteOptions {
     paramsSchema?: any;
   };
   responseSchemas?: { statusCode: number; schema: any }[];
+  controller: ControllerHandler;
 }
 
 interface OpenApiDocConfig {
@@ -30,6 +45,24 @@ interface OpenApiDocConfig {
 interface ConstructorOptions {
   basePath?: string;
   tags?: string[];
+}
+
+function wrapHandler(handler: ControllerHandler): RequestHandler {
+  return (req, res, next) => {
+    const maybePromise = (handler as AuthAwareHandler)(
+      req as AuthenticatedRequest,
+      res,
+      next
+    );
+
+    if (
+      maybePromise &&
+      typeof (maybePromise as Promise<void>).then === "function" &&
+      typeof (maybePromise as Promise<void>).catch === "function"
+    ) {
+      (maybePromise as Promise<void>).catch(next);
+    }
+  };
 }
 
 class RouteRegistrar {
@@ -101,10 +134,12 @@ class RouteRegistrar {
     }
 
     if (middlewares?.length > 0) {
-      middlewareList.push(...middlewares);
+      middlewares.forEach(middleware => {
+        middlewareList.push(wrapHandler(middleware));
+      });
     }
 
-    middlewareList.push(controller);
+    middlewareList.push(wrapHandler(controller));
 
     (this.router as any)[method](path, ...middlewareList);
   }

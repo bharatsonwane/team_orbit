@@ -137,7 +137,7 @@ export const generateMockMessages = (
       senderId = selectedUser.id;
       sender = selectedUser;
     } else {
-      // For one-to-one, alternate between participant and current user
+      // For direct, alternate between participant and current user
       const isFromParticipant = i % 3 !== 0; // 2/3 messages from participant
       senderId = isFromParticipant ? participantId : 1;
       sender = isFromParticipant ? participant : groupChatUsers[0];
@@ -168,7 +168,7 @@ export const generateMockMessages = (
           ? [1, ...mockUsers.slice(0, 3).map(u => u.id)]
           : [senderId];
     } else {
-      // For one-to-one, last 3 messages read by both participants
+      // For direct, last 3 messages read by both participants
       readBy = i >= messageCount - 3 ? [1, participantId] : [senderId];
     }
 
@@ -431,3 +431,5 @@ export const generateMockChannels = (): ChatChannel[] => {
     (a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
   );
 };
+
+export const getMockChatUsers = (): ChatUser[] => mockUsers;

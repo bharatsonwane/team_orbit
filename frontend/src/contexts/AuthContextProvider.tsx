@@ -23,6 +23,7 @@ import { getTenantIdFromUrl } from "@/utils/tenantHelper";
 import { getLookupListAction } from "@/redux/actions/lookupAction";
 import { useDispatch } from "react-redux";
 import { getTenantLookupListAction } from "@/redux/actions/tenantLookupActions";
+import { getTenantAction } from "@/redux/actions/tenantActions";
 
 // Auth context type
 export interface AuthContextType {
@@ -117,6 +118,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   useEffect(() => {
     if (tenantIdFromUrl) {
       dispatch(getTenantLookupListAction());
+      dispatch(getTenantAction(tenantIdFromUrl));
     }
   }, [dispatch, tenantIdFromUrl]);
 

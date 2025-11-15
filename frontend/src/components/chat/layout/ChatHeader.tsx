@@ -16,10 +16,10 @@ interface ChatHeaderProps {
 }
 
 export function ChatHeader({ conversation, channel }: ChatHeaderProps) {
-  const isOneToOne = !!conversation;
+  const isDirect = !!conversation;
   const isGroupChat = !!channel;
 
-  if (isOneToOne && conversation) {
+  if (isDirect && conversation) {
     const { participant } = conversation;
 
     return (
@@ -90,7 +90,7 @@ export function ChatHeader({ conversation, channel }: ChatHeaderProps) {
               <AvatarImage src={channel.avatar} alt={channel.name} />
             ) : (
               <AvatarFallback className="bg-muted">
-                {channel.type === "private" ? (
+                {channel.type === "direct" ? (
                   <Lock className="w-5 h-5 text-muted-foreground" />
                 ) : (
                   <Hash className="w-5 h-5 text-muted-foreground" />
@@ -103,7 +103,7 @@ export function ChatHeader({ conversation, channel }: ChatHeaderProps) {
               <h2 className="font-semibold text-sm truncate">
                 #{channel.name}
               </h2>
-              {channel.type === "private" && (
+              {channel.type === "direct" && (
                 <Lock className="w-3 h-3 text-muted-foreground" />
               )}
             </div>

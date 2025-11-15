@@ -14,7 +14,7 @@ import {
   tenantLookupsWithTypeListSchema,
   updateTenantLookupRequestSchema,
 } from "@src/schemas/tenantLookup.schema";
-import { tenantHeaderMiddleware } from "@src/middleware/tenantHeaderMiddleware";
+import { ensureTenantMiddleware } from "@src/middleware/ensureTenantMiddleware";
 import { authRoleMiddleware } from "@src/middleware/authRoleMiddleware";
 import { userRoleKeys } from "@src/utils/constants";
 
@@ -25,33 +25,27 @@ const registrar = new RouteRegistrar({
 
 /**@description Get all tenant lookups */
 registrar.get("/tenant-lookup/list", {
+  middlewares: [ensureTenantMiddleware()],
   responseSchemas: [
     { statusCode: 200, schema: tenantLookupsWithTypeListSchema },
   ],
-  middlewares: [tenantHeaderMiddleware()],
   controller: getTenantLookupList,
 });
 
 /**@description Get tenant lookup list by lookup type id */
 registrar.get("/tenant-lookup/type/:id", {
+  middlewares: [ensureTenantMiddleware()],
   requestSchema: {
     paramsSchema: { id: idValidation },
   },
   responseSchemas: [{ statusCode: 200, schema: tenantLookupTypesListSchema }],
-  middlewares: [tenantHeaderMiddleware()],
   controller: getTenantLookupTypeById,
 });
 
 /** @description Update tenant lookup by lookup ID */
 registrar.put("/tenant-lookup/:id", {
-  requestSchema: {
-    paramsSchema: { id: idValidation },
-    bodySchema: updateTenantLookupRequestSchema,
-  },
-
-  responseSchemas: [{ statusCode: 200, schema: tenantLookupSchema }],
   middlewares: [
-    tenantHeaderMiddleware(),
+    ensureTenantMiddleware(),
     authRoleMiddleware(
       userRoleKeys.PLATFORM_SUPER_ADMIN,
       userRoleKeys.PLATFORM_ADMIN,
@@ -59,17 +53,18 @@ registrar.put("/tenant-lookup/:id", {
       userRoleKeys.TENANT_ADMIN
     ),
   ],
+  requestSchema: {
+    paramsSchema: { id: idValidation },
+    bodySchema: updateTenantLookupRequestSchema,
+  },
+  responseSchemas: [{ statusCode: 200, schema: tenantLookupSchema }],
   controller: updateTenantLookupById,
 });
 
 /** @description Create tenant lookup */
 registrar.post("/tenant-lookup/", {
-  requestSchema: {
-    bodySchema: createTenantLookupRequestSchema,
-  },
-  responseSchemas: [{ statusCode: 201, schema: tenantLookupSchema }],
   middlewares: [
-    tenantHeaderMiddleware(),
+    ensureTenantMiddleware(),
     authRoleMiddleware(
       userRoleKeys.PLATFORM_SUPER_ADMIN,
       userRoleKeys.PLATFORM_ADMIN,
@@ -77,6 +72,10 @@ registrar.post("/tenant-lookup/", {
       userRoleKeys.TENANT_ADMIN
     ),
   ],
+  requestSchema: {
+    bodySchema: createTenantLookupRequestSchema,
+  },
+  responseSchemas: [{ statusCode: 201, schema: tenantLookupSchema }],
   controller: createTenantLookupById,
 });
 

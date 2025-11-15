@@ -4,6 +4,7 @@ import userSlice from "./slices/userSlice";
 import tenantSlice from "./slices/tenantSlice";
 import lookupSlice from "./slices/lookupSlice";
 import tenantLookupSlice from "./slices/tenantLookupSlice";
+import chatSlice from "./slices/chatSlice";
 
 // Root state type
 export interface RootState {
@@ -12,6 +13,7 @@ export interface RootState {
   tenant: ReturnType<typeof tenantSlice.reducer>;
   lookup: ReturnType<typeof lookupSlice.reducer>;
   tenantLookup: ReturnType<typeof tenantLookupSlice.reducer>;
+  chat: ReturnType<typeof chatSlice.reducer>;
 }
 
 // Configure the store
@@ -22,6 +24,7 @@ export const store = configureStore({
     tenant: tenantSlice.reducer,
     lookup: lookupSlice.reducer,
     tenantLookup: tenantLookupSlice.reducer,
+    chat: chatSlice.reducer,
   },
   middleware: getDefaultMiddleware =>
     getDefaultMiddleware({

@@ -16,15 +16,12 @@ export default class Tenant {
    * Create a new tenant
    */
   static async createTenant(
-    db: dbClientPool,
+    dbClient: dbClientPool,
     { tenantData }: { tenantData: CreateTenantSchema }
   ): Promise<TenantWithTrackingSchema> {
-    const client = db;
-    const dbClient: dbClientPool = { mainPool: client.mainPool };
-
     try {
       // Start transaction
-      await client.mainPool.query(dbTransactionKeys.BEGIN);
+      await dbClient.mainPool.query(dbTransactionKeys.BEGIN);
 
       // Create the tenant
       const tenantQuery = `

@@ -5,7 +5,7 @@ import logger from "@src/utils/logger";
 
 export interface dbClientPool {
   mainPool: PoolClient;
-  tenantPool?: PoolClient;
+  tenantPool: PoolClient;
 }
 
 // Extend Express Request interface to include database pools
@@ -13,6 +13,7 @@ declare global {
   namespace Express {
     interface Request {
       db: dbClientPool;
+      xTenantId: number;
     }
   }
 }

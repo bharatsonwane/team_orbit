@@ -62,7 +62,7 @@ export class TenantLookupService {
     `;
 
     // Execute the queryString
-    const results = (await dbClient.tenantPool?.query(queryString))?.rows || [];
+    const results = (await dbClient.tenantPool!.query(queryString))?.rows || [];
     return results;
   }
 
@@ -74,7 +74,7 @@ export class TenantLookupService {
   ): Promise<
     (TenantLookup & { lookupTypeName: string; lookupTypeLabel: string })[]
   > {
-    const result = await dbClient.tenantPool?.query(
+    const result = await dbClient.tenantPool!.query(
       `SELECT 
          l.id, l.name, l.label, l.description, l."sortOrder",
          l."isSystem", l."isArchived", l."lookupTypeId",
@@ -127,7 +127,7 @@ export class TenantLookupService {
       ORDER BY lt.id;
     `;
 
-    const result = await dbClient.tenantPool?.query(queryString, [id]);
+    const result = await dbClient.tenantPool!.query(queryString, [id]);
     return result?.rows[0] || null;
   }
 
@@ -151,7 +151,7 @@ export class TenantLookupService {
         "isSystem", "isArchived", "createdAt", "updatedAt";
     `;
 
-    const result = await dbClient.tenantPool?.query(query);
+    const result = await dbClient.tenantPool!.query(query);
     return result?.rows[0] || null;
   }
 
@@ -180,7 +180,7 @@ export class TenantLookupService {
         "isSystem", "isArchived", "createdAt", "updatedAt";
     `;
 
-    const result = await dbClient.tenantPool?.query(queryString);
+    const result = await dbClient.tenantPool!.query(queryString);
     return result?.rows[0] || null;
   }
 }

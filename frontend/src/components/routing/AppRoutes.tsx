@@ -518,11 +518,11 @@ export const tenantSidebarNavigationItems: SidebarRouteWithChildren[] = [
     allowedRoles: [userRoleKeys.ANY],
     childItems: [
       {
-        title: "One-to-One Chats",
+        title: "Direct Chats",
         isShownInSidebar: true,
         icon: User,
-        href: "/tenant/:tenantId/chat/one-to-one",
-        path: "/tenant/:tenantId/chat/one-to-one",
+        href: "/tenant/:tenantId/chat/direct",
+        path: "/tenant/:tenantId/chat/direct",
         allowedRoles: [userRoleKeys.ANY],
         element: <OneToOneChat />,
       },

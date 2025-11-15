@@ -511,7 +511,7 @@ static async getData(id: string, mainPool: Pool): Promise<Data> {
 
 // ✅ Good: Use dbClient for tenant-specific operations
 static async getTenantData(dbClient: dbClientPool, userId: number): Promise<Data> {
-  const result = await dbClient.tenantPool?.query('SELECT * FROM tenant_table WHERE "userId" = $1', [userId]);
+  const result = await dbClient.tenantPool!.query('SELECT * FROM tenant_table WHERE "userId" = $1', [userId]);
   return result?.rows[0];
 }
 
@@ -535,18 +535,18 @@ static async saveUserContacts(
 ): Promise<void> {
   try {
     // Start transaction on tenant pool
-    await dbClient.tenantPool?.query(dbTransactionKeys.BEGIN);
+    await dbClient.tenantPool!.query(dbTransactionKeys.BEGIN);
     
     // Perform tenant-specific operations
-    await dbClient.tenantPool?.query(
+    await dbClient.tenantPool!.query(
       'INSERT INTO user_contacts ("userId", "contactTypeId", value) VALUES ($1, $2, $3)',
       [userId, contactTypeId, contactData.personalEmail]
     );
     
     // Commit transaction
-    await dbClient.tenantPool?.query(dbTransactionKeys.COMMIT);
+    await dbClient.tenantPool!.query(dbTransactionKeys.COMMIT);
   } catch (error) {
-    await dbClient.tenantPool?.query(dbTransactionKeys.ROLLBACK);
+    await dbClient.tenantPool!.query(dbTransactionKeys.ROLLBACK);
     throw error;
   }
 }

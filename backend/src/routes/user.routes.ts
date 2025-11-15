@@ -38,7 +38,7 @@ import {
 import RouteRegistrar from "@src/middleware/RouteRegistrar";
 import { authRoleMiddleware } from "@src/middleware/authRoleMiddleware";
 import { userRoleKeys } from "@src/utils/constants";
-import { tenantHeaderMiddleware } from "@src/middleware/tenantHeaderMiddleware";
+import { ensureTenantMiddleware } from "@src/middleware/ensureTenantMiddleware";
 
 const registrar = new RouteRegistrar({
   basePath: "/api",
@@ -55,8 +55,8 @@ registrar.post("/user/login", {
 /**@description get user profile  */
 registrar.get("/user/profile", {
   middlewares: [authRoleMiddleware()],
-  controller: getUserProfile,
   oasSchema: getUserProfileOASSchema,
+  controller: getUserProfile,
 });
 
 /**@description update user password  */
@@ -72,6 +72,7 @@ registrar.put("/user/:id/password/", {
 
 /**@description update user authentication email  */
 registrar.put("/user/:id/auth-email/", {
+  middlewares: [authRoleMiddleware()],
   requestSchema: {
     paramsSchema: { id: idValidation },
     bodySchema: updateUserAuthEmailSchema,
@@ -85,20 +86,20 @@ registrar.put("/user/:id/auth-email/", {
       }),
     },
   ],
-  middlewares: [authRoleMiddleware()],
   controller: updateUserAuthEmail,
 });
 
 /**@description get all users with optional filtering */
 registrar.get("/user/list", {
+  middlewares: [ensureTenantMiddleware(), authRoleMiddleware()],
   oasSchema: getUserOASSchema,
   requestSchema: { querySchema: getUsersQuerySchema },
-  middlewares: [tenantHeaderMiddleware(), authRoleMiddleware()],
   controller: getUsers,
 });
 
 /**@description get users count with optional search filtering */
 registrar.get("/count", {
+  middlewares: [ensureTenantMiddleware(), authRoleMiddleware()],
   requestSchema: {
     querySchema: getUsersCountQuerySchema,
   },
@@ -108,12 +109,12 @@ registrar.get("/count", {
       schema: getUsersCountResponseSchema,
     },
   ],
-  middlewares: [tenantHeaderMiddleware(), authRoleMiddleware()],
   controller: getUsersCount,
 });
 
 /**@description get user authentication email  */
 registrar.get("/user/:id/auth-email/", {
+  middlewares: [authRoleMiddleware()],
   requestSchema: {
     paramsSchema: { id: idValidation },
   },
@@ -125,79 +126,78 @@ registrar.get("/user/:id/auth-email/", {
       }),
     },
   ],
-  middlewares: [authRoleMiddleware()],
   controller: getUserAuthEmail,
 });
 
 /**@description update user status and roles  */
 registrar.put("/user/:id/status-roles/", {
+  middlewares: [authRoleMiddleware()],
   requestSchema: {
     paramsSchema: { id: idValidation },
     bodySchema: updateUserStatusAndRolesSchema,
   },
-  middlewares: [authRoleMiddleware()],
   controller: updateUserStatusAndRoles,
 });
 
 /**@description Create User with Personal Information */
 registrar.post("/user/personal", {
+  middlewares: [authRoleMiddleware()],
   requestSchema: { bodySchema: createUserSchema },
   responseSchemas: [{ statusCode: 201, schema: z.object({ id: z.number() }) }],
-  middlewares: [authRoleMiddleware()],
   controller: createUser,
 });
 
 /**@description Update user personal information by id  */
 registrar.put("/user/:id/personal", {
+  middlewares: [authRoleMiddleware()],
   requestSchema: {
     paramsSchema: { id: idValidation },
     bodySchema: baseUserSchema.partial(),
   },
   responseSchemas: [{ statusCode: 200, schema: z.object({ id: z.number() }) }],
-  middlewares: [authRoleMiddleware()],
   controller: updateUserProfile,
 });
 
 /**@description get user by id  */
 registrar.get("/user/:id/personal", {
-  requestSchema: { paramsSchema: { id: idValidation } },
   middlewares: [authRoleMiddleware()],
+  requestSchema: { paramsSchema: { id: idValidation } },
   controller: getUserById,
 });
 
 /**@description get user contacts by id  */
 registrar.get("/user/:id/contacts", {
+  middlewares: [authRoleMiddleware(), ensureTenantMiddleware()],
   requestSchema: { paramsSchema: { id: idValidation } },
-  middlewares: [authRoleMiddleware(), tenantHeaderMiddleware()],
   controller: getUserContacts,
 });
 
 /**@description Save/Update user contact information  */
 registrar.put("/user/:id/contacts", {
+  middlewares: [authRoleMiddleware(), ensureTenantMiddleware()],
   requestSchema: {
     paramsSchema: { id: idValidation },
     bodySchema: saveUserContactsSchema,
   },
-  middlewares: [authRoleMiddleware(), tenantHeaderMiddleware()],
   controller: saveUserContacts,
 });
 
 /**@description Save/Update user job details  */
 registrar.post("/user/:id/job-details", {
+  middlewares: [authRoleMiddleware(), ensureTenantMiddleware()],
   requestSchema: {
     paramsSchema: { id: idValidation },
     bodySchema: saveUserJobDetailsSchema,
   },
-  middlewares: [authRoleMiddleware(), tenantHeaderMiddleware()],
   controller: saveUserJobDetails,
 });
 
 /**@description Get user job details  */
 registrar.get("/user/:id/job-details", {
+  middlewares: [authRoleMiddleware(), ensureTenantMiddleware()],
   requestSchema: {
     paramsSchema: { id: idValidation },
   },
-  middlewares: [authRoleMiddleware(), tenantHeaderMiddleware()],
   controller: getUserJobDetails,
 });
 

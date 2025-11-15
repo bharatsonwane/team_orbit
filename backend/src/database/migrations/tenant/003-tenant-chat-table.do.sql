@@ -1,6 +1,6 @@
 -- ==================== CHAT SYSTEM TABLES ====================
 -- ENUM TYPE FOR CHAT CHANNEL
-DO $$ BEGIN CREATE TYPE chat_channel_type_enum AS ENUM ('one_to_one', 'group');
+DO $$ BEGIN CREATE TYPE chat_channel_type_enum AS ENUM ('direct', 'group');
 EXCEPTION
 WHEN duplicate_object THEN NULL;
 END $$;

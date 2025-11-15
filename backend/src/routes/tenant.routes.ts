@@ -21,8 +21,6 @@ const registrar = new RouteRegistrar({
 
 /**@description Create new tenant with Tenant Admin */
 registrar.post("/tenant/create", {
-  requestSchema: { bodySchema: createTenantSchema },
-  responseSchemas: [{ statusCode: 201, schema: tenantWithTrackingSchema }],
   middlewares: [
     authRoleMiddleware(
       userRoleKeys.PLATFORM_SUPER_ADMIN,
@@ -30,16 +28,13 @@ registrar.post("/tenant/create", {
       userRoleKeys.PLATFORM_USER
     ),
   ],
+  requestSchema: { bodySchema: createTenantSchema },
+  responseSchemas: [{ statusCode: 201, schema: tenantWithTrackingSchema }],
   controller: createTenant,
 });
 
 /**@description Update tenant */
 registrar.put("/tenant/:id", {
-  requestSchema: {
-    paramsSchema: { id: idValidation },
-    bodySchema: updateTenantSchema,
-  },
-  responseSchemas: [{ statusCode: 200, schema: tenantWithTrackingSchema }],
   middlewares: [
     authRoleMiddleware(
       userRoleKeys.PLATFORM_SUPER_ADMIN,
@@ -47,6 +42,11 @@ registrar.put("/tenant/:id", {
       userRoleKeys.PLATFORM_USER
     ),
   ],
+  requestSchema: {
+    paramsSchema: { id: idValidation },
+    bodySchema: updateTenantSchema,
+  },
+  responseSchemas: [{ statusCode: 200, schema: tenantWithTrackingSchema }],
   controller: updateTenant,
 });
 
@@ -64,8 +64,6 @@ registrar.get("/tenant/list", {
 
 /**@description Get tenant by ID */
 registrar.get("/tenant/:id", {
-  requestSchema: { paramsSchema: { id: idValidation } },
-  responseSchemas: [{ statusCode: 200, schema: tenantWithTrackingSchema }],
   middlewares: [
     authRoleMiddleware(
       userRoleKeys.PLATFORM_SUPER_ADMIN,
@@ -73,6 +71,8 @@ registrar.get("/tenant/:id", {
       userRoleKeys.PLATFORM_USER
     ),
   ],
+  requestSchema: { paramsSchema: { id: idValidation } },
+  responseSchemas: [{ statusCode: 200, schema: tenantWithTrackingSchema }],
   controller: getTenantById,
 });
 

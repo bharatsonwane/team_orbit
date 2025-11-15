@@ -1,6 +1,54 @@
 import { NextFunction, Request, Response } from "express";
 import Chat from "@src/services/chat.service";
-import { ChatMessageSchema } from "@src/schemas/chat.schema";
+import {
+  ChatChannelListQuerySchema,
+  chatChannelListQuerySchema,
+  ChatMessageSchema,
+  CreateChatChannelSchema,
+} from "@src/schemas/chat.schema";
+import { AuthenticatedRequest } from "@src/middleware/authRoleMiddleware";
+
+export const createChannel = async (
+  req: AuthenticatedRequest,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  try {
+    const { user } = req;
+    if (!user?.userId) {
+      throw { statusCode: 401, message: "User not authenticated" };
+    }
+
+    const payload = req.body;
+    const result = await Chat.createChannel(req.db, {
+      ...payload,
+      createdBy: user.userId,
+    });
+
+    res.status(201).json(result);
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const getChannelsForUser = async (
+  req: AuthenticatedRequest,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  try {
+    const userId = req.user?.userId;
+    const query = chatChannelListQuerySchema.parse(
+      req.query
+    ) as ChatChannelListQuerySchema;
+
+    const channels = await Chat.getChannelsForUser(req.db, userId, query);
+
+    res.status(200).json(channels);
+  } catch (error) {
+    next(error);
+  }
+};
 
 export const sendMessage = async (
   req: Request<{}, {}, ChatMessageSchema>,

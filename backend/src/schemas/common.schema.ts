@@ -1,9 +1,7 @@
 import { z } from "zod";
 import { oasRegisterSchemas } from "@src/openApiSpecification/openAPIDocumentGenerator";
 
-/**
- * @description ZOD SCHEMAS
- */
+/** @description ZOD SCHEMAS*/
 export const idValidation = z
   .string()
   .refine(data => !Number.isNaN(Number(data)), "ID must be a numeric value")
@@ -23,15 +21,11 @@ export const nameSchema = z.object({
   params: z.object({ name: nameValidation }),
 });
 
-/**
- * @description SCHEMAS TYPES
- */
+/** @description SCHEMAS TYPES */
 export type IdSchema = z.infer<typeof idSchema>;
 export type NameSchema = z.infer<typeof nameSchema>;
 
-/**
- * @description OPENAPI SCHEMAS REGISTRATION
- */
+/** @description OPENAPI SCHEMAS REGISTRATION */
 oasRegisterSchemas([
   { schemaName: "IdSchema", schema: idSchema },
   { schemaName: "NameSchema", schema: nameSchema },

@@ -61,7 +61,7 @@ This document provides comprehensive documentation for the chat system, includin
 
 **Current Issue:** No name field for channels (especially group channels).
 
-**Solution:** Add `name` VARCHAR field (nullable for one_to_one, required for group).
+**Solution:** Add `name` VARCHAR field (nullable for direct, required for group).
 
 **Benefits:**
 - Display channel names in UI
@@ -625,7 +625,7 @@ REINDEX TABLE CONCURRENTLY chat_message;
 ### Low Priority (Nice to Have):
 12. Message metadata JSONB
 13. Channel settings per user
-14. One-to-one constraint enforcement
+14. direct constraint enforcement
 
 ---
 

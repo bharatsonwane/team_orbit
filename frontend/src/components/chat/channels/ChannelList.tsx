@@ -1,5 +1,6 @@
 import { useChat } from "@/contexts/ChatContextProvider";
 import { ChannelListItem } from "./ChannelListItem";
+import { CreateChannelModal } from "./CreateChannelModal";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Input } from "@/components/ui/input";
 import { Search, Hash } from "lucide-react";
@@ -7,8 +8,9 @@ import { useState, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 
 export function ChannelList() {
-  const { channels, selectedChannel, selectChannel } = useChat();
+  const { channels, selectedChannel, selectChannel, isLoading } = useChat();
   const [searchQuery, setSearchQuery] = useState("");
+  const [isCreateChannelOpen, setIsCreateChannelOpen] = useState(false);
 
   // Filter channels based on search query
   const filteredChannels = useMemo(() => {
@@ -23,12 +25,12 @@ export function ChannelList() {
     );
   }, [channels, searchQuery]);
 
-  // Separate public and private channels
-  const publicChannels = filteredChannels.filter(
-    channel => channel.type === "public"
+  // Separate group and direct channels
+  const groupChannels = filteredChannels.filter(
+    channel => channel.type === "group"
   );
-  const privateChannels = filteredChannels.filter(
-    channel => channel.type === "private"
+  const directChannels = filteredChannels.filter(
+    channel => channel.type === "direct"
   );
 
   return (
@@ -50,9 +52,7 @@ export function ChannelList() {
           variant="outline"
           size="sm"
           className="w-full mt-2"
-          onClick={() => {
-            // TODO: Open create channel dialog
-          }}
+          onClick={() => setIsCreateChannelOpen(true)}
         >
           <Hash className="w-4 h-4 mr-2" />
           Create Channel
@@ -62,19 +62,23 @@ export function ChannelList() {
       {/* Channel List */}
       <ScrollArea className="flex-1">
         <div className="flex flex-col">
-          {filteredChannels.length === 0 ? (
+          {isLoading ? (
+            <div className="p-4 text-center text-sm text-muted-foreground">
+              Loading channels...
+            </div>
+          ) : filteredChannels.length === 0 ? (
             <div className="p-4 text-center text-sm text-muted-foreground">
               {searchQuery ? "No channels found" : "No channels yet"}
             </div>
           ) : (
             <>
-              {/* Public Channels */}
-              {publicChannels.length > 0 && (
+              {/* Group Channels */}
+              {groupChannels.length > 0 && (
                 <div>
                   <div className="px-4 py-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-                    Public Channels
+                    Group Channels
                   </div>
-                  {publicChannels.map(channel => (
+                  {groupChannels.map(channel => (
                     <ChannelListItem
                       key={channel.id}
                       channel={channel}
@@ -85,13 +89,13 @@ export function ChannelList() {
                 </div>
               )}
 
-              {/* Private Channels */}
-              {privateChannels.length > 0 && (
+              {/* Direct Channels */}
+              {directChannels.length > 0 && (
                 <div>
                   <div className="px-4 py-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-                    Private Channels
+                    Direct Channels
                   </div>
-                  {privateChannels.map(channel => (
+                  {directChannels.map(channel => (
                     <ChannelListItem
                       key={channel.id}
                       channel={channel}
@@ -105,6 +109,10 @@ export function ChannelList() {
           )}
         </div>
       </ScrollArea>
+      <CreateChannelModal
+        open={isCreateChannelOpen}
+        onOpenChange={setIsCreateChannelOpen}
+      />
     </div>
   );
 }

@@ -3,7 +3,6 @@ import getAxios, { getAppErrorMessage } from "../../utils/axiosApi";
 import type {
   Tenant,
   TenantListResponse,
-  TenantUsersResponse,
   CreateTenantRequest,
 } from "@/schemas/tenant";
 

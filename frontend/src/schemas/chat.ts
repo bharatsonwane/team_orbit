@@ -1,5 +1,26 @@
 import { z } from "zod";
 
+// Channel schema (for group chats - will be used later)
+const channelTypeEnum = z.enum(["direct", "group"]);
+
+// Create Channel schema
+export const createChatChannelSchema = z.object({
+  name: z
+    .string()
+    .min(3, "Channel name must be at least 3 characters")
+    .max(50, "Channel name should be under 50 characters"),
+  description: z
+    .string()
+    .max(200, "Description should be under 200 characters")
+    .optional()
+    .or(z.literal("")),
+  image: z.string().max(500).optional(),
+  type: channelTypeEnum,
+  channelUserIds: z
+    .array(z.number())
+    .min(1, "Select at least one member to invite"),
+});
+
 // Chat User schema
 export const chatUserSchema = z.object({
   id: z.number(),
@@ -54,7 +75,7 @@ export const chatMessageSchema = chatMessageSchemaBase.extend({
   replyToMessage: z.custom<ChatMessage>().optional(),
 });
 
-// Conversation schema (for one-to-one chats)
+// Conversation schema (for direct chats)
 export const conversationSchema = z.object({
   id: z.string(), // composite key: "dm_${userId1}_${userId2}"
   channelId: z.number(),
@@ -66,12 +87,11 @@ export const conversationSchema = z.object({
 
 export type Conversation = z.infer<typeof conversationSchema>;
 
-// Channel schema (for group chats - will be used later)
 export const chatChannelSchema = z.object({
   id: z.number(),
   name: z.string(),
   description: z.string().optional(),
-  type: z.enum(["public", "private", "direct"]),
+  type: channelTypeEnum.default("direct"),
   avatar: z.string().optional(),
   memberCount: z.number(),
   lastMessage: chatMessageSchema.optional(),
@@ -81,6 +101,26 @@ export const chatChannelSchema = z.object({
 });
 
 export type ChatChannel = z.infer<typeof chatChannelSchema>;
+
+export const chatChannelListItemSchema = z.object({
+  id: z.number(),
+  name: z.string(),
+  description: z.string().nullable().optional(),
+  type: channelTypeEnum,
+  image: z.string().nullable().optional(),
+  createdBy: z.number().nullable().optional(),
+  createdAt: z.string(),
+  updatedAt: z.string(),
+  memberCount: z.number().int().nonnegative(),
+  isCurrentUserAdmin: z.boolean().optional(),
+});
+
+export const chatChannelListResponseSchema = z.array(chatChannelListItemSchema);
+
+export type ChatChannelListItem = z.infer<typeof chatChannelListItemSchema>;
+export type ChatChannelListResponse = z.infer<
+  typeof chatChannelListResponseSchema
+>;
 
 // Send Message schema
 export const sendMessageSchema = z.object({
@@ -111,3 +151,12 @@ export const addReactionSchema = z.object({
 });
 
 export type AddReactionData = z.infer<typeof addReactionSchema>;
+
+export const chatChannelMemberSchema = z.object({
+  userId: z.number(),
+  isAdmin: z.boolean(),
+});
+
+export type CreateChatChannelSchema = z.infer<typeof createChatChannelSchema>;
+
+export type ChatChannelMember = z.infer<typeof chatChannelMemberSchema>;

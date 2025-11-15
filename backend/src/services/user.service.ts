@@ -17,16 +17,13 @@ export default class User {
     dbClient: dbClientPool,
     userData: CreateUserSchema
   ): Promise<number> {
-    const client = dbClient;
-    const dbClientPool: dbClientPool = { mainPool: client.mainPool };
-
     try {
       // Start transaction
-      await client.mainPool.query(dbTransactionKeys.BEGIN);
+      await dbClient.mainPool.query(dbTransactionKeys.BEGIN);
 
       // Get default PENDING status if not provided
       let statusId = 0;
-      const statusResult = await dbClientPool.mainPool.query(
+      const statusResult = await dbClient.mainPool.query(
         `SELECT l.id FROM lookups l 
          INNER JOIN lookup_types lt ON l."lookupTypeId" = lt.id 
          WHERE lt.name = 'USER_STATUS' AND l.name = 'PENDING'`
@@ -70,7 +67,7 @@ export default class User {
         RETURNING id
       `;
 
-      const userResult = await dbClientPool.mainPool.query(createUserQuery, [
+      const userResult = await dbClient.mainPool.query(createUserQuery, [
         userData.title || null,
         userData.firstName,
         userData.lastName,
@@ -100,19 +97,19 @@ export default class User {
           RETURNING "authEmail";
         `;
 
-        await dbClientPool.mainPool.query(authInsertQuery, [
+        await dbClient.mainPool.query(authInsertQuery, [
           user.id,
           userData.authEmail, // Using authEmail for authentication
         ]);
       }
 
       // Commit transaction
-      await client.mainPool.query(dbTransactionKeys.COMMIT);
+      await dbClient.mainPool.query(dbTransactionKeys.COMMIT);
 
       return user.id;
     } catch (error) {
       // Rollback transaction on error
-      await client.mainPool.query(dbTransactionKeys.ROLLBACK);
+      await dbClient.mainPool.query(dbTransactionKeys.ROLLBACK);
       throw error;
     }
   }
@@ -409,7 +406,7 @@ export default class User {
     userId: number
   ): Promise<any> {
     try {
-      const contactsResult = await dbClient.tenantPool?.query(
+      const contactsResult = await dbClient.tenantPool!.query(
         `
         SELECT 
           uc.id,
@@ -473,10 +470,10 @@ export default class User {
   ): Promise<void> {
     try {
       // Start transaction
-      await dbClient.tenantPool?.query(dbTransactionKeys.BEGIN);
+      await dbClient.tenantPool!.query(dbTransactionKeys.BEGIN);
 
       // Get contact type lookup IDs from tenant lookups
-      const contactTypes = await dbClient.tenantPool?.query(`
+      const contactTypes = await dbClient.tenantPool!.query(`
         SELECT tl.id, tl.name 
         FROM tenant_lookups tl
         INNER JOIN tenant_lookup_types tlt ON tl."lookupTypeId" = tlt.id
@@ -513,7 +510,7 @@ export default class User {
       ];
 
       // Get existing contacts for this user
-      const existingContacts = await dbClient.tenantPool?.query(
+      const existingContacts = await dbClient.tenantPool!.query(
         `
         SELECT id, "contactTypeId", value, "isPrimary", "isVerified"
         FROM user_contacts 
@@ -540,7 +537,7 @@ export default class User {
           if (existingContact) {
             // Update existing contact if value has changed
             if (existingContact.value !== contact.value) {
-              await dbClient.tenantPool?.query(
+              await dbClient.tenantPool!.query(
                 `
                 UPDATE user_contacts 
                 SET value = $1, "updatedAt" = NOW()
@@ -551,7 +548,7 @@ export default class User {
             }
           } else {
             // Insert new contact
-            await dbClient.tenantPool?.query(
+            await dbClient.tenantPool!.query(
               `
               INSERT INTO user_contacts ("userId", "contactTypeId", value, "isPrimary", "isVerified", "createdAt", "updatedAt")
               VALUES ($1, $2, $3, $4, $5, NOW(), NOW())
@@ -562,7 +559,7 @@ export default class User {
         } else {
           // Delete contact if it exists but now has no value
           if (existingContact) {
-            await dbClient.tenantPool?.query(
+            await dbClient.tenantPool!.query(
               `
               DELETE FROM user_contacts 
               WHERE "userId" = $1 AND "contactTypeId" = $2
@@ -574,10 +571,10 @@ export default class User {
       }
 
       // Commit transaction
-      await dbClient.tenantPool?.query(dbTransactionKeys.COMMIT);
+      await dbClient.tenantPool!.query(dbTransactionKeys.COMMIT);
     } catch (error) {
       // Rollback transaction on error
-      await dbClient.tenantPool?.query(dbTransactionKeys.ROLLBACK);
+      await dbClient.tenantPool!.query(dbTransactionKeys.ROLLBACK);
       throw error;
     }
   }
@@ -599,10 +596,10 @@ export default class User {
       }
 
       // Start transaction
-      await dbClient.tenantPool?.query(dbTransactionKeys.BEGIN);
+      await dbClient.tenantPool!.query(dbTransactionKeys.BEGIN);
 
       // Check if job details already exist
-      const existingJobDetails = await dbClient.tenantPool?.query(
+      const existingJobDetails = await dbClient.tenantPool!.query(
         `SELECT id FROM user_job_details WHERE "userId" = $1`,
         [userId]
       );
@@ -627,14 +624,14 @@ export default class User {
             .map(([key, value]) => `"${key}" = ${value}`)
             .join(", ");
 
-          await dbClient.tenantPool?.query(
+          await dbClient.tenantPool!.query(
             `UPDATE user_job_details SET ${setClause} WHERE "userId" = $1`,
             [userId]
           );
         }
       } else {
         // Insert new job details
-        await dbClient.tenantPool?.query(
+        await dbClient.tenantPool!.query(
           `
           INSERT INTO user_job_details (
             "userId",
@@ -660,10 +657,10 @@ export default class User {
       }
 
       // Commit transaction
-      await dbClient.tenantPool?.query(dbTransactionKeys.COMMIT);
+      await dbClient.tenantPool!.query(dbTransactionKeys.COMMIT);
     } catch (error) {
       // Rollback transaction on error
-      await dbClient.tenantPool?.query(dbTransactionKeys.ROLLBACK);
+      await dbClient.tenantPool!.query(dbTransactionKeys.ROLLBACK);
       throw error;
     }
   }
@@ -685,7 +682,7 @@ export default class User {
         WHERE "userId" = $1
       `;
 
-      const result = await dbClient.tenantPool?.query(queryString, [userId]);
+      const result = await dbClient.tenantPool!.query(queryString, [userId]);
       return result?.rows[0] || null;
     } catch (error) {
       throw error;

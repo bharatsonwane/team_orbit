@@ -1,10 +1,6 @@
 import { Request, Response, NextFunction } from "express";
 import { validateJwtToken } from "@src/utils/authHelper";
 
-export interface AuthenticatedRequest extends Request {
-  user?: JwtTokenPayload;
-}
-
 export interface JwtTokenPayload {
   userId: number;
   email: string;
@@ -15,6 +11,14 @@ export interface JwtTokenPayload {
     label: string;
     lookupTypeId: number;
   }>;
+}
+
+export interface AuthenticatedRequest extends Request {
+  user: JwtTokenPayload;
+  headers: Request["headers"] & {
+    "x-tenant"?: string;
+    authorization?: string;
+  };
 }
 
 export const authRoleMiddleware = (...allowedRoles: string[]) => {
@@ -37,6 +41,14 @@ export const authRoleMiddleware = (...allowedRoles: string[]) => {
 
       // Validate the token
       const decodedJwt = (await validateJwtToken(token)) as JwtTokenPayload;
+
+      if (!decodedJwt) {
+        res.status(401).json({ message: "Invalid token." });
+        return;
+      } else if (!decodedJwt.userId) {
+        res.status(401).json({ message: "User not authenticated." });
+        return;
+      }
 
       const checkUserHasValidTenantAndRole = (): boolean => {
         // Extract tenantId from the decodedJwt token

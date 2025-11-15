@@ -64,7 +64,7 @@ export const createUser = async (
   req: AuthenticatedRequest,
   res: Response,
   next: NextFunction
-): Promise<{ id: number } | void> => {
+): Promise<void> => {
   try {
     const loggedInUser = req.user;
     const userData: CreateUserSchema = req.body;
@@ -81,14 +81,6 @@ export const createUser = async (
           message: "User already exists with this email",
         };
       }
-    }
-
-    // Get the logged-in user's roles
-    if (!loggedInUser?.userId) {
-      throw {
-        statusCode: 401,
-        message: "User not authenticated",
-      };
     }
 
     const currentUser = await User.getUserByIdOrAuthEmail(req.db, {
@@ -148,15 +140,7 @@ export const getUsers = async (
   next: NextFunction
 ): Promise<void> => {
   try {
-    const xTenant = req.headers["x-tenant"] as string;
-    const tenantId = parseInt(xTenant);
-
-    if (!tenantId || isNaN(tenantId)) {
-      throw {
-        statusCode: 400,
-        message: "Invalid tenant ID",
-      };
-    }
+    const tenantId = req.xTenantId;
     const { page, limit, searchText } = req.query;
 
     // Only apply pagination if page and limit are explicitly provided as valid numbers
@@ -188,15 +172,7 @@ export const getUsersCount = async (
   next: NextFunction
 ): Promise<void> => {
   try {
-    const xTenant = req.headers["x-tenant"] as string;
-    const tenantId = parseInt(xTenant);
-
-    if (!tenantId || isNaN(tenantId)) {
-      throw {
-        statusCode: 400,
-        message: "Invalid tenant ID",
-      };
-    }
+    const tenantId = req.xTenantId;
     const { searchText } = req.query;
 
     const count = await User.getUsersCount(req.db, {

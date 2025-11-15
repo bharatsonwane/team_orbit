@@ -6,6 +6,7 @@ import React, {
   useMemo,
 } from "react";
 import type { ReactNode } from "react";
+import { useDispatch, useSelector } from "react-redux";
 import type {
   ChatMessage,
   Conversation,
@@ -13,16 +14,19 @@ import type {
   SendMessageData,
   EditMessageData,
   AddReactionData,
+  CreateChatChannelSchema,
+  ChatChannelListItem,
 } from "../schemas/chat";
 import {
   generateMockConversations,
   generateMockMessages,
-  generateMockChannels,
 } from "../utils/chatUtils";
+import type { AppDispatch, RootState } from "@/redux/store";
+import { fetchChatChannelsAction } from "@/redux/actions/chatActions";
 
 // Chat Context Type
 export interface ChatContextType {
-  // State - One-to-One
+  // State - direct
   conversations: Conversation[];
   selectedConversation: Conversation | null;
 
@@ -37,11 +41,12 @@ export interface ChatContextType {
   error: string | null;
   socketConnected: boolean;
 
-  // Actions - One-to-One
+  // Actions - direct
   selectConversation: (conversation: Conversation | null) => void;
 
   // Actions - Group Chat
   selectChannel: (channel: ChatChannel | null) => void;
+  createChannel: (data: CreateChatChannelSchema) => ChatChannel;
 
   // Shared Actions
   sendMessage: (data: SendMessageData) => void;
@@ -82,6 +87,17 @@ const defaultContext: ChatContextType = {
   markAsRead: () => {},
   setTyping: () => {},
   clearError: () => {},
+  createChannel: () => ({
+    id: 0,
+    name: "",
+    description: "",
+    type: "group",
+    avatar: "",
+    memberCount: 0,
+    unreadCount: 0,
+    createdAt: "",
+    updatedAt: "",
+  }),
 };
 
 export const ChatContext = createContext<ChatContextType>(defaultContext);
@@ -108,13 +124,38 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
   );
   const [messages, setMessages] = useState<Record<number, ChatMessage[]>>({});
   const [typingUsers, setTypingUsers] = useState<Record<number, number[]>>({});
-  const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
-  const [socketConnected, setSocketConnected] = useState<boolean>(false);
+  const [socketConnected] = useState<boolean>(false);
+  const dispatch = useDispatch<AppDispatch>();
+  const {
+    channels: apiChannels,
+    loading: channelsLoading,
+    error: channelsError,
+  } = useSelector((state: RootState) => state.chat);
+
+  const mapApiChannelToChatChannel = useCallback(
+    (channel: ChatChannelListItem): ChatChannel => ({
+      id: channel.id,
+      name: channel.name,
+      description: channel.description ?? undefined,
+      type: channel.type,
+      avatar:
+        channel.image ||
+        `https://api.dicebear.com/7.x/shapes/svg?radius=50&seed=${encodeURIComponent(
+          channel.name
+        )}`,
+      memberCount: channel.memberCount,
+      lastMessage: undefined,
+      unreadCount: 0,
+      createdAt: channel.createdAt,
+      updatedAt: channel.updatedAt,
+    }),
+    []
+  );
 
   // Initialize with dummy data on mount
   React.useEffect(() => {
-    // One-to-One conversations
+    // direct conversations
     const mockConversations = generateMockConversations();
     const mockMessages: Record<number, ChatMessage[]> = {};
 
@@ -126,22 +167,34 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
       );
     });
 
-    // Group chat channels
-    const mockChannels = generateMockChannels();
-
-    // Generate messages for each channel (starting from channelId 101)
-    mockChannels.forEach((channel: ChatChannel) => {
-      mockMessages[channel.id] = generateMockMessages(
-        channel.id,
-        channel.memberCount > 0 ? 2 : 1, // Use first member as participant (not used for group chats)
-        true // Mark as group chat to use multiple users
-      );
-    });
-
     setConversations(mockConversations);
-    setChannels(mockChannels);
     setMessages(mockMessages);
   }, []);
+
+  React.useEffect(() => {
+    dispatch(fetchChatChannelsAction());
+  }, [dispatch]);
+
+  React.useEffect(() => {
+    if (channelsError) {
+      setError(channelsError);
+    }
+  }, [channelsError]);
+
+  React.useEffect(() => {
+    if (!apiChannels) return;
+    const mappedChannels = apiChannels.map(mapApiChannelToChatChannel);
+    setChannels(mappedChannels);
+    setMessages(prev => {
+      const next = { ...prev };
+      mappedChannels.forEach(channel => {
+        if (!next[channel.id]) {
+          next[channel.id] = [];
+        }
+      });
+      return next;
+    });
+  }, [apiChannels, mapApiChannelToChatChannel]);
 
   // Mark as read
   const markAsRead = useCallback((channelId: number) => {
@@ -389,6 +442,63 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
     setError(null);
   }, []);
 
+  // Create new channel
+  const createChannel = useCallback(
+    (data: CreateChatChannelSchema): ChatChannel => {
+      const newChannelId =
+        channels.length > 0
+          ? Math.max(...channels.map(channel => channel.id)) + 1
+          : 200;
+      const now = new Date().toISOString();
+
+      const welcomeMessage: ChatMessage = {
+        id: newChannelId * 1000,
+        messageCreatedAt: now,
+        channelId: newChannelId,
+        senderId: 1,
+        sender: {
+          id: 1,
+          name: "You",
+          email: "you@example.com",
+          status: "online",
+        },
+        text: `Welcome to #${data.name}!`,
+        isEdited: false,
+        isDeleted: false,
+        createdAt: now,
+        updatedAt: now,
+        reactions: [],
+        readBy: [1],
+      };
+
+      const newChannel: ChatChannel = {
+        id: newChannelId,
+        name: data.name,
+        description: data.description?.trim() || undefined,
+        type: data.type ?? "group",
+        avatar: `https://api.dicebear.com/7.x/shapes/svg?radius=50&seed=${encodeURIComponent(
+          data.name
+        )}`,
+        memberCount: data.channelUserIds.length + 1,
+        unreadCount: 0,
+        createdAt: now,
+        updatedAt: now,
+        lastMessage: welcomeMessage,
+      };
+
+      setChannels(prev => [newChannel, ...prev]);
+      setMessages(prev => ({
+        ...prev,
+        [newChannelId]: [welcomeMessage],
+      }));
+      setSelectedChannel(newChannel);
+      markAsRead(newChannel.id);
+
+      return newChannel;
+    },
+    [channels, markAsRead]
+  );
+
   const value = useMemo<ChatContextType>(
     () => ({
       conversations,
@@ -397,7 +507,7 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
       selectedChannel,
       messages,
       typingUsers,
-      isLoading,
+      isLoading: channelsLoading,
       error,
       socketConnected,
       selectConversation,
@@ -410,6 +520,7 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
       markAsRead,
       setTyping,
       clearError,
+      createChannel,
     }),
     [
       conversations,
@@ -418,7 +529,7 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
       selectedChannel,
       messages,
       typingUsers,
-      isLoading,
+      channelsLoading,
       error,
       socketConnected,
       selectConversation,
@@ -431,6 +542,7 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
       markAsRead,
       setTyping,
       clearError,
+      createChannel,
     ]
   );
 

@@ -57,7 +57,7 @@ export const getUsersAction = createAsyncThunk(
     },
     { rejectWithValue }
   ) => {
-    const queryParam: { [key: string]: any } = {};
+    const queryParam: { [key: string]: number | string } = {};
 
     if (searchText.trim().length > 0) {
       queryParam.searchText = searchText.trim();
@@ -74,10 +74,8 @@ export const getUsersAction = createAsyncThunk(
         params: { ...queryParam },
       });
       return response.data as TenantUsersResponse;
-    } catch (error: any) {
-      return rejectWithValue(
-        error.response?.data?.message || "Failed to fetch tenant users"
-      );
+    } catch (error: unknown) {
+      return rejectWithValue(getAppErrorMessage(error));
     }
   }
 );
@@ -93,7 +91,7 @@ export const getUsersCountAction = createAsyncThunk(
     },
     { rejectWithValue }
   ) => {
-    const queryParam: { [key: string]: any } = {};
+    const queryParam: { [key: string]: number | string } = {};
 
     if (searchText.trim().length > 0) {
       queryParam.searchText = searchText.trim();
@@ -107,10 +105,8 @@ export const getUsersCountAction = createAsyncThunk(
         }
       );
       return response.data;
-    } catch (error: any) {
-      return rejectWithValue(
-        error.response?.data?.message || "Failed to fetch users count"
-      );
+    } catch (error: unknown) {
+      return rejectWithValue(getAppErrorMessage(error));
     }
   }
 );

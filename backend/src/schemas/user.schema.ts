@@ -9,9 +9,7 @@ import {
   userStatusName,
 } from "@src/utils/constants";
 
-/**
- * @description ZOD SCHEMAS
- */
+/** @description ZOD SCHEMAS */
 export const baseUserSchema = z.object({
   title: titleEnum.optional(),
   firstName: z.string().min(2),
@@ -117,9 +115,7 @@ export const getUsersCountResponseSchema = z.object({
   count: z.number(),
 });
 
-/**
- * @description SCHEMAS TYPES
- */
+/** @description SCHEMAS TYPES */
 export type BaseUserSchema = z.infer<typeof baseUserSchema>;
 export type UserWithTrackingSchema = z.infer<typeof userWithTrackingSchema>;
 export type UserDataWithHashPasswordSchema = z.infer<
@@ -144,9 +140,7 @@ export type GetUsersCountResponseSchema = z.infer<
   typeof getUsersCountResponseSchema
 >;
 
-/**
- * @description OPENAPI SCHEMAS REGISTRATION
- */
+/** @description OPENAPI SCHEMAS REGISTRATION */
 oasRegisterSchemas([
   { schemaName: "BaseUserSchema", schema: baseUserSchema },
   { schemaName: "UserLoginSchema", schema: userLoginSchema },
