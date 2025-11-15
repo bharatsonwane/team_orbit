@@ -4,6 +4,8 @@ import {
   type CreateChatChannelSchema,
   chatChannelListResponseSchema,
   type ChatChannelListResponse,
+  chatMessageApiSchema,
+  type ChatMessageApiResponse,
 } from "@/schemas/chat";
 
 export const createChatChannelAction = createAsyncThunk(
@@ -31,6 +33,30 @@ export const fetchChatChannelsAction = createAsyncThunk<
   try {
     const response = await getAxios().get("api/chat/channel/list");
     return chatChannelListResponseSchema.parse(response.data);
+  } catch (error: unknown) {
+    return rejectWithValue(getAppErrorMessage(error));
+  }
+});
+
+export interface SendChannelMessagePayload {
+  channelId: number;
+  text?: string;
+  mediaUrl?: string;
+  replyToMessageId?: number;
+}
+
+export const sendChannelMessageAction = createAsyncThunk<
+  ChatMessageApiResponse,
+  SendChannelMessagePayload,
+  { rejectValue: string }
+>("chat/sendChannelMessageAction", async (payload, { rejectWithValue }) => {
+  try {
+    const { channelId, ...body } = payload;
+    const response = await getAxios().post(
+      `api/chat/channel/${channelId}/message`,
+      body
+    );
+    return chatMessageApiSchema.parse(response.data);
   } catch (error: unknown) {
     return rejectWithValue(getAppErrorMessage(error));
   }

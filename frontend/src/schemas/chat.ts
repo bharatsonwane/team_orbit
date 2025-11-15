@@ -75,6 +75,21 @@ export const chatMessageSchema = chatMessageSchemaBase.extend({
   replyToMessage: z.custom<ChatMessage>().optional(),
 });
 
+export const chatMessageApiSchema = z.object({
+  id: z.number(),
+  channelId: z.number(),
+  senderUserId: z.number(),
+  text: z.string().nullable().optional(),
+  mediaUrl: z.string().nullable().optional(),
+  replyToMessageId: z.number().nullable().optional(),
+  deliveredTo: z.array(z.number()).default([]),
+  readBy: z.array(z.number()).default([]),
+  createdAt: z.string(),
+  updatedAt: z.string(),
+});
+
+export type ChatMessageApiResponse = z.infer<typeof chatMessageApiSchema>;
+
 // Conversation schema (for direct chats)
 export const conversationSchema = z.object({
   id: z.string(), // composite key: "dm_${userId1}_${userId2}"

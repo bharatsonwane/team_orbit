@@ -16,13 +16,19 @@ import type {
   AddReactionData,
   CreateChatChannelSchema,
   ChatChannelListItem,
+  ChatUser,
+  ChatMessageApiResponse,
 } from "../schemas/chat";
 import {
   generateMockConversations,
   generateMockMessages,
 } from "../utils/chatUtils";
 import type { AppDispatch, RootState } from "@/redux/store";
-import { fetchChatChannelsAction } from "@/redux/actions/chatActions";
+import {
+  fetchChatChannelsAction,
+  sendChannelMessageAction,
+} from "@/redux/actions/chatActions";
+import { useAuthService } from "./AuthContextProvider";
 
 // Chat Context Type
 export interface ChatContextType {
@@ -132,6 +138,48 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
     loading: channelsLoading,
     error: channelsError,
   } = useSelector((state: RootState) => state.chat);
+  const { loggedInUser } = useAuthService();
+
+  const buildSenderFromUser = useCallback((): ChatUser => {
+    if (!loggedInUser) {
+      return {
+        id: 0,
+        name: "Unknown",
+        email: "",
+        status: "online",
+      };
+    }
+
+    const fullName =
+      `${loggedInUser.firstName} ${loggedInUser.lastName}`.trim();
+
+    return {
+      id: loggedInUser.id,
+      name: fullName || loggedInUser.firstName || loggedInUser.email,
+      email: loggedInUser.email,
+      status: "online",
+    };
+  }, [loggedInUser]);
+
+  const mapApiMessageToChatMessage = useCallback(
+    (message: ChatMessageApiResponse): ChatMessage => ({
+      id: message.id,
+      messageCreatedAt: message.createdAt,
+      channelId: message.channelId,
+      senderUserId: message.senderUserId,
+      sender: buildSenderFromUser(),
+      replyToMessageId: message.replyToMessageId ?? undefined,
+      text: message.text ?? undefined,
+      mediaUrl: message.mediaUrl ?? undefined,
+      isEdited: false,
+      isDeleted: false,
+      createdAt: message.createdAt,
+      updatedAt: message.updatedAt,
+      reactions: [],
+      readBy: message.readBy ?? [],
+    }),
+    [buildSenderFromUser]
+  );
 
   const mapApiChannelToChatChannel = useCallback(
     (channel: ChatChannelListItem): ChatChannel => ({
@@ -228,61 +276,169 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
   );
 
   // Send message
-  const sendMessage = useCallback((data: SendMessageData) => {
-    if (!data.text && !data.mediaUrl) return;
+  const sendMessage = useCallback(
+    (data: SendMessageData) => {
+      if (!data.channelId || (!data.text && !data.mediaUrl)) return;
 
-    const tempId = Date.now();
-    const now = new Date().toISOString();
+      if (!loggedInUser) {
+        setError("You must be logged in to send messages.");
+        return;
+      }
 
-    const newMessage: ChatMessage = {
-      id: tempId,
-      messageCreatedAt: now,
-      channelId: data.channelId,
-      senderUserId: 1, // Current user ID (should come from auth context)
-      sender: {
-        id: 1,
-        name: "You",
-        email: "you@example.com",
-        status: "online",
-      },
-      replyToMessageId: data.replyToMessageId,
-      text: data.text,
-      mediaUrl: data.mediaUrl,
-      isEdited: false,
-      isDeleted: false,
-      createdAt: now,
-      updatedAt: now,
-      reactions: [],
-      readBy: [],
-    };
+      const channelId = data.channelId;
+      const previousChannelState = channels.find(
+        channel => channel.id === channelId
+      );
+      const previousConversationState = conversations.find(
+        conversation => conversation.channelId === channelId
+      );
 
-    // Optimistic update
-    setMessages(prev => ({
-      ...prev,
-      [data.channelId]: [...(prev[data.channelId] || []), newMessage],
-    }));
+      const tempId = Date.now();
+      const now = new Date().toISOString();
+      const sender = buildSenderFromUser();
 
-    // Update conversation last message
-    setConversations(prev =>
-      prev.map(conv =>
-        conv.channelId === data.channelId
-          ? { ...conv, lastMessage: newMessage, updatedAt: now }
-          : conv
-      )
-    );
+      const optimisticMessage: ChatMessage = {
+        id: tempId,
+        messageCreatedAt: now,
+        channelId,
+        senderUserId: sender.id,
+        sender,
+        replyToMessageId: data.replyToMessageId,
+        text: data.text,
+        mediaUrl: data.mediaUrl,
+        isEdited: false,
+        isDeleted: false,
+        createdAt: now,
+        updatedAt: now,
+        reactions: [],
+        readBy: [],
+      };
 
-    // Update channel last message
-    setChannels(prev =>
-      prev.map(channel =>
-        channel.id === data.channelId
-          ? { ...channel, lastMessage: newMessage, updatedAt: now }
-          : channel
-      )
-    );
+      setMessages(prev => ({
+        ...prev,
+        [channelId]: [...(prev[channelId] || []), optimisticMessage],
+      }));
 
-    // TODO: Emit socket event to backend
-    // socket.emit("chat:send_message", data);
-  }, []);
+      setConversations(prev =>
+        prev.map(conv =>
+          conv.channelId === channelId
+            ? { ...conv, lastMessage: optimisticMessage, updatedAt: now }
+            : conv
+        )
+      );
+
+      setChannels(prev =>
+        prev.map(channel =>
+          channel.id === channelId
+            ? { ...channel, lastMessage: optimisticMessage, updatedAt: now }
+            : channel
+        )
+      );
+
+      const send = async () => {
+        try {
+          const result = await dispatch(
+            sendChannelMessageAction({
+              channelId,
+              text: data.text,
+              mediaUrl: data.mediaUrl,
+              replyToMessageId: data.replyToMessageId,
+            })
+          ).unwrap();
+
+          const persistedMessage = mapApiMessageToChatMessage(result);
+
+          setMessages(prev => ({
+            ...prev,
+            [channelId]: (prev[channelId] || []).map(message =>
+              message.id === tempId ? persistedMessage : message
+            ),
+          }));
+
+          setConversations(prev =>
+            prev.map(conv =>
+              conv.channelId === channelId &&
+              conv.lastMessage &&
+              conv.lastMessage.id === tempId
+                ? {
+                    ...conv,
+                    lastMessage: persistedMessage,
+                    updatedAt: persistedMessage.updatedAt,
+                  }
+                : conv
+            )
+          );
+
+          setChannels(prev =>
+            prev.map(channel =>
+              channel.id === channelId &&
+              channel.lastMessage &&
+              channel.lastMessage.id === tempId
+                ? {
+                    ...channel,
+                    lastMessage: persistedMessage,
+                    updatedAt: persistedMessage.updatedAt,
+                  }
+                : channel
+            )
+          );
+        } catch (err) {
+          setMessages(prev => ({
+            ...prev,
+            [channelId]: (prev[channelId] || []).filter(
+              message => message.id !== tempId
+            ),
+          }));
+
+          setConversations(prev =>
+            prev.map(conv =>
+              conv.channelId === channelId &&
+              conv.lastMessage &&
+              conv.lastMessage.id === tempId
+                ? {
+                    ...conv,
+                    lastMessage: previousConversationState?.lastMessage,
+                    updatedAt:
+                      previousConversationState?.updatedAt ?? conv.updatedAt,
+                  }
+                : conv
+            )
+          );
+
+          setChannels(prev =>
+            prev.map(channel =>
+              channel.id === channelId &&
+              channel.lastMessage &&
+              channel.lastMessage.id === tempId
+                ? {
+                    ...channel,
+                    lastMessage: previousChannelState?.lastMessage,
+                    updatedAt:
+                      previousChannelState?.updatedAt ?? channel.updatedAt,
+                  }
+                : channel
+            )
+          );
+
+          setError(
+            typeof err === "string"
+              ? err
+              : "Failed to send message. Please try again."
+          );
+        }
+      };
+
+      void send();
+    },
+    [
+      buildSenderFromUser,
+      channels,
+      conversations,
+      dispatch,
+      loggedInUser,
+      mapApiMessageToChatMessage,
+    ]
+  );
 
   // Edit message
   const editMessage = useCallback((data: EditMessageData) => {
