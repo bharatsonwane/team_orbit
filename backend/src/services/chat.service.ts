@@ -200,40 +200,19 @@ export default class Chat {
         "createdAt",
         "updatedAt"
       )
-      VALUES ($1, $2, $3, $4, $5, NOW(), NOW())
-      RETURNING
-        id,
-        "chatChannelId" AS "channelId",
-        "senderUserId",
-        "replyToMessageId",
-        text,
-        "mediaUrl",
-        "createdAt",
-        "updatedAt";
+      VALUES (
+        ${channelId},
+        ${senderUserId},
+        ${replyToMessageId ?? null},
+        '${text ?? ""}',
+        '${mediaUrl ?? ""}',
+        NOW(),
+        NOW()
+      )
+      RETURNING *;
     `;
 
-    const values = [
-      channelId,
-      senderUserId,
-      replyToMessageId ?? null,
-      text ?? null,
-      mediaUrl ?? null,
-    ];
-
-    const result = await tenantPool.query(insertQuery, values);
-    const row = result.rows[0];
-
-    return {
-      id: row.id,
-      channelId: row.channelId,
-      senderUserId: row.senderUserId,
-      text: row.text ?? undefined,
-      mediaUrl: row.mediaUrl ?? undefined,
-      replyToMessageId: row.replyToMessageId ?? undefined,
-      deliveredTo: [],
-      readBy: [],
-      createdAt: row.createdAt,
-      updatedAt: row.updatedAt,
-    };
+    const result = await tenantPool.query(insertQuery);
+    return result.rows[0] as ChatMessageSchema;
   }
 }
