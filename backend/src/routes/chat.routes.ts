@@ -3,11 +3,14 @@ import {
   createChannel,
   getChannelsForUser,
   saveChannelMessage,
+  getChannelMessages,
 } from "@src/controllers/chat.controller";
 import {
   chatChannelListQuerySchema,
   chatChannelListResponseSchema,
   chatMessageSchema,
+  chatMessageListQuerySchema,
+  chatMessageListResponseSchema,
   createChatChannelSchema,
   sendChatMessageSchema,
 } from "@src/schemas/chat.schema";
@@ -46,6 +49,16 @@ registrar.post("/chat/channel/:channelId/message", {
   },
   responseSchemas: [{ statusCode: 201, schema: chatMessageSchema }],
   controller: saveChannelMessage,
+});
+
+registrar.get("/chat/channel/:channelId/messages", {
+  middlewares: [ensureTenantMiddleware(), authRoleMiddleware()],
+  requestSchema: {
+    paramsSchema: { channelId: idValidation },
+    querySchema: chatMessageListQuerySchema,
+  },
+  responseSchemas: [{ statusCode: 200, schema: chatMessageListResponseSchema }],
+  controller: getChannelMessages,
 });
 
 export default registrar;

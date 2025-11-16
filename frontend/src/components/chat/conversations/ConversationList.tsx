@@ -7,7 +7,7 @@ import { useState, useMemo } from "react";
 import { cn } from "@/lib/utils";
 
 export function ConversationList() {
-  const { conversations, selectedConversation, selectConversation } = useChat();
+  const { conversations, selectedChannel, selectConversation } = useChat();
   const [searchQuery, setSearchQuery] = useState("");
 
   // Filter conversations based on search query
@@ -52,7 +52,7 @@ export function ConversationList() {
               <ConversationListItem
                 key={conversation.id}
                 conversation={conversation}
-                isSelected={selectedConversation?.id === conversation.id}
+                isSelected={selectedChannel?.id === conversation.channelId}
                 onClick={() => selectConversation(conversation)}
               />
             ))

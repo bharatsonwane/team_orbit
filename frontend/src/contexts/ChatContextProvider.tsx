@@ -1,4 +1,5 @@
 import React, {
+  useEffect,
   createContext,
   useContext,
   useState,
@@ -6,7 +7,7 @@ import React, {
   useMemo,
 } from "react";
 import type { ReactNode } from "react";
-import { useDispatch, useSelector } from "react-redux";
+import { useDispatch } from "react-redux";
 import type {
   ChatMessage,
   Conversation,
@@ -18,15 +19,15 @@ import type {
   ChatChannelListItem,
   ChatUser,
   ChatMessageApiResponse,
+  ChannelState,
+  ChannelStateMap,
 } from "../schemas/chat";
-import {
-  generateMockConversations,
-  generateMockMessages,
-} from "../utils/chatUtils";
-import type { AppDispatch, RootState } from "@/redux/store";
+import { dummyChatData, dummyChatUsers } from "../utils/dummyChat";
+import type { AppDispatch } from "@/redux/store";
 import {
   fetchChatChannelsAction,
   sendChannelMessageAction,
+  fetchChannelMessagesAction,
 } from "@/redux/actions/chatActions";
 import { useAuthService } from "./AuthContextProvider";
 
@@ -34,18 +35,15 @@ import { useAuthService } from "./AuthContextProvider";
 export interface ChatContextType {
   // State - direct
   conversations: Conversation[];
-  selectedConversation: Conversation | null;
 
   // State - Group Chat
   channels: ChatChannel[];
   selectedChannel: ChatChannel | null;
 
   // Shared State
-  messages: Record<number, ChatMessage[]>; // channelId -> messages
-  typingUsers: Record<number, number[]>; // channelId -> userIds who are typing
+  channelStateMap: ChannelStateMap; // channelId -> ChannelState
   isLoading: boolean;
   error: string | null;
-  socketConnected: boolean;
 
   // Actions - direct
   selectConversation: (conversation: Conversation | null) => void;
@@ -75,14 +73,11 @@ export interface ChatContextType {
 
 const defaultContext: ChatContextType = {
   conversations: [],
-  selectedConversation: null,
   channels: [],
   selectedChannel: null,
-  messages: {},
-  typingUsers: {},
+  channelStateMap: {},
   isLoading: false,
   error: null,
-  socketConnected: false,
   selectConversation: () => {},
   selectChannel: () => {},
   sendMessage: () => {},
@@ -121,24 +116,16 @@ interface ChatProviderProps {
 }
 
 export const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
-  const [conversations, setConversations] = useState<Conversation[]>([]);
-  const [selectedConversation, setSelectedConversation] =
-    useState<Conversation | null>(null);
-  const [channels, setChannels] = useState<ChatChannel[]>([]);
-  const [selectedChannel, setSelectedChannel] = useState<ChatChannel | null>(
+  const [channelStateMap, setChannelStateMap] = useState<ChannelStateMap>({});
+  const [selectedChannelId, setSelectedChannelId] = useState<number | null>(
     null
   );
-  const [messages, setMessages] = useState<Record<number, ChatMessage[]>>({});
-  const [typingUsers, setTypingUsers] = useState<Record<number, number[]>>({});
+  const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
-  const [socketConnected] = useState<boolean>(false);
   const dispatch = useDispatch<AppDispatch>();
-  const {
-    channels: apiChannels,
-    loading: channelsLoading,
-    error: channelsError,
-  } = useSelector((state: RootState) => state.chat);
   const { loggedInUser } = useAuthService();
+
+  console.log("bharat-channelStateMap", channelStateMap);
 
   const buildSenderFromUser = useCallback((): ChatUser => {
     if (!loggedInUser) {
@@ -201,76 +188,220 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
     []
   );
 
-  // Initialize with dummy data on mount
-  React.useEffect(() => {
-    // direct conversations
-    const mockConversations = generateMockConversations();
-    const mockMessages: Record<number, ChatMessage[]> = {};
+  // Helper to get sender user from senderUserId
+  const getSenderUser = useCallback(
+    (senderUserId: number): ChatUser => {
+      // If it's the current user, use buildSenderFromUser
+      if (loggedInUser && senderUserId === loggedInUser.id) {
+        return buildSenderFromUser();
+      }
+      // Otherwise, look up from dummyChatUsers
+      const user = dummyChatUsers.find(u => u.id === senderUserId);
+      if (user) {
+        return user;
+      }
+      // Fallback
+      return {
+        id: senderUserId,
+        name: `User ${senderUserId}`,
+        email: `user${senderUserId}@example.com`,
+        status: "online",
+      };
+    },
+    [loggedInUser, buildSenderFromUser]
+  );
 
-    // Generate messages for each conversation
-    mockConversations.forEach((conversation: Conversation) => {
-      mockMessages[conversation.channelId] = generateMockMessages(
-        conversation.channelId,
-        conversation.participant.id
-      );
-    });
-
-    setConversations(mockConversations);
-    setMessages(mockMessages);
-  }, []);
-
-  React.useEffect(() => {
-    dispatch(fetchChatChannelsAction());
-  }, [dispatch]);
-
-  React.useEffect(() => {
-    if (channelsError) {
-      setError(channelsError);
-    }
-  }, [channelsError]);
-
-  React.useEffect(() => {
-    if (!apiChannels) return;
-    const mappedChannels = apiChannels.map(mapApiChannelToChatChannel);
-    setChannels(mappedChannels);
-    setMessages(prev => {
+  // Initialize with hardcoded dummy data on mount
+  useEffect(() => {
+    setChannelStateMap(prev => {
       const next = { ...prev };
-      mappedChannels.forEach(channel => {
-        if (!next[channel.id]) {
-          next[channel.id] = [];
-        }
+
+      // Process each channel from dummyChatData
+      Object.values(dummyChatData).forEach(channelData => {
+        const channelId = channelData.channelId;
+
+        // Map messages and add sender field, and fix reaction user types
+        const messages: ChatMessage[] = (channelData.messages || []).map(
+          msg => ({
+            ...msg,
+            sender: getSenderUser(msg.senderUserId),
+            reactions: (msg.reactions || []).map(reaction => ({
+              ...reaction,
+              user: {
+                ...reaction.user,
+                status: (reaction.user.status || "online") as
+                  | "online"
+                  | "offline"
+                  | "away",
+              },
+            })),
+          })
+        );
+
+        // Get last message if available
+        const lastMessage =
+          messages.length > 0
+            ? {
+                ...messages[messages.length - 1],
+                sender: getSenderUser(
+                  messages[messages.length - 1].senderUserId
+                ),
+              }
+            : undefined;
+
+        next[channelId] = {
+          channelId,
+          messages,
+          hasMore: channelData.hasMore ?? true,
+          loading: channelData.loading ?? false,
+          error: channelData.error ?? null,
+          typingUserIds: channelData.typingUserIds ?? [],
+          lastFetchedAt: channelData.lastFetchedAt ?? new Date().toISOString(),
+          name: channelData.name,
+          description: (channelData as { description?: string }).description,
+          type: (channelData.type as "direct" | "group") ?? "group",
+          image: channelData.image,
+          memberCount: channelData.memberCount ?? 0,
+          unreadCount: channelData.unreadCount ?? 0,
+          createdAt: channelData.createdAt ?? new Date().toISOString(),
+          updatedAt: channelData.updatedAt ?? new Date().toISOString(),
+          lastMessage,
+        };
       });
       return next;
     });
-  }, [apiChannels, mapApiChannelToChatChannel]);
+  }, [getSenderUser]);
+
+  useEffect(() => {
+    const loadChannels = async () => {
+      setIsLoading(true);
+      try {
+        const apiChannels = await dispatch(fetchChatChannelsAction()).unwrap();
+        const mappedChannels = apiChannels.map(mapApiChannelToChatChannel);
+        setChannelStateMap(prev => {
+          const next = { ...prev };
+          mappedChannels.forEach(channel => {
+            const existing = next[channel.id] || {
+              channelId: channel.id,
+              messages: [],
+              hasMore: true,
+              loading: false,
+              error: null,
+              typingUserIds: [],
+            };
+            next[channel.id] = {
+              ...existing,
+              name: channel.name,
+              description: channel.description,
+              type: channel.type,
+              image: channel.avatar,
+              memberCount: channel.memberCount,
+              unreadCount: existing.unreadCount ?? 0,
+              createdAt: channel.createdAt,
+              updatedAt: channel.updatedAt,
+              lastMessage: existing.lastMessage,
+            };
+          });
+          return next;
+        });
+      } catch (e) {
+        setError(
+          typeof e === "string"
+            ? e
+            : "Unable to load channels. Please try again."
+        );
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    void loadChannels();
+  }, [dispatch, mapApiChannelToChatChannel]);
+
+  // Derive channels list for sidebar from channelStateMap
+  const channels: ChatChannel[] = useMemo(() => {
+    const list: ChatChannel[] = Object.values(channelStateMap).map(s => ({
+      id: s.channelId,
+      name: s.name ?? `Channel ${s.channelId}`,
+      description: s.description,
+      type: (s.type as "direct" | "group") ?? "group",
+      avatar:
+        s.image ||
+        `https://api.dicebear.com/7.x/shapes/svg?radius=50&seed=${encodeURIComponent(
+          s.name ?? String(s.channelId)
+        )}`,
+      memberCount: s.memberCount ?? 0,
+      lastMessage: s.lastMessage,
+      unreadCount: s.unreadCount ?? 0,
+      createdAt: s.createdAt ?? new Date().toISOString(),
+      updatedAt: s.updatedAt ?? s.lastFetchedAt ?? new Date().toISOString(),
+    }));
+    // Sort by updatedAt desc
+    return list.sort(
+      (a, b) =>
+        new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
+    );
+  }, [channelStateMap]);
+
+  // Derive conversations list from channelStateMap (direct messages only)
+  const conversations: Conversation[] = useMemo(() => {
+    return Object.values(channelStateMap)
+      .filter(s => s.type === "direct")
+      .map(s => {
+        // Create a Conversation from ChannelState
+        // For direct messages, we need to reconstruct participant info
+        // Since we don't store participant id/email in channelStateMap,
+        // we create a minimal participant from available data
+        const participant: ChatUser = {
+          id: s.channelId, // This is approximate, but works for UI
+          name: s.name ?? `User ${s.channelId}`,
+          email: s.name
+            ? `${s.name.toLowerCase().replace(/\s+/g, ".")}@example.com`
+            : `user${s.channelId}@example.com`,
+          avatar: s.image,
+          status: "online" as const,
+        };
+        return {
+          id: `dm_1_${s.channelId}`, // Composite key for conversation
+          channelId: s.channelId,
+          participant,
+          lastMessage: s.lastMessage,
+          unreadCount: s.unreadCount ?? 0,
+          updatedAt: s.updatedAt ?? s.lastFetchedAt ?? new Date().toISOString(),
+        };
+      })
+      .sort(
+        (a, b) =>
+          new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
+      );
+  }, [channelStateMap]);
 
   // Mark as read
   const markAsRead = useCallback((channelId: number) => {
-    // Update conversation unread count
-    setConversations(prev =>
-      prev.map(conv =>
-        conv.channelId === channelId ? { ...conv, unreadCount: 0 } : conv
-      )
-    );
-
     // Update channel unread count
-    setChannels(prev =>
-      prev.map(channel =>
-        channel.id === channelId ? { ...channel, unreadCount: 0 } : channel
-      )
-    );
+    setChannelStateMap(prev => {
+      const existing = prev[channelId];
+      if (!existing) return prev;
+      return {
+        ...prev,
+        [channelId]: { ...existing, unreadCount: 0 },
+      };
+    });
 
     // TODO: Emit socket event to backend
     // socket.emit("chat:mark_as_read", { channelId });
   }, []);
 
-  // Select conversation
+  // Select conversation (converts to channel and uses selectChannel)
   const selectConversation = useCallback(
     (conversation: Conversation | null) => {
-      setSelectedConversation(conversation);
-      if (conversation) {
-        markAsRead(conversation.channelId);
+      if (!conversation) {
+        setSelectedChannelId(null);
+        return;
       }
+      // Select underlying channel for this conversation
+      setSelectedChannelId(conversation.channelId);
+      markAsRead(conversation.channelId);
     },
     [markAsRead]
   );
@@ -286,12 +417,7 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
       }
 
       const channelId = data.channelId;
-      const previousChannelState = channels.find(
-        channel => channel.id === channelId
-      );
-      const previousConversationState = conversations.find(
-        conversation => conversation.channelId === channelId
-      );
+      const previousChannelState = channelStateMap[channelId];
 
       const tempId = Date.now();
       const now = new Date().toISOString();
@@ -314,26 +440,35 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
         readBy: [],
       };
 
-      setMessages(prev => ({
-        ...prev,
-        [channelId]: [...(prev[channelId] || []), optimisticMessage],
-      }));
+      setChannelStateMap(prev => {
+        const existing = prev[channelId];
+        const messages = existing?.messages || [];
+        const nextState: ChannelState = {
+          channelId,
+          messages: [...messages, optimisticMessage],
+          hasMore: existing?.hasMore ?? true,
+          loading: false,
+          error: null,
+          typingUserIds: existing?.typingUserIds ?? [],
+          lastFetchedAt: existing?.lastFetchedAt,
+          lastReadAt: existing?.lastReadAt,
+        };
+        return { ...prev, [channelId]: nextState };
+      });
 
-      setConversations(prev =>
-        prev.map(conv =>
-          conv.channelId === channelId
-            ? { ...conv, lastMessage: optimisticMessage, updatedAt: now }
-            : conv
-        )
-      );
-
-      setChannels(prev =>
-        prev.map(channel =>
-          channel.id === channelId
-            ? { ...channel, lastMessage: optimisticMessage, updatedAt: now }
-            : channel
-        )
-      );
+      // Update meta on channel state
+      setChannelStateMap(prev => {
+        const existing = prev[channelId];
+        if (!existing) return prev;
+        return {
+          ...prev,
+          [channelId]: {
+            ...existing,
+            lastMessage: optimisticMessage,
+            updatedAt: now,
+          },
+        };
+      });
 
       const send = async () => {
         try {
@@ -348,77 +483,60 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
 
           const persistedMessage = mapApiMessageToChatMessage(result);
 
-          setMessages(prev => ({
-            ...prev,
-            [channelId]: (prev[channelId] || []).map(message =>
+          setChannelStateMap(prev => {
+            const existing = prev[channelId];
+            if (!existing) return prev;
+            const updated = existing.messages.map(message =>
               message.id === tempId ? persistedMessage : message
-            ),
-          }));
+            );
+            return {
+              ...prev,
+              [channelId]: { ...existing, messages: updated },
+            };
+          });
 
-          setConversations(prev =>
-            prev.map(conv =>
-              conv.channelId === channelId &&
-              conv.lastMessage &&
-              conv.lastMessage.id === tempId
-                ? {
-                    ...conv,
-                    lastMessage: persistedMessage,
-                    updatedAt: persistedMessage.updatedAt,
-                  }
-                : conv
-            )
-          );
-
-          setChannels(prev =>
-            prev.map(channel =>
-              channel.id === channelId &&
-              channel.lastMessage &&
-              channel.lastMessage.id === tempId
-                ? {
-                    ...channel,
-                    lastMessage: persistedMessage,
-                    updatedAt: persistedMessage.updatedAt,
-                  }
-                : channel
-            )
-          );
+          // Update channel meta with persisted message
+          setChannelStateMap(prev => {
+            const existing = prev[channelId];
+            if (!existing) return prev;
+            return {
+              ...prev,
+              [channelId]: {
+                ...existing,
+                lastMessage: persistedMessage,
+                updatedAt: persistedMessage.updatedAt,
+              },
+            };
+          });
         } catch (err) {
-          setMessages(prev => ({
-            ...prev,
-            [channelId]: (prev[channelId] || []).filter(
+          setChannelStateMap(prev => {
+            const existing = prev[channelId];
+            if (!existing) return prev;
+            const updated = existing.messages.filter(
               message => message.id !== tempId
-            ),
-          }));
+            );
+            return {
+              ...prev,
+              [channelId]: { ...existing, messages: updated },
+            };
+          });
 
-          setConversations(prev =>
-            prev.map(conv =>
-              conv.channelId === channelId &&
-              conv.lastMessage &&
-              conv.lastMessage.id === tempId
-                ? {
-                    ...conv,
-                    lastMessage: previousConversationState?.lastMessage,
-                    updatedAt:
-                      previousConversationState?.updatedAt ?? conv.updatedAt,
-                  }
-                : conv
-            )
-          );
-
-          setChannels(prev =>
-            prev.map(channel =>
-              channel.id === channelId &&
-              channel.lastMessage &&
-              channel.lastMessage.id === tempId
-                ? {
-                    ...channel,
-                    lastMessage: previousChannelState?.lastMessage,
-                    updatedAt:
-                      previousChannelState?.updatedAt ?? channel.updatedAt,
-                  }
-                : channel
-            )
-          );
+          // Rollback channel meta if needed
+          if (previousChannelState) {
+            setChannelStateMap(prev => {
+              const existing = prev[channelId];
+              if (!existing) return prev;
+              return {
+                ...prev,
+                [channelId]: {
+                  ...existing,
+                  lastMessage: previousChannelState.lastMessage,
+                  updatedAt:
+                    previousChannelState.updatedAt ?? existing.updatedAt,
+                },
+              };
+            });
+          }
 
           setError(
             typeof err === "string"
@@ -432,8 +550,7 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
     },
     [
       buildSenderFromUser,
-      channels,
-      conversations,
+      channelStateMap,
       dispatch,
       loggedInUser,
       mapApiMessageToChatMessage,
@@ -442,9 +559,10 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
 
   // Edit message
   const editMessage = useCallback((data: EditMessageData) => {
-    setMessages(prev => ({
-      ...prev,
-      [data.channelId]: (prev[data.channelId] || []).map(msg =>
+    setChannelStateMap(prev => {
+      const existing = prev[data.channelId];
+      if (!existing) return prev;
+      const updated = existing.messages.map(msg =>
         msg.id === data.messageId &&
         msg.messageCreatedAt === data.messageCreatedAt
           ? {
@@ -454,8 +572,9 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
               updatedAt: new Date().toISOString(),
             }
           : msg
-      ),
-    }));
+      );
+      return { ...prev, [data.channelId]: { ...existing, messages: updated } };
+    });
 
     // TODO: Emit socket event to backend
     // socket.emit("chat:edit_message", data);
@@ -465,14 +584,16 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
   const deleteMessage = useCallback(
     (messageId: number, messageCreatedAt: string, channelId: number) => {
       const now = new Date().toISOString();
-      setMessages(prev => ({
-        ...prev,
-        [channelId]: (prev[channelId] || []).map(msg =>
+      setChannelStateMap(prev => {
+        const existing = prev[channelId];
+        if (!existing) return prev;
+        const updated = existing.messages.map(msg =>
           msg.id === messageId && msg.messageCreatedAt === messageCreatedAt
             ? { ...msg, isDeleted: true, deletedAt: now }
             : msg
-        ),
-      }));
+        );
+        return { ...prev, [channelId]: { ...existing, messages: updated } };
+      });
 
       // TODO: Emit socket event to backend
       // socket.emit("chat:delete_message", { messageId, messageCreatedAt, channelId });
@@ -483,9 +604,10 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
   // Add reaction
   const addReaction = useCallback((data: AddReactionData) => {
     const now = new Date().toISOString();
-    setMessages(prev => ({
-      ...prev,
-      [data.channelId]: (prev[data.channelId] || []).map(msg => {
+    setChannelStateMap(prev => {
+      const existing = prev[data.channelId];
+      if (!existing) return prev;
+      const updated = existing.messages.map(msg => {
         if (
           msg.id === data.messageId &&
           msg.messageCreatedAt === data.messageCreatedAt
@@ -519,7 +641,7 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
                     id: 1,
                     name: "You",
                     email: "you@example.com",
-                    status: "online",
+                    status: "online" as const,
                   },
                   reaction: data.reaction,
                   createdAt: now,
@@ -529,8 +651,9 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
           }
         }
         return msg;
-      }),
-    }));
+      });
+      return { ...prev, [data.channelId]: { ...existing, messages: updated } };
+    });
 
     // TODO: Emit socket event to backend
     // socket.emit("chat:add_reaction", data);
@@ -539,9 +662,10 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
   // Remove reaction
   const removeReaction = useCallback(
     (messageId: number, messageCreatedAt: string, channelId: number) => {
-      setMessages(prev => ({
-        ...prev,
-        [channelId]: (prev[channelId] || []).map(msg =>
+      setChannelStateMap(prev => {
+        const existing = prev[channelId];
+        if (!existing) return prev;
+        const updated = existing.messages.map(msg =>
           msg.id === messageId && msg.messageCreatedAt === messageCreatedAt
             ? {
                 ...msg,
@@ -550,8 +674,9 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
                 ),
               }
             : msg
-        ),
-      }));
+        );
+        return { ...prev, [channelId]: { ...existing, messages: updated } };
+      });
 
       // TODO: Emit socket event to backend
       // socket.emit("chat:remove_reaction", { messageId, messageCreatedAt, channelId });
@@ -562,31 +687,80 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
   // Select channel (for group chat)
   const selectChannel = useCallback(
     (channel: ChatChannel | null) => {
-      setSelectedChannel(channel);
+      if (!channel) {
+        setSelectedChannelId(null);
+        return;
+      }
+
+      setSelectedChannelId(channel.id);
+      markAsRead(channel.id);
+
       if (channel) {
-        markAsRead(channel.id);
+        // Load messages only if we don't already have them cached
+        const state = channelStateMap[channel.id];
+        if (!state || state.messages.length === 0) {
+          const load = async () => {
+            try {
+              const results = await dispatch(
+                fetchChannelMessagesAction({ channelId: channel.id, limit: 50 })
+              ).unwrap();
+              const mapped = results.map(mapApiMessageToChatMessage).reverse(); // oldest first
+              setChannelStateMap(prev => ({
+                ...prev,
+                [channel.id]: {
+                  channelId: channel.id,
+                  messages: mapped,
+                  hasMore: results.length >= 50,
+                  loading: false,
+                  error: null,
+                  typingUserIds: [],
+                  lastFetchedAt: new Date().toISOString(),
+                },
+              }));
+            } catch (e) {
+              setError(
+                typeof e === "string"
+                  ? e
+                  : "Failed to load messages. Please try again."
+              );
+            }
+          };
+          void load();
+        }
       }
     },
-    [markAsRead]
+    [channelStateMap, dispatch, mapApiMessageToChatMessage, markAsRead]
   );
+
+  // Derive selectedChannel from selectedChannelId and channels list
+  const selectedChannel: ChatChannel | null = useMemo(() => {
+    if (selectedChannelId == null) return null;
+    return channels.find(c => c.id === selectedChannelId) ?? null;
+  }, [channels, selectedChannelId]);
 
   // Set typing indicator
   const setTyping = useCallback((channelId: number, isTyping: boolean) => {
-    setTypingUsers(prev => {
-      const currentTyping = prev[channelId] || [];
-      const userId = 1; // Current user ID
-
+    const userId = 1; // Current user ID (replace with real)
+    setChannelStateMap(prev => {
+      const existing =
+        prev[channelId] ||
+        ({
+          channelId,
+          messages: [],
+          hasMore: true,
+          loading: false,
+          error: null,
+          typingUserIds: [],
+        } as ChannelState);
+      let typingUserIds = existing.typingUserIds ?? [];
       if (isTyping) {
-        if (!currentTyping.includes(userId)) {
-          return { ...prev, [channelId]: [...currentTyping, userId] };
+        if (!typingUserIds.includes(userId)) {
+          typingUserIds = [...typingUserIds, userId];
         }
       } else {
-        return {
-          ...prev,
-          [channelId]: currentTyping.filter(id => id !== userId),
-        };
+        typingUserIds = typingUserIds.filter(id => id !== userId);
       }
-      return prev;
+      return { ...prev, [channelId]: { ...existing, typingUserIds } };
     });
 
     // TODO: Emit socket event to backend
@@ -642,12 +816,19 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
         lastMessage: welcomeMessage,
       };
 
-      setChannels(prev => [newChannel, ...prev]);
-      setMessages(prev => ({
+      setChannelStateMap(prev => ({
         ...prev,
-        [newChannelId]: [welcomeMessage],
+        [newChannelId]: {
+          channelId: newChannelId,
+          messages: [welcomeMessage],
+          hasMore: true,
+          loading: false,
+          error: null,
+          typingUserIds: [],
+          lastFetchedAt: new Date().toISOString(),
+        },
       }));
-      setSelectedChannel(newChannel);
+      setSelectedChannelId(newChannel.id);
       markAsRead(newChannel.id);
 
       return newChannel;
@@ -658,14 +839,11 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
   const value = useMemo<ChatContextType>(
     () => ({
       conversations,
-      selectedConversation,
       channels,
       selectedChannel,
-      messages,
-      typingUsers,
-      isLoading: channelsLoading,
+      channelStateMap,
+      isLoading,
       error,
-      socketConnected,
       selectConversation,
       selectChannel,
       sendMessage,
@@ -679,15 +857,12 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
       createChannel,
     }),
     [
-      conversations,
-      selectedConversation,
       channels,
       selectedChannel,
-      messages,
-      typingUsers,
-      channelsLoading,
+      channelStateMap,
+      conversations,
+      isLoading,
       error,
-      socketConnected,
       selectConversation,
       selectChannel,
       sendMessage,

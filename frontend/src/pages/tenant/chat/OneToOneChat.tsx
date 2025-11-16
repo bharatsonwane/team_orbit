@@ -6,17 +6,14 @@ import { ChatEmptyState } from "@/components/chat/layout/ChatEmptyState";
 import { useChat } from "@/contexts/ChatContextProvider";
 
 function OneToOneChatContent() {
-  const { selectedConversation } = useChat();
+  const { selectedChannel } = useChat();
 
   return (
     <ChatLayout
       sidebar={<ConversationList />}
       mainContent={
-        selectedConversation ? (
-          <ChatMessageView
-            conversation={selectedConversation}
-            channel={undefined}
-          />
+        selectedChannel ? (
+          <ChatMessageView channel={selectedChannel} />
         ) : (
           <ChatEmptyState
             title="Select a conversation"

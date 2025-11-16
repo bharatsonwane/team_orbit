@@ -10,13 +10,13 @@ interface ChatMessageListProps {
 }
 
 export function ChatMessageList({ channelId }: ChatMessageListProps) {
-  const { messages, typingUsers } = useChat();
+  const { channelStateMap } = useChat();
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  const conversationMessages = messages[channelId] || [];
+  const conversationMessages = channelStateMap[channelId]?.messages || [];
   const groupedMessages = groupMessagesByDate(conversationMessages);
-  const typingUserIds = typingUsers[channelId] || [];
+  const typingUserIds = channelStateMap[channelId]?.typingUserIds || [];
 
   // Auto-scroll to bottom when new messages arrive
   useEffect(() => {

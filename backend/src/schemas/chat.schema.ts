@@ -82,6 +82,13 @@ export const chatMessageSchema = z.object({
   updatedAt: z.string().datetime().optional(),
 });
 
+export const chatMessageListQuerySchema = z.object({
+  before: z.string().datetime().optional(),
+  limit: z.coerce.number().int().min(1).max(100).default(50),
+});
+
+export const chatMessageListResponseSchema = z.array(chatMessageSchema);
+
 /** @description SCHEMAS TYPES */
 export type CreateChatChannelSchema = z.infer<typeof createChatChannelSchema>;
 export type ChatChannelSchema = z.infer<typeof chatChannelSchema>;
@@ -93,6 +100,9 @@ export type ChatChannelListItemSchema = z.infer<
   typeof chatChannelListItemSchema
 >;
 export type SendChatMessageSchema = z.infer<typeof sendChatMessageSchema>;
+export type ChatMessageListQuerySchema = z.infer<
+  typeof chatMessageListQuerySchema
+>;
 
 /** @description OPENAPI SCHEMAS REGISTRATION */
 oasRegisterSchemas([
@@ -111,5 +121,13 @@ oasRegisterSchemas([
   {
     schemaName: "ChatChannelListResponseSchema",
     schema: chatChannelListResponseSchema,
+  },
+  {
+    schemaName: "ChatMessageListQuerySchema",
+    schema: chatMessageListQuerySchema,
+  },
+  {
+    schemaName: "ChatMessageListResponseSchema",
+    schema: chatMessageListResponseSchema,
   },
 ]);

@@ -215,4 +215,40 @@ export default class Chat {
     const result = await tenantPool.query(insertQuery);
     return result.rows[0] as ChatMessageSchema;
   }
+
+  static async getChannelMessages(
+    dbClient: dbClientPool,
+    channelId: number,
+    userId: number,
+    { before, limit = 50 }: { before?: string; limit?: number }
+  ): Promise<ChatMessageSchema[]> {
+    const tenantPool = dbClient.tenantPool!;
+
+    const params: any[] = [channelId];
+    let where = `WHERE m."chatChannelId" = $1`;
+    if (before) {
+      params.push(before);
+      where += ` AND m."createdAt" < $2`;
+    }
+    params.push(limit);
+
+    const query = `
+      SELECT
+        m.id,
+        m.text,
+        m."mediaUrl",
+        m."replyToMessageId",
+        m."senderUserId",
+        m."createdAt",
+        m."updatedAt",
+        m."chatChannelId" AS "channelId"
+      FROM chat_message m
+      ${where}
+      ORDER BY m."createdAt" DESC
+      LIMIT $${params.length};
+    `;
+
+    const { rows } = await tenantPool.query(query, params);
+    return rows as ChatMessageSchema[];
+  }
 }

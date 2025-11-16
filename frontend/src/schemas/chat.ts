@@ -90,6 +90,44 @@ export const chatMessageApiSchema = z.object({
 
 export type ChatMessageApiResponse = z.infer<typeof chatMessageApiSchema>;
 
+// API payload types
+export type SendChannelMessagePayload = {
+  channelId: number;
+  text?: string;
+  mediaUrl?: string;
+  replyToMessageId?: number;
+};
+
+export type FetchChannelMessagesPayload = {
+  channelId: number;
+  before?: string;
+  limit?: number;
+};
+
+// Per-channel UI state
+export type ChannelState = {
+  channelId: number;
+  messages: ChatMessage[];
+  hasMore: boolean;
+  loading: boolean;
+  error: string | null;
+  typingUserIds: number[];
+  lastFetchedAt?: string;
+  lastReadAt?: string;
+  // channel metadata for sidebar/UX
+  name?: string;
+  description?: string;
+  type?: "direct" | "group";
+  image?: string;
+  memberCount?: number;
+  unreadCount?: number;
+  createdAt?: string;
+  updatedAt?: string;
+  lastMessage?: ChatMessage;
+};
+
+export type ChannelStateMap = Record<number, ChannelState>;
+
 // Conversation schema (for direct chats)
 export const conversationSchema = z.object({
   id: z.string(), // composite key: "dm_${userId1}_${userId2}"

@@ -82,3 +82,34 @@ export const saveChannelMessage = async (
     next(error);
   }
 };
+
+export const getChannelMessages = async (
+  req: AuthenticatedRequest,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  try {
+    const userId = req.user?.userId!;
+    const channelId = Number(req.params.channelId);
+    const before =
+      typeof req.query.before === "string" ? req.query.before : undefined;
+    const limit = req.query.limit ? Number(req.query.limit) : undefined;
+
+    const isMember = await Chat.isUserChannelMember(req.db, channelId, userId);
+    if (!isMember) {
+      throw {
+        statusCode: 403,
+        message: "You are not a member of this channel",
+      };
+    }
+
+    const messages = await Chat.getChannelMessages(req.db, channelId, userId, {
+      before,
+      limit,
+    });
+
+    res.status(200).json(messages);
+  } catch (error) {
+    next(error);
+  }
+};
