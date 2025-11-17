@@ -17,7 +17,7 @@ export function ChannelList({ channelType }: ChannelListProps) {
   const [isCreateChannelOpen, setIsCreateChannelOpen] = useState(false);
 
   // Filter channels based on channelType and search query
-  const filteredChannels = useMemo(() => {
+  const filteredChannelList = useMemo(() => {
     let filtered = channels;
 
     // Filter by channelType if provided
@@ -38,17 +38,6 @@ export function ChannelList({ channelType }: ChannelListProps) {
 
     return filtered;
   }, [channels, channelType, searchQuery]);
-
-  // Separate group and direct channels (only if channelType is not specified)
-  const groupChannels = useMemo(() => {
-    if (channelType) return [];
-    return filteredChannels.filter(channel => channel.type === "group");
-  }, [filteredChannels, channelType]);
-
-  const directChannels = useMemo(() => {
-    if (channelType) return [];
-    return filteredChannels.filter(channel => channel.type === "direct");
-  }, [filteredChannels, channelType]);
 
   return (
     <div className="flex flex-col h-full">
@@ -91,59 +80,26 @@ export function ChannelList({ channelType }: ChannelListProps) {
             <div className="p-4 text-center text-sm text-muted-foreground">
               Loading channels...
             </div>
-          ) : filteredChannels.length === 0 ? (
+          ) : filteredChannelList.length === 0 ? (
             <div className="p-4 text-center text-sm text-muted-foreground">
               {searchQuery
                 ? `No ${channelType === "direct" ? "conversations" : "channels"} found`
                 : `No ${channelType === "direct" ? "conversations" : "channels"} yet`}
             </div>
-          ) : channelType ? (
-            // Show filtered channels when channelType is specified
-            filteredChannels.map(channel => (
-              <ChannelListItem
-                key={channel.id}
-                channel={channel}
-                isSelected={selectedChannel?.id === channel.id}
-                onClick={() => selectChannel(channel)}
-              />
-            ))
           ) : (
-            // Show separated group and direct channels when channelType is not specified
-            <>
-              {/* Group Channels */}
-              {groupChannels.length > 0 && (
-                <div>
-                  <div className="px-4 py-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-                    Group Channels
-                  </div>
-                  {groupChannels.map(channel => (
-                    <ChannelListItem
-                      key={channel.id}
-                      channel={channel}
-                      isSelected={selectedChannel?.id === channel.id}
-                      onClick={() => selectChannel(channel)}
-                    />
-                  ))}
-                </div>
-              )}
-
-              {/* Direct Channels */}
-              {directChannels.length > 0 && (
-                <div>
-                  <div className="px-4 py-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-                    Direct Channels
-                  </div>
-                  {directChannels.map(channel => (
-                    <ChannelListItem
-                      key={channel.id}
-                      channel={channel}
-                      isSelected={selectedChannel?.id === channel.id}
-                      onClick={() => selectChannel(channel)}
-                    />
-                  ))}
-                </div>
-              )}
-            </>
+            <div>
+              <div className="px-4 py-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                {channelType === "group" ? "Group Channels" : "Direct Channels"}
+              </div>
+              {filteredChannelList.map(channel => (
+                <ChannelListItem
+                  key={channel.id}
+                  channel={channel}
+                  isSelected={selectedChannel?.id === channel.id}
+                  onClick={() => selectChannel(channel)}
+                />
+              ))}
+            </div>
           )}
         </div>
       </ScrollArea>

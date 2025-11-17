@@ -8,7 +8,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
 import { formatMessageTime } from "@/utils/chatUtils";
-import type { ChatMessage } from "@/schemas/chat";
+import type { ChatMessage } from "@/schemas/chatSchema";
 import { useChat } from "@/contexts/ChatContextProvider";
 import { MoreVertical, Reply, Edit, Trash2 } from "lucide-react";
 import { useState } from "react";

@@ -24,9 +24,9 @@ import { useAuthService } from "@/contexts/AuthContextProvider";
 import {
   createChatChannelSchema,
   type CreateChatChannelSchema,
-} from "@/schemas/chat";
+} from "@/schemas/chatSchema";
 import { toast } from "sonner";
-import type { TenantUser } from "@/schemas/user";
+import type { TenantUser } from "@/schemas/userSchema";
 import { getUsersAction } from "@/redux/actions/userActions";
 import { createChatChannelAction } from "../../../redux/actions/chatActions";
 import type { AppDispatch } from "@/redux/store";

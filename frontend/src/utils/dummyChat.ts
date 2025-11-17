@@ -1,4 +1,4 @@
-import type { ChatUser } from "@/schemas/chat";
+import type { ChatUser } from "@/schemas/chatSchema";
 
 export const dummyChatUsers: ChatUser[] = [
   {

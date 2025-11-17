@@ -3,7 +3,7 @@ import type {
   ChatMessage,
   Conversation,
   ChatChannel,
-} from "../schemas/chat";
+} from "../schemas/chatSchema";
 import { dummyChatUsers } from "./dummyChat";
 
 /**

@@ -7,26 +7,36 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import type { Conversation, ChatChannel } from "@/schemas/chat";
+import type { ChatChannel } from "@/schemas/chatSchema";
 import { Badge } from "@/components/ui/badge";
+import { dummyChatUsers } from "@/utils/dummyChat";
 
 interface ChatHeaderProps {
-  conversation?: Conversation;
-  channel?: ChatChannel;
+  channel: ChatChannel;
+  channelType: "group" | "direct";
 }
 
-export function ChatHeader({ conversation, channel }: ChatHeaderProps) {
-  const isDirect = !!conversation;
-  const isGroupChat = !!channel;
-
-  if (isDirect && conversation) {
-    const { participant } = conversation;
+export function ChatHeader({ channel, channelType }: ChatHeaderProps) {
+  if (channelType === "direct" && channel) {
+    // For direct chats, find the other participant
+    // This is a temporary solution - in a real app, you'd get this from the channel metadata
+    const participant = dummyChatUsers.find(
+      user => user.id !== channel.id && channel.name.includes(user.name)
+    ) || {
+      id: 0,
+      name: channel.name,
+      email: "",
+      status: "offline" as const,
+    };
 
     return (
       <div className="flex items-center justify-between p-4 border-b border-border bg-card">
         <div className="flex items-center gap-3 flex-1 min-w-0">
           <Avatar className="w-10 h-10">
-            <AvatarImage src={participant.avatar} alt={participant.name} />
+            <AvatarImage
+              src={channel.avatar || participant.avatar}
+              alt={participant.name}
+            />
             <AvatarFallback>
               {participant.name
                 .split(" ")
@@ -81,7 +91,7 @@ export function ChatHeader({ conversation, channel }: ChatHeaderProps) {
     );
   }
 
-  if (isGroupChat && channel) {
+  if (channelType === "group" && channel) {
     return (
       <div className="flex items-center justify-between p-4 border-b border-border bg-card">
         <div className="flex items-center gap-3 flex-1 min-w-0">

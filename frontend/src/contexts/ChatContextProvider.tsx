@@ -21,7 +21,7 @@ import type {
   ChatMessageApiResponse,
   ChannelState,
   ChannelStateMap,
-} from "../schemas/chat";
+} from "../schemas/chatSchema";
 import { dummyChatUsers, getDummyChatData } from "../utils/dummyChat";
 import type { AppDispatch } from "@/redux/store";
 import {
@@ -124,8 +124,6 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
   const [error, setError] = useState<string | null>(null);
   const dispatch = useDispatch<AppDispatch>();
   const { loggedInUser } = useAuthService();
-
-  console.log("bharat-channelStateMap", channelStateMap);
 
   const buildSenderFromUser = useCallback((): ChatUser => {
     if (!loggedInUser) {

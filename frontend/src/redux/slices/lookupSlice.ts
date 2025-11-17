@@ -1,5 +1,5 @@
 import { createSlice } from "@reduxjs/toolkit";
-import type { LookupType } from "../../schemas/lookup";
+import type { LookupType } from "../../schemas/lookupSchema";
 import { getLookupListAction } from "../actions/lookupAction";
 
 // Lookup state interface

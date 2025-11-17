@@ -8,14 +8,12 @@ import {
   type ChatMessageApiResponse,
   type SendChannelMessagePayload,
   type FetchChannelMessagesPayload,
-} from "@/schemas/chat";
+} from "@/schemas/chatSchema";
 
 export const createChatChannelAction = createAsyncThunk(
   "chat/createChatChannelAction",
   async (payload: CreateChatChannelSchema, { rejectWithValue }) => {
     try {
-      console.log("payload", payload);
-
       const response = await getAxios().post<CreateChatChannelSchema>(
         "api/chat/channel/create",
         payload
@@ -56,7 +54,6 @@ export const fetchChannelMessagesAction = createAsyncThunk<
       { params }
     );
 
-    console.log("response", response);
     return response.data;
   } catch (error: unknown) {
     return rejectWithValue(getAppErrorMessage(error));

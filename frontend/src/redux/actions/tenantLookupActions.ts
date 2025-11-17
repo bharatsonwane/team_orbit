@@ -4,12 +4,12 @@ import type {
   LookupItem,
   LookupListResponse,
   LookupType,
-} from "@/schemas/lookup";
+} from "@/schemas/lookupSchema";
 import type {
   CreateTenantLookupFormData,
   TenantLookupItem,
   UpdateTenantLookupFormData,
-} from "@/schemas/tenantLookup";
+} from "@/schemas/tenantLookupSchema";
 
 /** Get tenant lookup list action - API call only */
 export const getTenantLookupListAction = createAsyncThunk(
@@ -34,7 +34,6 @@ export const getTenantLookupListByTypeIdAction = createAsyncThunk(
       const response = await getAxios().get<TenantLookupItem>(
         `/api/tenant-lookup/type/${id}`
       );
-      console.log(response);
       return response.data;
     } catch (error: unknown) {
       // Proper error handling for rejected promises

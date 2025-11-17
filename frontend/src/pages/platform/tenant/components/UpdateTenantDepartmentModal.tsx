@@ -33,7 +33,7 @@ import {
 import {
   createTenantLookupFormSchema,
   type CreateTenantLookupFormData,
-} from "@/schemas/tenantLookup";
+} from "@/schemas/tenantLookupSchema";
 
 interface DepartmentModalProps {
   mode: "create" | "update";

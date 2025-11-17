@@ -13,7 +13,7 @@ function DirectChatContent() {
       sidebar={<ChannelList channelType="direct" />}
       mainContent={
         selectedChannel ? (
-          <ChatMessageView channel={selectedChannel} />
+          <ChatMessageView channel={selectedChannel} channelType="direct" />
         ) : (
           <ChatEmptyState
             title="Select a conversation"

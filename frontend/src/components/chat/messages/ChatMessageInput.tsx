@@ -3,24 +3,20 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Send, Paperclip, Smile } from "lucide-react";
 import { useChat } from "@/contexts/ChatContextProvider";
-import type { Conversation, ChatChannel } from "@/schemas/chat";
+import type { ChatChannel } from "@/schemas/chatSchema";
 
 interface ChatMessageInputProps {
-  conversation?: Conversation;
-  channel?: ChatChannel;
+  channel: ChatChannel;
 }
 
-export function ChatMessageInput({
-  conversation,
-  channel,
-}: ChatMessageInputProps) {
+export function ChatMessageInput({ channel }: ChatMessageInputProps) {
   const { sendMessage, setTyping } = useChat();
   const [message, setMessage] = useState("");
   const [isTyping, setIsTyping] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-  const channelId = conversation?.channelId || channel?.id;
+  const channelId = channel?.id;
   if (!channelId) return null;
 
   // Handle typing indicator

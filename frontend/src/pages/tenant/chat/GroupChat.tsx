@@ -13,7 +13,7 @@ function GroupChatContent() {
       sidebar={<ChannelList channelType="group" />}
       mainContent={
         selectedChannel ? (
-          <ChatMessageView channel={selectedChannel} />
+          <ChatMessageView channel={selectedChannel} channelType="group" />
         ) : (
           <ChatEmptyState
             title="Select a channel"

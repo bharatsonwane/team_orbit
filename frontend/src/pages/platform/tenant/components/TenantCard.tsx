@@ -11,7 +11,7 @@ import { Badge } from "@/components/ui/badge";
 import { Building2, Calendar, Archive, Settings } from "lucide-react";
 import { selectLookupTypeByName } from "@/redux/slices/lookupSlice";
 import { lookupTypeKeys } from "@/utils/constants";
-import { type Tenant } from "@/schemas/tenant";
+import { type Tenant } from "@/schemas/tenantSchema";
 import type { RootState } from "@/redux/store";
 
 interface TenantCardProps {

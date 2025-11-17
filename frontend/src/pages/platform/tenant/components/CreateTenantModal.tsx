@@ -21,7 +21,7 @@ import { useSelector, useDispatch } from "react-redux";
 import {
   createTenantFormSchema,
   type CreateTenantFormData,
-} from "@/schemas/tenant";
+} from "@/schemas/tenantSchema";
 import { selectLookupTypeByName } from "@/redux/slices/lookupSlice";
 import { createTenantAction } from "@/redux/actions/tenantActions";
 import { LoadingSpinner } from "@/components/ui/loading-indicator";

@@ -1,5 +1,5 @@
 import { createSlice } from "@reduxjs/toolkit";
-import type { Tenant } from "../../schemas/tenant";
+import type { Tenant } from "../../schemas/tenantSchema";
 import { getTenantsAction, getTenantAction } from "../actions/tenantActions";
 
 interface PaginationInfo {

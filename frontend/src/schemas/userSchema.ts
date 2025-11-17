@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { lookupItemSchema } from "./lookup";
+import { lookupItemSchema } from "./lookupSchema";
 import { userRoleName } from "@/utils/constants";
 
 // User schema
