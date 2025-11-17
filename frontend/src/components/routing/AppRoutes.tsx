@@ -37,7 +37,7 @@ import { AppLayout } from "@/components/AppLayout";
 import type { BreadcrumbLayoutProps } from "@/components/AppLayout";
 import TenantDepartments from "@/pages/platform/tenant/TenantDepartments";
 import TenantDesignations from "@/pages/platform/tenant/TenantDesignations";
-import OneToOneChat from "@/pages/tenant/chat/OneToOneChat";
+import DirectChat from "@/pages/tenant/chat/DirectChat";
 import GroupChat from "@/pages/tenant/chat/GroupChat";
 
 export interface SidebarRouteWithChildren {
@@ -524,7 +524,7 @@ export const tenantSidebarNavigationItems: SidebarRouteWithChildren[] = [
         href: "/tenant/:tenantId/chat/direct",
         path: "/tenant/:tenantId/chat/direct",
         allowedRoles: [userRoleKeys.ANY],
-        element: <OneToOneChat />,
+        element: <DirectChat />,
       },
       {
         title: "Group Chat",

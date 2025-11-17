@@ -10,7 +10,7 @@ function GroupChatContent() {
 
   return (
     <ChatLayout
-      sidebar={<ChannelList />}
+      sidebar={<ChannelList channelType="group" />}
       mainContent={
         selectedChannel ? (
           <ChatMessageView channel={selectedChannel} />

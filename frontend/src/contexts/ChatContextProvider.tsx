@@ -22,7 +22,7 @@ import type {
   ChannelState,
   ChannelStateMap,
 } from "../schemas/chat";
-import { dummyChatData, dummyChatUsers } from "../utils/dummyChat";
+import { dummyChatUsers, getDummyChatData } from "../utils/dummyChat";
 import type { AppDispatch } from "@/redux/store";
 import {
   fetchChatChannelsAction,
@@ -217,7 +217,8 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
       const next = { ...prev };
 
       // Process each channel from dummyChatData
-      Object.values(dummyChatData).forEach(channelData => {
+      const dummyChatData = getDummyChatData(loggedInUser?.id);
+      Object.values(dummyChatData).forEach((channelData: any) => {
         const channelId = channelData.channelId;
 
         // Map messages and add sender field, and fix reaction user types

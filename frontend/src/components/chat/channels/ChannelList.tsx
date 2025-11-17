@@ -7,56 +7,81 @@ import { Search, Hash } from "lucide-react";
 import { useState, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 
-export function ChannelList() {
+interface ChannelListProps {
+  channelType?: "group" | "direct";
+}
+
+export function ChannelList({ channelType }: ChannelListProps) {
   const { channels, selectedChannel, selectChannel, isLoading } = useChat();
   const [searchQuery, setSearchQuery] = useState("");
   const [isCreateChannelOpen, setIsCreateChannelOpen] = useState(false);
 
-  // Filter channels based on search query
+  // Filter channels based on channelType and search query
   const filteredChannels = useMemo(() => {
-    if (!searchQuery.trim()) return channels;
+    let filtered = channels;
 
-    const query = searchQuery.toLowerCase();
-    return channels.filter(
-      channel =>
-        channel.name.toLowerCase().includes(query) ||
-        channel.description?.toLowerCase().includes(query) ||
-        channel.lastMessage?.text?.toLowerCase().includes(query)
-    );
-  }, [channels, searchQuery]);
+    // Filter by channelType if provided
+    if (channelType) {
+      filtered = filtered.filter(channel => channel.type === channelType);
+    }
 
-  // Separate group and direct channels
-  const groupChannels = filteredChannels.filter(
-    channel => channel.type === "group"
-  );
-  const directChannels = filteredChannels.filter(
-    channel => channel.type === "direct"
-  );
+    // Filter by search query
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase();
+      filtered = filtered.filter(
+        channel =>
+          channel.name.toLowerCase().includes(query) ||
+          channel.description?.toLowerCase().includes(query) ||
+          channel.lastMessage?.text?.toLowerCase().includes(query)
+      );
+    }
+
+    return filtered;
+  }, [channels, channelType, searchQuery]);
+
+  // Separate group and direct channels (only if channelType is not specified)
+  const groupChannels = useMemo(() => {
+    if (channelType) return [];
+    return filteredChannels.filter(channel => channel.type === "group");
+  }, [filteredChannels, channelType]);
+
+  const directChannels = useMemo(() => {
+    if (channelType) return [];
+    return filteredChannels.filter(channel => channel.type === "direct");
+  }, [filteredChannels, channelType]);
 
   return (
     <div className="flex flex-col h-full">
       {/* Header */}
       <div className="p-4 border-b border-border">
-        <h2 className="text-lg font-semibold mb-3">Channels</h2>
+        <h2 className="text-lg font-semibold mb-3">
+          {channelType === "direct" ? "Direct Messages" : "Channels"}
+        </h2>
         <div className="relative">
           <Search className="absolute left-2 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
           <Input
             type="text"
-            placeholder="Search channels..."
+            placeholder={
+              channelType === "direct"
+                ? "Search conversations..."
+                : "Search channels..."
+            }
             value={searchQuery}
             onChange={e => setSearchQuery(e.target.value)}
             className="pl-8"
           />
         </div>
-        <Button
-          variant="outline"
-          size="sm"
-          className="w-full mt-2"
-          onClick={() => setIsCreateChannelOpen(true)}
-        >
-          <Hash className="w-4 h-4 mr-2" />
-          Create Channel
-        </Button>
+        {channelType !== "direct" && (
+          <Button
+            variant="outline"
+            size="sm"
+            className="w-full mt-2"
+            onClick={() => setIsCreateChannelOpen(true)}
+          >
+            <Hash className="w-4 h-4 mr-2" />
+            Create Channel
+          </Button>
+        )}
       </div>
 
       {/* Channel List */}
@@ -68,9 +93,22 @@ export function ChannelList() {
             </div>
           ) : filteredChannels.length === 0 ? (
             <div className="p-4 text-center text-sm text-muted-foreground">
-              {searchQuery ? "No channels found" : "No channels yet"}
+              {searchQuery
+                ? `No ${channelType === "direct" ? "conversations" : "channels"} found`
+                : `No ${channelType === "direct" ? "conversations" : "channels"} yet`}
             </div>
+          ) : channelType ? (
+            // Show filtered channels when channelType is specified
+            filteredChannels.map(channel => (
+              <ChannelListItem
+                key={channel.id}
+                channel={channel}
+                isSelected={selectedChannel?.id === channel.id}
+                onClick={() => selectChannel(channel)}
+              />
+            ))
           ) : (
+            // Show separated group and direct channels when channelType is not specified
             <>
               {/* Group Channels */}
               {groupChannels.length > 0 && (
