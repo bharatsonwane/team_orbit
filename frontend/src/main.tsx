@@ -9,6 +9,8 @@ import { AuthProvider } from "./contexts/AuthContextProvider";
 import { store } from "./redux/store";
 import { SocketProvider } from "./contexts/SocketProvider";
 
+import { ChatProvider } from "@/contexts/ChatContextProvider";
+
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
     <Provider store={store}>
@@ -16,7 +18,9 @@ createRoot(document.getElementById("root")!).render(
         <ThemeProvider defaultTheme="system">
           <AuthProvider>
             <SocketProvider>
-              <App />
+              <ChatProvider>
+                <App />
+              </ChatProvider>
             </SocketProvider>
           </AuthProvider>
         </ThemeProvider>

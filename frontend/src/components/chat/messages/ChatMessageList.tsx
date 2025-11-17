@@ -1,9 +1,9 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useMemo } from "react";
 import { useChat } from "@/contexts/ChatContextProvider";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { MessageBubble } from "./MessageBubble";
 import { Separator } from "@/components/ui/separator";
-import { formatMessageTime, groupMessagesByDate } from "@/utils/chatUtils";
+import { groupMessagesByDate } from "@/utils/chatUtils";
 
 interface ChatMessageListProps {
   channelId: number;
@@ -14,9 +14,38 @@ export function ChatMessageList({ channelId }: ChatMessageListProps) {
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  const conversationMessages = channelStateMap[channelId]?.messages || [];
-  const groupedMessages = groupMessagesByDate(conversationMessages);
-  const typingUserIds = channelStateMap[channelId]?.typingUserIds || [];
+  // Use useMemo to ensure we get the latest state and React detects changes
+  const channelState = useMemo(() => {
+    return channelStateMap.get(channelId);
+  }, [channelStateMap, channelId]);
+
+  const conversationMessages = useMemo(() => {
+    return channelState?.messages || [];
+  }, [channelState]);
+
+  const groupedMessages = useMemo(() => {
+    return groupMessagesByDate(conversationMessages);
+  }, [conversationMessages]);
+
+  const typingUserIds = channelState?.typingUserIds || [];
+
+  // Debug logging
+  useEffect(() => {
+    console.log("ChatMessageList - channelId:", channelId);
+    console.log("ChatMessageList - channelState:", channelState);
+    console.log(
+      "ChatMessageList - conversationMessages:",
+      conversationMessages
+    );
+    console.log(
+      "ChatMessageList - channelStateMap size:",
+      channelStateMap.size
+    );
+    console.log(
+      "ChatMessageList - channelStateMap keys:",
+      Array.from(channelStateMap.keys())
+    );
+  }, [channelId, channelState, conversationMessages, channelStateMap]);
 
   // Auto-scroll to bottom when new messages arrive
   useEffect(() => {

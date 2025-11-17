@@ -9,7 +9,8 @@ import {
 } from "@/components/ui/dropdown-menu";
 import type { ChatChannel } from "@/schemas/chatSchema";
 import { Badge } from "@/components/ui/badge";
-import { dummyChatUsers } from "@/utils/dummyChat";
+import { useChat } from "@/contexts/ChatContextProvider";
+import { useAuthService } from "@/contexts/AuthContextProvider";
 
 interface ChatHeaderProps {
   channel: ChatChannel;
@@ -17,13 +18,21 @@ interface ChatHeaderProps {
 }
 
 export function ChatHeader({ channel, channelType }: ChatHeaderProps) {
+  const { chatUsers } = useChat();
+  const { loggedInUser } = useAuthService();
+
   if (channelType === "direct" && channel) {
-    // For direct chats, find the other participant
-    // This is a temporary solution - in a real app, you'd get this from the channel metadata
-    const participant = dummyChatUsers.find(
-      user => user.id !== channel.id && channel.name.includes(user.name)
-    ) || {
-      id: 0,
+    // For direct chats, find the other participant from channel.members
+    // The other participant is the one who is not the logged-in user
+    const otherParticipantId = channel.members?.find(
+      memberId => memberId !== loggedInUser?.id
+    );
+    const participant = otherParticipantId
+      ? chatUsers.find(user => user.id === otherParticipantId)
+      : undefined;
+
+    const participantUser = participant || {
+      id: otherParticipantId || 0,
       name: channel.name,
       email: "",
       status: "offline" as const,
@@ -34,11 +43,11 @@ export function ChatHeader({ channel, channelType }: ChatHeaderProps) {
         <div className="flex items-center gap-3 flex-1 min-w-0">
           <Avatar className="w-10 h-10">
             <AvatarImage
-              src={channel.avatar || participant.avatar}
-              alt={participant.name}
+              src={channel.avatar || participantUser.avatar}
+              alt={participantUser.name}
             />
             <AvatarFallback>
-              {participant.name
+              {participantUser.name
                 .split(" ")
                 .map(n => n[0])
                 .join("")
@@ -49,19 +58,21 @@ export function ChatHeader({ channel, channelType }: ChatHeaderProps) {
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2">
               <h2 className="font-semibold text-sm truncate">
-                {participant.name}
+                {participantUser.name}
               </h2>
-              {participant.status === "online" && (
+              {participantUser.status === "online" && (
                 <Badge variant="outline" className="h-4 px-1.5 text-xs">
                   Online
                 </Badge>
               )}
             </div>
-            {participant.status !== "online" && participant.lastSeen && (
-              <p className="text-xs text-muted-foreground">
-                Last seen {new Date(participant.lastSeen).toLocaleTimeString()}
-              </p>
-            )}
+            {participantUser.status !== "online" &&
+              participantUser.lastSeen && (
+                <p className="text-xs text-muted-foreground">
+                  Last seen{" "}
+                  {new Date(participantUser.lastSeen).toLocaleTimeString()}
+                </p>
+              )}
           </div>
         </div>
 
@@ -119,8 +130,8 @@ export function ChatHeader({ channel, channelType }: ChatHeaderProps) {
             </div>
             <div className="flex items-center gap-2">
               <p className="text-xs text-muted-foreground">
-                {channel.memberCount}{" "}
-                {channel.memberCount === 1 ? "member" : "members"}
+                {channel.members?.length || 0}{" "}
+                {(channel.members?.length || 0) === 1 ? "member" : "members"}
               </p>
               {channel.description && (
                 <>

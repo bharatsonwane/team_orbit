@@ -37,8 +37,7 @@ import { AppLayout } from "@/components/AppLayout";
 import type { BreadcrumbLayoutProps } from "@/components/AppLayout";
 import TenantDepartments from "@/pages/platform/tenant/TenantDepartments";
 import TenantDesignations from "@/pages/platform/tenant/TenantDesignations";
-import DirectChat from "@/pages/tenant/chat/DirectChat";
-import GroupChat from "@/pages/tenant/chat/GroupChat";
+import ChatPage from "@/pages/tenant/chat/ChatPage";
 
 export interface SidebarRouteWithChildren {
   title: string;
@@ -524,7 +523,7 @@ export const tenantSidebarNavigationItems: SidebarRouteWithChildren[] = [
         href: "/tenant/:tenantId/chat/direct",
         path: "/tenant/:tenantId/chat/direct",
         allowedRoles: [userRoleKeys.ANY],
-        element: <DirectChat />,
+        element: <ChatPage channelType="direct" />,
       },
       {
         title: "Group Chat",
@@ -533,7 +532,7 @@ export const tenantSidebarNavigationItems: SidebarRouteWithChildren[] = [
         href: "/tenant/:tenantId/chat/group",
         path: "/tenant/:tenantId/chat/group",
         allowedRoles: [userRoleKeys.ANY],
-        element: <GroupChat />,
+        element: <ChatPage channelType="group" />,
       },
     ],
   },

@@ -52,7 +52,6 @@ const chatMessageSchemaBase = z.object({
   messageCreatedAt: z.string(), // For composite key with backend
   channelId: z.number(),
   senderUserId: z.number(),
-  sender: chatUserSchema,
   replyToMessageId: z.number().optional(),
   text: z.string().optional(),
   mediaUrl: z.string().optional(),
@@ -119,14 +118,14 @@ export type ChannelState = {
   description?: string;
   type?: "direct" | "group";
   image?: string;
-  memberCount?: number;
+  members?: number[]; // Array of user IDs
   unreadCount?: number;
   createdAt?: string;
   updatedAt?: string;
   lastMessage?: ChatMessage;
 };
 
-export type ChannelStateMap = Record<number, ChannelState>;
+export type ChannelStateMap = Map<number, ChannelState>;
 
 // Conversation schema (for direct chats)
 export const conversationSchema = z.object({
@@ -146,7 +145,7 @@ export const chatChannelSchema = z.object({
   description: z.string().optional(),
   type: channelTypeEnum.default("direct"),
   avatar: z.string().optional(),
-  memberCount: z.number(),
+  members: z.array(z.number()), // Array of user IDs
   lastMessage: chatMessageSchema.optional(),
   unreadCount: z.number().default(0),
   createdAt: z.string(),
@@ -164,7 +163,7 @@ export const chatChannelListItemSchema = z.object({
   createdBy: z.number().nullable().optional(),
   createdAt: z.string(),
   updatedAt: z.string(),
-  memberCount: z.number().int().nonnegative(),
+  members: z.array(z.number()), // Array of user IDs
   isCurrentUserAdmin: z.boolean().optional(),
 });
 

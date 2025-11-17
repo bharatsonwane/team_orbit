@@ -10,19 +10,20 @@ import type { ReactNode } from "react";
 import { useDispatch } from "react-redux";
 import type {
   ChatMessage,
-  Conversation,
   ChatChannel,
   SendMessageData,
   EditMessageData,
   AddReactionData,
   CreateChatChannelSchema,
-  ChatChannelListItem,
   ChatUser,
-  ChatMessageApiResponse,
   ChannelState,
   ChannelStateMap,
 } from "../schemas/chatSchema";
-import { dummyChatUsers, getDummyChatData } from "../utils/dummyChat";
+import { getDummyChatData, dummyChatUsers } from "../utils/dummyChat";
+import {
+  mapApiChannelToChatChannel,
+  mapApiMessageToChatMessage,
+} from "../utils/chatUtils";
 import type { AppDispatch } from "@/redux/store";
 import {
   fetchChatChannelsAction,
@@ -30,23 +31,17 @@ import {
   fetchChannelMessagesAction,
 } from "@/redux/actions/chatActions";
 import { useAuthService } from "./AuthContextProvider";
+import { getUsersAction } from "@/redux/actions/userActions";
+import type { TenantUser } from "@/schemas/userSchema";
 
 // Chat Context Type
 export interface ChatContextType {
-  // State - direct
-  conversations: Conversation[];
-
-  // State - Group Chat
-  channels: ChatChannel[];
-  selectedChannel: ChatChannel | null;
-
   // Shared State
   channelStateMap: ChannelStateMap; // channelId -> ChannelState
+  selectedChannelId: number | null;
+  chatUsers: ChatUser[]; // Array of all chat users for lookups
   isLoading: boolean;
   error: string | null;
-
-  // Actions - direct
-  selectConversation: (conversation: Conversation | null) => void;
 
   // Actions - Group Chat
   selectChannel: (channel: ChatChannel | null) => void;
@@ -72,13 +67,11 @@ export interface ChatContextType {
 }
 
 const defaultContext: ChatContextType = {
-  conversations: [],
-  channels: [],
-  selectedChannel: null,
-  channelStateMap: {},
+  channelStateMap: new Map(),
+  selectedChannelId: null,
+  chatUsers: [],
   isLoading: false,
   error: null,
-  selectConversation: () => {},
   selectChannel: () => {},
   sendMessage: () => {},
   editMessage: () => {},
@@ -94,7 +87,7 @@ const defaultContext: ChatContextType = {
     description: "",
     type: "group",
     avatar: "",
-    memberCount: 0,
+    members: [],
     unreadCount: 0,
     createdAt: "",
     updatedAt: "",
@@ -116,115 +109,40 @@ interface ChatProviderProps {
 }
 
 export const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
-  const [channelStateMap, setChannelStateMap] = useState<ChannelStateMap>({});
+  const [channelStateMap, setChannelStateMap] = useState<ChannelStateMap>(
+    new Map()
+  );
   const [selectedChannelId, setSelectedChannelId] = useState<number | null>(
     null
   );
+  const [chatUsers, setChatUsers] = useState<ChatUser[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
   const dispatch = useDispatch<AppDispatch>();
   const { loggedInUser } = useAuthService();
 
-  const buildSenderFromUser = useCallback((): ChatUser => {
-    if (!loggedInUser) {
-      return {
-        id: 0,
-        name: "Unknown",
-        email: "",
-        status: "online",
-      };
-    }
+  // Initialize with hardcoded dummy data and load channels from API
+  const loadChannels = useCallback(async () => {
+    setIsLoading(true);
 
-    const fullName =
-      `${loggedInUser.firstName} ${loggedInUser.lastName}`.trim();
+    // First, process dummy data
+    const next = new Map<number, ChannelState>();
+    const dummyChatData = getDummyChatData(loggedInUser?.id);
 
-    return {
-      id: loggedInUser.id,
-      name: fullName || loggedInUser.firstName || loggedInUser.email,
-      email: loggedInUser.email,
-      status: "online",
-    };
-  }, [loggedInUser]);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    Object.values(dummyChatData).forEach((channelData: any) => {
+      const channelId = channelData.channelId;
 
-  const mapApiMessageToChatMessage = useCallback(
-    (message: ChatMessageApiResponse): ChatMessage => ({
-      id: message.id,
-      messageCreatedAt: message.createdAt,
-      channelId: message.channelId,
-      senderUserId: message.senderUserId,
-      sender: buildSenderFromUser(),
-      replyToMessageId: message.replyToMessageId ?? undefined,
-      text: message.text ?? undefined,
-      mediaUrl: message.mediaUrl ?? undefined,
-      isEdited: false,
-      isDeleted: false,
-      createdAt: message.createdAt,
-      updatedAt: message.updatedAt,
-      reactions: [],
-      readBy: message.readBy ?? [],
-    }),
-    [buildSenderFromUser]
-  );
-
-  const mapApiChannelToChatChannel = useCallback(
-    (channel: ChatChannelListItem): ChatChannel => ({
-      id: channel.id,
-      name: channel.name,
-      description: channel.description ?? undefined,
-      type: channel.type,
-      avatar:
-        channel.image ||
-        `https://api.dicebear.com/7.x/shapes/svg?radius=50&seed=${encodeURIComponent(
-          channel.name
-        )}`,
-      memberCount: channel.memberCount,
-      lastMessage: undefined,
-      unreadCount: 0,
-      createdAt: channel.createdAt,
-      updatedAt: channel.updatedAt,
-    }),
-    []
-  );
-
-  // Helper to get sender user from senderUserId
-  const getSenderUser = useCallback(
-    (senderUserId: number): ChatUser => {
-      // If it's the current user, use buildSenderFromUser
-      if (loggedInUser && senderUserId === loggedInUser.id) {
-        return buildSenderFromUser();
-      }
-      // Otherwise, look up from dummyChatUsers
-      const user = dummyChatUsers.find(u => u.id === senderUserId);
-      if (user) {
-        return user;
-      }
-      // Fallback
-      return {
-        id: senderUserId,
-        name: `User ${senderUserId}`,
-        email: `user${senderUserId}@example.com`,
-        status: "online",
-      };
-    },
-    [loggedInUser, buildSenderFromUser]
-  );
-
-  // Initialize with hardcoded dummy data on mount
-  useEffect(() => {
-    setChannelStateMap(prev => {
-      const next = { ...prev };
-
-      // Process each channel from dummyChatData
-      const dummyChatData = getDummyChatData(loggedInUser?.id);
-      Object.values(dummyChatData).forEach((channelData: any) => {
-        const channelId = channelData.channelId;
-
-        // Map messages and add sender field, and fix reaction user types
-        const messages: ChatMessage[] = (channelData.messages || []).map(
-          msg => ({
+      // Map messages and add sender field, and fix reaction user types
+      // Note: dummy data messages don't have sender, so we add it here
+      const messages: ChatMessage[] =
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        ((channelData.messages || []) as any[]).map(
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          (msg: any) => ({
             ...msg,
-            sender: getSenderUser(msg.senderUserId),
-            reactions: (msg.reactions || []).map(reaction => ({
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            reactions: (msg.reactions || []).map((reaction: any) => ({
               ...reaction,
               user: {
                 ...reaction.user,
@@ -237,173 +155,107 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
           })
         );
 
-        // Get last message if available
-        const lastMessage =
-          messages.length > 0
-            ? {
-                ...messages[messages.length - 1],
-                sender: getSenderUser(
-                  messages[messages.length - 1].senderUserId
-                ),
-              }
-            : undefined;
+      // Get last message if available
+      const lastMessage =
+        messages.length > 0 ? messages[messages.length - 1] : undefined;
 
-        next[channelId] = {
-          channelId,
-          messages,
-          hasMore: channelData.hasMore ?? true,
-          loading: channelData.loading ?? false,
-          error: channelData.error ?? null,
-          typingUserIds: channelData.typingUserIds ?? [],
-          lastFetchedAt: channelData.lastFetchedAt ?? new Date().toISOString(),
-          name: channelData.name,
-          description: (channelData as { description?: string }).description,
-          type: (channelData.type as "direct" | "group") ?? "group",
-          image: channelData.image,
-          memberCount: channelData.memberCount ?? 0,
-          unreadCount: channelData.unreadCount ?? 0,
-          createdAt: channelData.createdAt ?? new Date().toISOString(),
-          updatedAt: channelData.updatedAt ?? new Date().toISOString(),
-          lastMessage,
-        };
+      next.set(channelId, {
+        channelId,
+        messages,
+        hasMore: channelData.hasMore ?? true,
+        loading: channelData.loading ?? false,
+        error: channelData.error ?? null,
+        typingUserIds: channelData.typingUserIds ?? [],
+        lastFetchedAt: channelData.lastFetchedAt ?? new Date().toISOString(),
+        name: channelData.name,
+        description: channelData.description,
+        type: (channelData.type as "direct" | "group") ?? "group",
+        image: channelData.image,
+        members: channelData.members ?? [],
+        unreadCount: channelData.unreadCount ?? 0,
+        createdAt: channelData.createdAt ?? new Date().toISOString(),
+        updatedAt: channelData.updatedAt ?? new Date().toISOString(),
+        lastMessage,
       });
-      return next;
     });
-  }, [getSenderUser]);
+
+    // Then, load channels from API and merge with dummy data
+    try {
+      const apiChannels = await dispatch(fetchChatChannelsAction()).unwrap();
+      const userList = await dispatch(
+        getUsersAction({
+          page: 1,
+          limit: 99,
+          searchText: "",
+        })
+      ).unwrap();
+      // Convert TenantUser[] to ChatUser[]
+      const apiChatUsers: ChatUser[] = userList.map((user: TenantUser) => ({
+        id: user.id,
+        name: `${user.firstName} ${user.lastName}`.trim(),
+        email: user.email || user.authEmail,
+        avatar: undefined,
+        status: "online" as const,
+      }));
+      // Merge API users with dummyChatUsers (all users are unique, no conflicts)
+      const chatUsersList: ChatUser[] = [...dummyChatUsers, ...apiChatUsers];
+      setChatUsers(chatUsersList);
+      const mappedChannels = apiChannels.map(mapApiChannelToChatChannel);
+
+      mappedChannels.forEach(channel => {
+        const existing = next.get(channel.id) || {
+          channelId: channel.id,
+          messages: [],
+          hasMore: true,
+          loading: false,
+          error: null,
+          typingUserIds: [],
+        };
+        next.set(channel.id, {
+          ...existing,
+          name: channel.name,
+          description: channel.description,
+          type: channel.type,
+          image: channel.avatar,
+          members: channel.members ?? [],
+          unreadCount: existing.unreadCount ?? 0,
+          createdAt: channel.createdAt,
+          updatedAt: channel.updatedAt,
+          lastMessage: existing.lastMessage,
+        });
+      });
+    } catch (e) {
+      setError(
+        typeof e === "string" ? e : "Unable to load channels. Please try again."
+      );
+    } finally {
+      setIsLoading(false);
+    }
+
+    // Set state once with all data
+    setChannelStateMap(next);
+  }, [loggedInUser, dispatch]);
 
   useEffect(() => {
-    const loadChannels = async () => {
-      setIsLoading(true);
-      try {
-        const apiChannels = await dispatch(fetchChatChannelsAction()).unwrap();
-        const mappedChannels = apiChannels.map(mapApiChannelToChatChannel);
-        setChannelStateMap(prev => {
-          const next = { ...prev };
-          mappedChannels.forEach(channel => {
-            const existing = next[channel.id] || {
-              channelId: channel.id,
-              messages: [],
-              hasMore: true,
-              loading: false,
-              error: null,
-              typingUserIds: [],
-            };
-            next[channel.id] = {
-              ...existing,
-              name: channel.name,
-              description: channel.description,
-              type: channel.type,
-              image: channel.avatar,
-              memberCount: channel.memberCount,
-              unreadCount: existing.unreadCount ?? 0,
-              createdAt: channel.createdAt,
-              updatedAt: channel.updatedAt,
-              lastMessage: existing.lastMessage,
-            };
-          });
-          return next;
-        });
-      } catch (e) {
-        setError(
-          typeof e === "string"
-            ? e
-            : "Unable to load channels. Please try again."
-        );
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    void loadChannels();
-  }, [dispatch, mapApiChannelToChatChannel]);
-
-  // Derive channels list for sidebar from channelStateMap
-  const channels: ChatChannel[] = useMemo(() => {
-    const list: ChatChannel[] = Object.values(channelStateMap).map(s => ({
-      id: s.channelId,
-      name: s.name ?? `Channel ${s.channelId}`,
-      description: s.description,
-      type: (s.type as "direct" | "group") ?? "group",
-      avatar:
-        s.image ||
-        `https://api.dicebear.com/7.x/shapes/svg?radius=50&seed=${encodeURIComponent(
-          s.name ?? String(s.channelId)
-        )}`,
-      memberCount: s.memberCount ?? 0,
-      lastMessage: s.lastMessage,
-      unreadCount: s.unreadCount ?? 0,
-      createdAt: s.createdAt ?? new Date().toISOString(),
-      updatedAt: s.updatedAt ?? s.lastFetchedAt ?? new Date().toISOString(),
-    }));
-    // Sort by updatedAt desc
-    return list.sort(
-      (a, b) =>
-        new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
-    );
-  }, [channelStateMap]);
-
-  // Derive conversations list from channelStateMap (direct messages only)
-  const conversations: Conversation[] = useMemo(() => {
-    return Object.values(channelStateMap)
-      .filter(s => s.type === "direct")
-      .map(s => {
-        // Create a Conversation from ChannelState
-        // For direct messages, we need to reconstruct participant info
-        // Since we don't store participant id/email in channelStateMap,
-        // we create a minimal participant from available data
-        const participant: ChatUser = {
-          id: s.channelId, // This is approximate, but works for UI
-          name: s.name ?? `User ${s.channelId}`,
-          email: s.name
-            ? `${s.name.toLowerCase().replace(/\s+/g, ".")}@example.com`
-            : `user${s.channelId}@example.com`,
-          avatar: s.image,
-          status: "online" as const,
-        };
-        return {
-          id: `dm_1_${s.channelId}`, // Composite key for conversation
-          channelId: s.channelId,
-          participant,
-          lastMessage: s.lastMessage,
-          unreadCount: s.unreadCount ?? 0,
-          updatedAt: s.updatedAt ?? s.lastFetchedAt ?? new Date().toISOString(),
-        };
-      })
-      .sort(
-        (a, b) =>
-          new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
-      );
-  }, [channelStateMap]);
+    if (loggedInUser) {
+      void loadChannels();
+    }
+  }, [loggedInUser, loadChannels]);
 
   // Mark as read
   const markAsRead = useCallback((channelId: number) => {
     // Update channel unread count
     setChannelStateMap(prev => {
-      const existing = prev[channelId];
+      const existing = prev.get(channelId);
       if (!existing) return prev;
-      return {
-        ...prev,
-        [channelId]: { ...existing, unreadCount: 0 },
-      };
+      const next = new Map(prev);
+      next.set(channelId, { ...existing, unreadCount: 0 });
+      return next;
     });
 
     // TODO: Emit socket event to backend
     // socket.emit("chat:mark_as_read", { channelId });
   }, []);
-
-  // Select conversation (converts to channel and uses selectChannel)
-  const selectConversation = useCallback(
-    (conversation: Conversation | null) => {
-      if (!conversation) {
-        setSelectedChannelId(null);
-        return;
-      }
-      // Select underlying channel for this conversation
-      setSelectedChannelId(conversation.channelId);
-      markAsRead(conversation.channelId);
-    },
-    [markAsRead]
-  );
 
   // Send message
   const sendMessage = useCallback(
@@ -416,18 +268,16 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
       }
 
       const channelId = data.channelId;
-      const previousChannelState = channelStateMap[channelId];
+      const previousChannelState = channelStateMap.get(channelId);
 
       const tempId = Date.now();
       const now = new Date().toISOString();
-      const sender = buildSenderFromUser();
 
       const optimisticMessage: ChatMessage = {
         id: tempId,
         messageCreatedAt: now,
         channelId,
-        senderUserId: sender.id,
-        sender,
+        senderUserId: loggedInUser?.id || 0,
         replyToMessageId: data.replyToMessageId,
         text: data.text,
         mediaUrl: data.mediaUrl,
@@ -440,7 +290,7 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
       };
 
       setChannelStateMap(prev => {
-        const existing = prev[channelId];
+        const existing = prev.get(channelId);
         const messages = existing?.messages || [];
         const nextState: ChannelState = {
           channelId,
@@ -452,21 +302,22 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
           lastFetchedAt: existing?.lastFetchedAt,
           lastReadAt: existing?.lastReadAt,
         };
-        return { ...prev, [channelId]: nextState };
+        const next = new Map(prev);
+        next.set(channelId, nextState);
+        return next;
       });
 
       // Update meta on channel state
       setChannelStateMap(prev => {
-        const existing = prev[channelId];
+        const existing = prev.get(channelId);
         if (!existing) return prev;
-        return {
-          ...prev,
-          [channelId]: {
-            ...existing,
-            lastMessage: optimisticMessage,
-            updatedAt: now,
-          },
-        };
+        const next = new Map(prev);
+        next.set(channelId, {
+          ...existing,
+          lastMessage: optimisticMessage,
+          updatedAt: now,
+        });
+        return next;
       });
 
       const send = async () => {
@@ -480,60 +331,58 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
             })
           ).unwrap();
 
-          const persistedMessage = mapApiMessageToChatMessage(result);
+          const persistedMessage = mapApiMessageToChatMessage(
+            result,
+            loggedInUser
+          );
 
           setChannelStateMap(prev => {
-            const existing = prev[channelId];
+            const existing = prev.get(channelId);
             if (!existing) return prev;
             const updated = existing.messages.map(message =>
               message.id === tempId ? persistedMessage : message
             );
-            return {
-              ...prev,
-              [channelId]: { ...existing, messages: updated },
-            };
+            const next = new Map(prev);
+            next.set(channelId, { ...existing, messages: updated });
+            return next;
           });
 
           // Update channel meta with persisted message
           setChannelStateMap(prev => {
-            const existing = prev[channelId];
+            const existing = prev.get(channelId);
             if (!existing) return prev;
-            return {
-              ...prev,
-              [channelId]: {
-                ...existing,
-                lastMessage: persistedMessage,
-                updatedAt: persistedMessage.updatedAt,
-              },
-            };
+            const next = new Map(prev);
+            next.set(channelId, {
+              ...existing,
+              lastMessage: persistedMessage,
+              updatedAt: persistedMessage.updatedAt,
+            });
+            return next;
           });
         } catch (err) {
           setChannelStateMap(prev => {
-            const existing = prev[channelId];
+            const existing = prev.get(channelId);
             if (!existing) return prev;
             const updated = existing.messages.filter(
               message => message.id !== tempId
             );
-            return {
-              ...prev,
-              [channelId]: { ...existing, messages: updated },
-            };
+            const next = new Map(prev);
+            next.set(channelId, { ...existing, messages: updated });
+            return next;
           });
 
           // Rollback channel meta if needed
           if (previousChannelState) {
             setChannelStateMap(prev => {
-              const existing = prev[channelId];
+              const existing = prev.get(channelId);
               if (!existing) return prev;
-              return {
-                ...prev,
-                [channelId]: {
-                  ...existing,
-                  lastMessage: previousChannelState.lastMessage,
-                  updatedAt:
-                    previousChannelState.updatedAt ?? existing.updatedAt,
-                },
-              };
+              const next = new Map(prev);
+              next.set(channelId, {
+                ...existing,
+                lastMessage: previousChannelState.lastMessage,
+                updatedAt: previousChannelState.updatedAt ?? existing.updatedAt,
+              });
+              return next;
             });
           }
 
@@ -547,19 +396,13 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
 
       void send();
     },
-    [
-      buildSenderFromUser,
-      channelStateMap,
-      dispatch,
-      loggedInUser,
-      mapApiMessageToChatMessage,
-    ]
+    [channelStateMap, dispatch, loggedInUser]
   );
 
   // Edit message
   const editMessage = useCallback((data: EditMessageData) => {
     setChannelStateMap(prev => {
-      const existing = prev[data.channelId];
+      const existing = prev.get(data.channelId);
       if (!existing) return prev;
       const updated = existing.messages.map(msg =>
         msg.id === data.messageId &&
@@ -572,7 +415,9 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
             }
           : msg
       );
-      return { ...prev, [data.channelId]: { ...existing, messages: updated } };
+      const next = new Map(prev);
+      next.set(data.channelId, { ...existing, messages: updated });
+      return next;
     });
 
     // TODO: Emit socket event to backend
@@ -584,14 +429,16 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
     (messageId: number, messageCreatedAt: string, channelId: number) => {
       const now = new Date().toISOString();
       setChannelStateMap(prev => {
-        const existing = prev[channelId];
+        const existing = prev.get(channelId);
         if (!existing) return prev;
         const updated = existing.messages.map(msg =>
           msg.id === messageId && msg.messageCreatedAt === messageCreatedAt
             ? { ...msg, isDeleted: true, deletedAt: now }
             : msg
         );
-        return { ...prev, [channelId]: { ...existing, messages: updated } };
+        const next = new Map(prev);
+        next.set(channelId, { ...existing, messages: updated });
+        return next;
       });
 
       // TODO: Emit socket event to backend
@@ -604,7 +451,7 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
   const addReaction = useCallback((data: AddReactionData) => {
     const now = new Date().toISOString();
     setChannelStateMap(prev => {
-      const existing = prev[data.channelId];
+      const existing = prev.get(data.channelId);
       if (!existing) return prev;
       const updated = existing.messages.map(msg => {
         if (
@@ -651,7 +498,9 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
         }
         return msg;
       });
-      return { ...prev, [data.channelId]: { ...existing, messages: updated } };
+      const next = new Map(prev);
+      next.set(data.channelId, { ...existing, messages: updated });
+      return next;
     });
 
     // TODO: Emit socket event to backend
@@ -662,7 +511,7 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
   const removeReaction = useCallback(
     (messageId: number, messageCreatedAt: string, channelId: number) => {
       setChannelStateMap(prev => {
-        const existing = prev[channelId];
+        const existing = prev.get(channelId);
         if (!existing) return prev;
         const updated = existing.messages.map(msg =>
           msg.id === messageId && msg.messageCreatedAt === messageCreatedAt
@@ -674,7 +523,9 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
               }
             : msg
         );
-        return { ...prev, [channelId]: { ...existing, messages: updated } };
+        const next = new Map(prev);
+        next.set(channelId, { ...existing, messages: updated });
+        return next;
       });
 
       // TODO: Emit socket event to backend
@@ -696,17 +547,19 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
 
       if (channel) {
         // Load messages only if we don't already have them cached
-        const state = channelStateMap[channel.id];
+        const state = channelStateMap.get(channel.id);
         if (!state || state.messages.length === 0) {
           const load = async () => {
             try {
               const results = await dispatch(
                 fetchChannelMessagesAction({ channelId: channel.id, limit: 50 })
               ).unwrap();
-              const mapped = results.map(mapApiMessageToChatMessage).reverse(); // oldest first
-              setChannelStateMap(prev => ({
-                ...prev,
-                [channel.id]: {
+              const mapped = results
+                .map(msg => mapApiMessageToChatMessage(msg, loggedInUser))
+                .reverse(); // oldest first
+              setChannelStateMap(prev => {
+                const next = new Map(prev);
+                next.set(channel.id, {
                   channelId: channel.id,
                   messages: mapped,
                   hasMore: results.length >= 50,
@@ -714,8 +567,9 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
                   error: null,
                   typingUserIds: [],
                   lastFetchedAt: new Date().toISOString(),
-                },
-              }));
+                });
+                return next;
+              });
             } catch (e) {
               setError(
                 typeof e === "string"
@@ -728,21 +582,15 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
         }
       }
     },
-    [channelStateMap, dispatch, mapApiMessageToChatMessage, markAsRead]
+    [channelStateMap, dispatch, loggedInUser, markAsRead]
   );
-
-  // Derive selectedChannel from selectedChannelId and channels list
-  const selectedChannel: ChatChannel | null = useMemo(() => {
-    if (selectedChannelId == null) return null;
-    return channels.find(c => c.id === selectedChannelId) ?? null;
-  }, [channels, selectedChannelId]);
 
   // Set typing indicator
   const setTyping = useCallback((channelId: number, isTyping: boolean) => {
     const userId = 1; // Current user ID (replace with real)
     setChannelStateMap(prev => {
       const existing =
-        prev[channelId] ||
+        prev.get(channelId) ||
         ({
           channelId,
           messages: [],
@@ -759,7 +607,9 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
       } else {
         typingUserIds = typingUserIds.filter(id => id !== userId);
       }
-      return { ...prev, [channelId]: { ...existing, typingUserIds } };
+      const next = new Map(prev);
+      next.set(channelId, { ...existing, typingUserIds });
+      return next;
     });
 
     // TODO: Emit socket event to backend
@@ -774,23 +624,17 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
   // Create new channel
   const createChannel = useCallback(
     (data: CreateChatChannelSchema): ChatChannel => {
+      // Get max channel ID from channelStateMap
+      const existingIds = Array.from(channelStateMap.keys());
       const newChannelId =
-        channels.length > 0
-          ? Math.max(...channels.map(channel => channel.id)) + 1
-          : 200;
+        existingIds.length > 0 ? Math.max(...existingIds) + 1 : 200;
       const now = new Date().toISOString();
 
       const welcomeMessage: ChatMessage = {
         id: newChannelId * 1000,
         messageCreatedAt: now,
         channelId: newChannelId,
-        senderUserId: 1,
-        sender: {
-          id: 1,
-          name: "You",
-          email: "you@example.com",
-          status: "online",
-        },
+        senderUserId: loggedInUser?.id || 0,
         text: `Welcome to #${data.name}!`,
         isEdited: false,
         isDeleted: false,
@@ -800,6 +644,14 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
         readBy: [1],
       };
 
+      // Create members array from channelUserIds (including current user)
+      const members: number[] = [
+        // Current user (logged in user)
+        ...(loggedInUser ? [loggedInUser.id] : []),
+        // Other members
+        ...data.channelUserIds,
+      ];
+
       const newChannel: ChatChannel = {
         id: newChannelId,
         name: data.name,
@@ -808,16 +660,16 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
         avatar: `https://api.dicebear.com/7.x/shapes/svg?radius=50&seed=${encodeURIComponent(
           data.name
         )}`,
-        memberCount: data.channelUserIds.length + 1,
+        members,
         unreadCount: 0,
         createdAt: now,
         updatedAt: now,
         lastMessage: welcomeMessage,
       };
 
-      setChannelStateMap(prev => ({
-        ...prev,
-        [newChannelId]: {
+      setChannelStateMap(prev => {
+        const next = new Map(prev);
+        next.set(newChannelId, {
           channelId: newChannelId,
           messages: [welcomeMessage],
           hasMore: true,
@@ -825,25 +677,24 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
           error: null,
           typingUserIds: [],
           lastFetchedAt: new Date().toISOString(),
-        },
-      }));
+        });
+        return next;
+      });
       setSelectedChannelId(newChannel.id);
       markAsRead(newChannel.id);
 
       return newChannel;
     },
-    [channels, markAsRead]
+    [channelStateMap, markAsRead, loggedInUser]
   );
 
   const value = useMemo<ChatContextType>(
     () => ({
-      conversations,
-      channels,
-      selectedChannel,
       channelStateMap,
+      selectedChannelId,
+      chatUsers,
       isLoading,
       error,
-      selectConversation,
       selectChannel,
       sendMessage,
       editMessage,
@@ -856,13 +707,11 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
       createChannel,
     }),
     [
-      channels,
-      selectedChannel,
       channelStateMap,
-      conversations,
+      selectedChannelId,
+      chatUsers,
       isLoading,
       error,
-      selectConversation,
       selectChannel,
       sendMessage,
       editMessage,

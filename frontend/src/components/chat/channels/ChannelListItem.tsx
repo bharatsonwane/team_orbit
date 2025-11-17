@@ -2,8 +2,10 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import type { ChatChannel } from "@/schemas/chatSchema";
-import { formatConversationTime } from "@/utils/chatUtils";
+import { formatConversationTime, getSenderUser } from "@/utils/chatUtils";
 import { Hash, Lock } from "lucide-react";
+import { useChat } from "@/contexts/ChatContextProvider";
+import { useAuthService } from "@/contexts/AuthContextProvider";
 
 interface ChannelListItemProps {
   channel: ChatChannel;
@@ -18,6 +20,8 @@ export function ChannelListItem({
 }: ChannelListItemProps) {
   const { name, description, lastMessage, unreadCount, updatedAt, type } =
     channel;
+  const { chatUsers } = useChat();
+  const { loggedInUser } = useAuthService();
 
   return (
     <div
@@ -62,9 +66,14 @@ export function ChannelListItem({
             <div className="flex items-center gap-2 flex-1 min-w-0">
               <p className="text-sm text-muted-foreground truncate">
                 <span className="font-medium">
-                  {lastMessage.senderUserId === 1
+                  {loggedInUser &&
+                  lastMessage.senderUserId === loggedInUser.id
                     ? "You"
-                    : lastMessage.sender.name}
+                    : getSenderUser(
+                        lastMessage.senderUserId,
+                        loggedInUser,
+                        chatUsers
+                      ).name}
                   :
                 </span>{" "}
                 {lastMessage.isDeleted ? (
@@ -90,8 +99,8 @@ export function ChannelListItem({
         </div>
         <div className="flex items-center gap-2 mt-1">
           <span className="text-xs text-muted-foreground">
-            {channel.memberCount}{" "}
-            {channel.memberCount === 1 ? "member" : "members"}
+            {channel.members?.length || 0}{" "}
+            {(channel.members?.length || 0) === 1 ? "member" : "members"}
           </span>
         </div>
       </div>

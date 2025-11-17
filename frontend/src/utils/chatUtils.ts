@@ -1,10 +1,11 @@
 import type {
-  ChatUser,
   ChatMessage,
-  Conversation,
   ChatChannel,
+  ChatChannelListItem,
+  ChatMessageApiResponse,
+  ChatUser,
 } from "../schemas/chatSchema";
-import { dummyChatUsers } from "./dummyChat";
+import type { User } from "../schemas/userSchema";
 
 /**
  * Format message time
@@ -96,3 +97,107 @@ export const groupMessagesByDate = (
 
   return grouped;
 };
+
+/**
+ * Map API channel list item to ChatChannel
+ * @param channel - The API channel list item
+ * @returns The mapped ChatChannel
+ */
+export const mapApiChannelToChatChannel = (
+  channel: ChatChannelListItem
+): ChatChannel => ({
+  id: channel.id,
+  name: channel.name,
+  description: channel.description ?? undefined,
+  type: channel.type,
+  avatar:
+    channel.image ||
+    `https://api.dicebear.com/7.x/shapes/svg?radius=50&seed=${encodeURIComponent(
+      channel.name
+    )}`,
+  members: channel.members ?? [],
+  lastMessage: undefined,
+  unreadCount: 0,
+  createdAt: channel.createdAt,
+  updatedAt: channel.updatedAt,
+});
+
+/**
+ * Build sender user from logged in user
+ * @param loggedInUser - The logged in user object
+ * @returns The ChatUser object
+ */
+export const buildSenderFromUser = (loggedInUser: User | null): ChatUser => {
+  if (!loggedInUser) {
+    return {
+      id: 0,
+      name: "Unknown",
+      email: "",
+      status: "online",
+    };
+  }
+
+  const fullName = `${loggedInUser.firstName} ${loggedInUser.lastName}`.trim();
+
+  return {
+    id: loggedInUser.id,
+    name: fullName || loggedInUser.firstName || loggedInUser.email,
+    email: loggedInUser.email,
+    status: "online",
+  };
+};
+
+/**
+ * Get sender user from senderUserId
+ * @param senderUserId - The sender user ID
+ * @param loggedInUser - The logged in user object
+ * @param chatUsers - Array of all chat users for lookups
+ * @returns The ChatUser object
+ */
+export const getSenderUser = (
+  senderUserId: number,
+  loggedInUser: User | null,
+  chatUsers: ChatUser[] = []
+): ChatUser => {
+  // If it's the current user, use buildSenderFromUser
+  if (loggedInUser && senderUserId === loggedInUser.id) {
+    return buildSenderFromUser(loggedInUser);
+  }
+  // Otherwise, look up from chatUsers
+  const user = chatUsers.find(u => u.id === senderUserId);
+  if (user) {
+    return user;
+  }
+  // Final fallback (should not happen if chatUsers is properly populated)
+  return {
+    id: senderUserId,
+    name: `User ${senderUserId}`,
+    email: `user${senderUserId}@example.com`,
+    status: "online",
+  };
+};
+
+/**
+ * Map API message response to ChatMessage
+ * @param message - The API message response
+ * @param loggedInUser - The logged in user object (unused, kept for API compatibility)
+ * @returns The mapped ChatMessage
+ */
+export const mapApiMessageToChatMessage = (
+  message: ChatMessageApiResponse,
+  loggedInUser: User | null // eslint-disable-line @typescript-eslint/no-unused-vars
+): ChatMessage => ({
+  id: message.id,
+  messageCreatedAt: message.createdAt,
+  channelId: message.channelId,
+  senderUserId: message.senderUserId,
+  replyToMessageId: message.replyToMessageId ?? undefined,
+  text: message.text ?? undefined,
+  mediaUrl: message.mediaUrl ?? undefined,
+  isEdited: false,
+  isDeleted: false,
+  createdAt: message.createdAt,
+  updatedAt: message.updatedAt,
+  reactions: [],
+  readBy: message.readBy ?? [],
+});

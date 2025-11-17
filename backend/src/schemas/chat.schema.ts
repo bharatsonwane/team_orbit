@@ -46,7 +46,7 @@ export const chatChannelListItemSchema = z.object({
   createdBy: z.number().int().nullable(),
   createdAt: z.string().datetime(),
   updatedAt: z.string().datetime(),
-  memberCount: z.number().int().nonnegative(),
+  members: z.array(z.number().int()),
   isCurrentUserAdmin: z.boolean(),
 });
 

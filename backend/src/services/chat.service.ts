@@ -132,7 +132,8 @@ export default class Chat {
     const offsetIdx = params.length + 2;
 
     const channelQuery = `
-      SELECT
+      WITH user_channels AS (
+        SELECT DISTINCT
         c.id,
         c.name,
         c.type,
@@ -141,19 +142,43 @@ export default class Chat {
         c."createdBy",
         c."createdAt",
         c."updatedAt",
-        COALESCE(member_stats.member_count, 0) AS "memberCount",
         cm."isAdmin" AS "isCurrentUserAdmin"
       FROM chat_channel c
       INNER JOIN chat_channel_user_mapping cm
         ON cm."chatChannelId" = c.id
-      LEFT JOIN (
-        SELECT "chatChannelId", COUNT(*) AS member_count
-        FROM chat_channel_user_mapping
-        WHERE "isActive" = TRUE
-        GROUP BY "chatChannelId"
-      ) AS member_stats ON member_stats."chatChannelId" = c.id
       ${whereClause}
-      ORDER BY c."updatedAt" DESC
+      )
+      SELECT
+        uc.id,
+        uc.name,
+        uc.type,
+        uc.description,
+        uc.image,
+        uc."createdBy",
+        uc."createdAt",
+        uc."updatedAt",
+        uc."isCurrentUserAdmin",
+        COALESCE(
+          JSON_AGG(u.id ORDER BY u."firstName", u."lastName")
+            FILTER (WHERE u.id IS NOT NULL),
+          '[]'::json
+        ) AS members
+      FROM user_channels uc
+      LEFT JOIN chat_channel_user_mapping cm_all
+        ON cm_all."chatChannelId" = uc.id AND cm_all."isActive" = TRUE
+      LEFT JOIN main.users u
+        ON u.id = cm_all."userId"
+      GROUP BY
+        uc.id,
+        uc.name,
+        uc.type,
+        uc.description,
+        uc.image,
+        uc."createdBy",
+        uc."createdAt",
+        uc."updatedAt",
+        uc."isCurrentUserAdmin"
+      ORDER BY uc."updatedAt" DESC
       LIMIT $${limitIdx}
       OFFSET $${offsetIdx};
     `;
@@ -170,7 +195,7 @@ export default class Chat {
         createdBy: row.createdBy ?? null,
         createdAt: row.createdAt,
         updatedAt: row.updatedAt,
-        memberCount: Number(row.memberCount ?? 0),
+        members: Array.isArray(row.members) ? row.members : [],
         isCurrentUserAdmin: Boolean(row.isCurrentUserAdmin),
       })
     );

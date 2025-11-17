@@ -10,6 +10,8 @@ import { cn } from "@/lib/utils";
 import { formatMessageTime } from "@/utils/chatUtils";
 import type { ChatMessage } from "@/schemas/chatSchema";
 import { useChat } from "@/contexts/ChatContextProvider";
+import { getSenderUser } from "@/utils/chatUtils";
+import { useAuthService } from "@/contexts/AuthContextProvider";
 import { MoreVertical, Reply, Edit, Trash2 } from "lucide-react";
 import { useState } from "react";
 import { MessageReactions } from "./MessageReactions";
@@ -23,11 +25,15 @@ export function MessageBubble({
   message,
   showAvatar = true,
 }: MessageBubbleProps) {
-  const { editMessage, deleteMessage, addReaction, removeReaction } = useChat();
+  const { editMessage, deleteMessage, addReaction, removeReaction, chatUsers } =
+    useChat();
+  const { loggedInUser } = useAuthService();
   const [isEditing, setIsEditing] = useState(false);
   const [editText, setEditText] = useState(message.text || "");
 
-  const isCurrentUser = message.senderUserId === 1; // Current user ID (should come from auth context)
+  const sender = getSenderUser(message.senderUserId, loggedInUser, chatUsers);
+  const isCurrentUser =
+    loggedInUser && message.senderUserId === loggedInUser.id;
   const isDeleted = message.isDeleted;
 
   const handleEdit = () => {
@@ -73,9 +79,9 @@ export function MessageBubble({
       {/* Avatar */}
       {showAvatar && (
         <Avatar className="w-8 h-8 flex-shrink-0">
-          <AvatarImage src={message.sender.avatar} alt={message.sender.name} />
+          <AvatarImage src={sender.avatar} alt={sender.name} />
           <AvatarFallback className="text-xs">
-            {message.sender.name
+            {sender.name
               .split(" ")
               .map(n => n[0])
               .join("")
@@ -94,7 +100,7 @@ export function MessageBubble({
         {/* Sender Name */}
         {showAvatar && (
           <span className="text-xs font-medium px-2">
-            {isCurrentUser ? "You" : message.sender.name}
+            {isCurrentUser ? "You" : sender.name}
           </span>
         )}
 
@@ -112,7 +118,11 @@ export function MessageBubble({
           {message.replyToMessage && (
             <div className="mb-2 pb-2 border-b border-border/50">
               <div className="text-xs font-medium opacity-75">
-                {message.replyToMessage.sender.name}
+                {getSenderUser(
+                  message.replyToMessage.senderUserId,
+                  loggedInUser,
+                  chatUsers
+                ).name}
               </div>
               <div className="text-xs opacity-60 truncate">
                 {message.replyToMessage.text || "Media"}

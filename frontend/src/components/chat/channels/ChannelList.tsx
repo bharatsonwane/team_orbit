@@ -6,15 +6,42 @@ import { Input } from "@/components/ui/input";
 import { Search, Hash } from "lucide-react";
 import { useState, useMemo } from "react";
 import { Button } from "@/components/ui/button";
+import type { ChatChannel } from "@/schemas/chatSchema";
 
 interface ChannelListProps {
   channelType?: "group" | "direct";
 }
 
 export function ChannelList({ channelType }: ChannelListProps) {
-  const { channels, selectedChannel, selectChannel, isLoading } = useChat();
+  const { channelStateMap, selectedChannelId, selectChannel, isLoading } =
+    useChat();
   const [searchQuery, setSearchQuery] = useState("");
   const [isCreateChannelOpen, setIsCreateChannelOpen] = useState(false);
+
+  // Derive channels list from channelStateMap
+  const channels: ChatChannel[] = useMemo(() => {
+    const list: ChatChannel[] = Array.from(channelStateMap.values()).map(s => ({
+      id: s.channelId,
+      name: s.name ?? `Channel ${s.channelId}`,
+      description: s.description,
+      type: (s.type as "direct" | "group") ?? "group",
+      avatar:
+        s.image ||
+        `https://api.dicebear.com/7.x/shapes/svg?radius=50&seed=${encodeURIComponent(
+          s.name ?? String(s.channelId)
+        )}`,
+      members: s.members ?? [],
+      lastMessage: s.lastMessage,
+      unreadCount: s.unreadCount ?? 0,
+      createdAt: s.createdAt ?? new Date().toISOString(),
+      updatedAt: s.updatedAt ?? s.lastFetchedAt ?? new Date().toISOString(),
+    }));
+    // Sort by updatedAt desc
+    return list.sort(
+      (a, b) =>
+        new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
+    );
+  }, [channelStateMap]);
 
   // Filter channels based on channelType and search query
   const filteredChannelList = useMemo(() => {
@@ -27,13 +54,13 @@ export function ChannelList({ channelType }: ChannelListProps) {
 
     // Filter by search query
     if (searchQuery.trim()) {
-      const query = searchQuery.toLowerCase();
+    const query = searchQuery.toLowerCase();
       filtered = filtered.filter(
-        channel =>
-          channel.name.toLowerCase().includes(query) ||
-          channel.description?.toLowerCase().includes(query) ||
-          channel.lastMessage?.text?.toLowerCase().includes(query)
-      );
+      channel =>
+        channel.name.toLowerCase().includes(query) ||
+        channel.description?.toLowerCase().includes(query) ||
+        channel.lastMessage?.text?.toLowerCase().includes(query)
+    );
     }
 
     return filtered;
@@ -61,15 +88,15 @@ export function ChannelList({ channelType }: ChannelListProps) {
           />
         </div>
         {channelType !== "direct" && (
-          <Button
-            variant="outline"
-            size="sm"
-            className="w-full mt-2"
-            onClick={() => setIsCreateChannelOpen(true)}
-          >
-            <Hash className="w-4 h-4 mr-2" />
-            Create Channel
-          </Button>
+        <Button
+          variant="outline"
+          size="sm"
+          className="w-full mt-2"
+          onClick={() => setIsCreateChannelOpen(true)}
+        >
+          <Hash className="w-4 h-4 mr-2" />
+          Create Channel
+        </Button>
         )}
       </div>
 
@@ -87,19 +114,19 @@ export function ChannelList({ channelType }: ChannelListProps) {
                 : `No ${channelType === "direct" ? "conversations" : "channels"} yet`}
             </div>
           ) : (
-            <div>
-              <div className="px-4 py-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                <div>
+                  <div className="px-4 py-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
                 {channelType === "group" ? "Group Channels" : "Direct Channels"}
-              </div>
+                  </div>
               {filteredChannelList.map(channel => (
-                <ChannelListItem
-                  key={channel.id}
-                  channel={channel}
-                  isSelected={selectedChannel?.id === channel.id}
-                  onClick={() => selectChannel(channel)}
-                />
-              ))}
-            </div>
+                    <ChannelListItem
+                      key={channel.id}
+                      channel={channel}
+                  isSelected={selectedChannelId === channel.id}
+                      onClick={() => selectChannel(channel)}
+                    />
+                  ))}
+                </div>
           )}
         </div>
       </ScrollArea>
