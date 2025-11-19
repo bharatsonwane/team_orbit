@@ -159,8 +159,7 @@ export default class Chat {
         uc."updatedAt",
         uc."isCurrentUserAdmin",
         COALESCE(
-          JSON_AGG(u.id ORDER BY u."firstName", u."lastName")
-            FILTER (WHERE u.id IS NOT NULL),
+          JSON_AGG(u.id ORDER BY u."firstName", u."lastName"),
           '[]'::json
         ) AS members
       FROM user_channels uc
@@ -243,21 +242,35 @@ export default class Chat {
 
   static async getChannelMessages(
     dbClient: dbClientPool,
-    channelId: number,
-    userId: number,
-    { before, limit = 50 }: { before?: string; limit?: number }
+    {
+      channelId,
+      userId,
+      before,
+      limit = 50,
+    }: {
+      channelId: number;
+      userId: number;
+      before?: string;
+      limit?: number;
+    }
   ): Promise<ChatMessageSchema[]> {
     const tenantPool = dbClient.tenantPool!;
 
-    const params: any[] = [channelId];
-    let where = `WHERE m."chatChannelId" = $1`;
+    let where = `WHERE m."chatChannelId" = ${channelId}`;
     if (before) {
-      params.push(before);
-      where += ` AND m."createdAt" < $2`;
+      where += ` AND m."createdAt" < '${before}'`;
     }
-    params.push(limit);
 
     const query = `
+      WITH latest_messages AS (
+        SELECT 
+          m.id,
+          m."createdAt"
+        FROM chat_message m
+        ${where}
+        ORDER BY m."createdAt" DESC
+        LIMIT ${limit}
+      )
       SELECT
         m.id,
         m.text,
@@ -266,14 +279,49 @@ export default class Chat {
         m."senderUserId",
         m."createdAt",
         m."updatedAt",
-        m."chatChannelId" AS "channelId"
-      FROM chat_message m
-      ${where}
-      ORDER BY m."createdAt" DESC
-      LIMIT $${params.length};
+        m."chatChannelId" AS "channelId",
+        COALESCE(
+          JSON_AGG(
+            JSONB_BUILD_OBJECT(
+              'id', r.id,
+              'userId', r."userId",
+              'reaction', r.reaction,
+              'createdAt', r."createdAt"::text
+            )
+            ORDER BY r."createdAt"
+          ) FILTER (WHERE r.id IS NOT NULL),
+          '[]'::json
+        ) AS reactions,
+        COALESCE(
+          JSON_AGG(
+            JSONB_BUILD_OBJECT(
+              'id', s.id,
+              'userId', s."userId",
+              'deliveredAt', s."deliveredAt"::text,
+              'readAt', s."readAt"::text
+            )
+            ORDER BY s."userId"
+          ) FILTER (WHERE s.id IS NOT NULL),
+          '[]'::json
+        ) AS receipt
+      FROM latest_messages lm
+      INNER JOIN chat_message m
+        ON m.id = lm.id 
+        AND m."createdAt" = lm."createdAt"
+      LEFT JOIN chat_message_reaction r 
+        ON r."messageId" = m.id 
+        AND r."messageCreatedAt" = m."createdAt"
+      LEFT JOIN chat_message_receipt s 
+        ON s."messageId" = m.id 
+        AND s."messageCreatedAt" = m."createdAt"
+      GROUP BY 
+        m.id,
+        m."createdAt",
+        m."chatChannelId"
+      ORDER BY m."createdAt" ASC;
     `;
 
-    const { rows } = await tenantPool.query(query, params);
+    const { rows } = await tenantPool.query(query);
     return rows as ChatMessageSchema[];
   }
 }

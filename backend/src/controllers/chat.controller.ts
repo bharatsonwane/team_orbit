@@ -4,6 +4,7 @@ import { chatSocket } from "@src/socket/chat.socket";
 import {
   ChatChannelListQuerySchema,
   chatChannelListQuerySchema,
+  ChatMessageListQuerySchema,
   CreateChatChannelSchema,
   SendChatMessageSchema,
   sendChatMessageSchema,
@@ -89,11 +90,10 @@ export const getChannelMessages = async (
   next: NextFunction
 ): Promise<void> => {
   try {
+    const query = req.query as unknown as ChatMessageListQuerySchema;
+    const { before, limit } = query;
     const userId = req.user?.userId!;
     const channelId = Number(req.params.channelId);
-    const before =
-      typeof req.query.before === "string" ? req.query.before : undefined;
-    const limit = req.query.limit ? Number(req.query.limit) : undefined;
 
     const isMember = await Chat.isUserChannelMember(req.db, channelId, userId);
     if (!isMember) {
@@ -103,7 +103,9 @@ export const getChannelMessages = async (
       };
     }
 
-    const messages = await Chat.getChannelMessages(req.db, channelId, userId, {
+    const messages = await Chat.getChannelMessages(req.db, {
+      channelId,
+      userId,
       before,
       limit,
     });

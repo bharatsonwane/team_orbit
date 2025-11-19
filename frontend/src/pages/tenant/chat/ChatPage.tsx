@@ -19,6 +19,12 @@ export default function ChatPage({ channelType = "group" }: ChatPageProps) {
     const state = channelStateMap.get(selectedChannelId);
     if (!state) return null;
 
+    // Derive lastMessage from messages array (last item)
+    const lastMessage =
+      state.messages.length > 0
+        ? state.messages[state.messages.length - 1]
+        : undefined;
+
     return {
       id: state.channelId,
       name: state.name ?? `Channel ${state.channelId}`,
@@ -30,11 +36,10 @@ export default function ChatPage({ channelType = "group" }: ChatPageProps) {
           state.name ?? String(state.channelId)
         )}`,
       members: state.members ?? [],
-      lastMessage: state.lastMessage,
+      lastMessage,
       unreadCount: state.unreadCount ?? 0,
       createdAt: state.createdAt ?? new Date().toISOString(),
-      updatedAt:
-        state.updatedAt ?? state.lastFetchedAt ?? new Date().toISOString(),
+      updatedAt: state.updatedAt ?? new Date().toISOString(),
     };
   }, [channelStateMap, selectedChannelId]);
 

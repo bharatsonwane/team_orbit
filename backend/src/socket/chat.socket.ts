@@ -252,7 +252,7 @@ class ChatSocket {
       return;
     }
 
-    // TODO: Update chat_message_status in database
+    // TODO: Update chat_message_receipt in database
     // TODO: Update chat_channel_user_mapping.lastReadMessageId
 
     this.emitReadReceipt(channelId, socket.userId!, messageId);

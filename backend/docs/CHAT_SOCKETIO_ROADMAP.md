@@ -73,12 +73,12 @@ This roadmap outlines the step-by-step implementation plan for integrating Socke
 
 ### 2.2 Read Receipt Events
 - **`mark_as_read`** - Handle read receipt
-  - Batch insert into `chat_message_status` table
+  - Batch insert into `chat_message_receipt` table
   - Update `lastReadMessageId` in `chat_channel_user_mapping`
   - Emit `messages_read` to channel room (optional)
 
 - **`mark_as_delivered`** - Handle delivery receipt
-  - Update `deliveredAt` in `chat_message_status` table
+  - Update `deliveredAt` in `chat_message_receipt` table
   - Emit delivery status to sender (optional)
 
 ### 2.3 Reaction Events
@@ -232,7 +232,7 @@ This roadmap outlines the step-by-step implementation plan for integrating Socke
 ### 6.2 Read Receipt Flow
 ```
 1. Receive mark_as_read event
-2. Batch insert/update chat_message_status
+2. Batch insert/update chat_message_receipt
 3. Update chat_channel_user_mapping.lastReadMessageId
 4. Emit messages_read to channel room (optional)
 ```
@@ -491,13 +491,13 @@ This roadmap outlines the step-by-step implementation plan for integrating Socke
 - `chat_channel` - Channel information
 - `chat_channel_user_mapping` - User-channel relationships and `lastReadMessageId`
 - `chat_message` - Messages (partitioned by `createdAt`)
-- `chat_message_status` - Delivery and read status
+- `chat_message_receipt` - Delivery and read status
 - `chat_message_reaction` - Message reactions
 
 ### Important Fields for Socket.IO
 - `chat_message.id` and `chat_message.createdAt` - Composite key for foreign keys
 - `chat_channel_user_mapping.lastReadMessageId` - For fast unread count
-- `chat_message_status.messageCreatedAt` - Required for foreign key
+- `chat_message_receipt.messageCreatedAt` - Required for foreign key
 - `chat_message_reaction.messageCreatedAt` - Required for foreign key
 
 ---
@@ -505,7 +505,7 @@ This roadmap outlines the step-by-step implementation plan for integrating Socke
 ## ⚠️ Important Considerations
 
 ### 1. Partitioned Table Foreign Keys
-- Always include both `messageId` and `messageCreatedAt` when inserting into `chat_message_status` or `chat_message_reaction`
+- Always include both `messageId` and `messageCreatedAt` when inserting into `chat_message_receipt` or `chat_message_reaction`
 - Get `createdAt` from inserted message to use in related tables
 
 ### 2. Batch Operations

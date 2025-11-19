@@ -68,16 +68,31 @@ export const sendChatMessageSchema = z
     path: ["text"],
   });
 
+export const messageReactionSchema = z.object({
+  id: z.number().int(),
+  messageId: z.number().int(),
+  messageCreatedAt: z.string().datetime(),
+  userId: z.number().int(),
+  reaction: z.string(),
+  createdAt: z.string().datetime(),
+});
+
+export const messageReceiptSchema = z.object({
+  id: z.number().int(),
+  userId: z.number().int(),
+  deliveredAt: z.string().datetime().nullable(),
+  readAt: z.string().datetime().nullable(),
+});
+
 export const chatMessageSchema = z.object({
   id: z.number().int().optional(),
   text: z.string().min(1, "Message is required").optional(),
   mediaUrl: z.string().url().optional(),
   replyToMessageId: z.number().int().optional(),
-  reaction: z.record(z.string(), z.any()).optional(),
+  reactions: z.array(messageReactionSchema).optional(),
   channelId: z.number().int().optional(),
   senderUserId: z.number().int().optional(),
-  deliveredTo: z.array(z.number().int()).optional(),
-  readBy: z.array(z.number().int()).optional(),
+  receipt: z.array(messageReceiptSchema).optional(),
   createdAt: z.string().datetime().optional(),
   updatedAt: z.string().datetime().optional(),
 });
@@ -92,6 +107,8 @@ export const chatMessageListResponseSchema = z.array(chatMessageSchema);
 /** @description SCHEMAS TYPES */
 export type CreateChatChannelSchema = z.infer<typeof createChatChannelSchema>;
 export type ChatChannelSchema = z.infer<typeof chatChannelSchema>;
+export type MessageReactionSchema = z.infer<typeof messageReactionSchema>;
+export type MessageReceiptSchema = z.infer<typeof messageReceiptSchema>;
 export type ChatMessageSchema = z.infer<typeof chatMessageSchema>;
 export type ChatChannelListQuerySchema = z.infer<
   typeof chatChannelListQuerySchema

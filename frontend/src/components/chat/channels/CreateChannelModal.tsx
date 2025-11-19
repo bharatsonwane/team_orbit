@@ -47,7 +47,7 @@ export function CreateChannelModal({
   open,
   onOpenChange,
 }: CreateChannelModalProps) {
-  const { createChannel } = useChat();
+  const { handleCreateChannel } = useChat();
   const { loggedInUser } = useAuthService();
   const dispatch = useDispatch<AppDispatch>();
   const [userList, setUserList] = useState<TenantUser[]>([]);
@@ -128,7 +128,7 @@ export function CreateChannelModal({
 
     try {
       await dispatch(createChatChannelAction(payload)).unwrap();
-      createChannel(payload);
+      handleCreateChannel(payload);
       toast.success(`Channel #${payload.name} created`);
       onOpenChange(false);
     } catch (error) {

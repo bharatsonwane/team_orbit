@@ -56,7 +56,7 @@ CREATE TABLE IF NOT EXISTS chat_message (
 -- ===========================================================
 -- CHAT MESSAGE STATUS (Per-User Delivered / Read)
 -- ===========================================================
-CREATE TABLE IF NOT EXISTS chat_message_status (
+CREATE TABLE IF NOT EXISTS chat_message_receipt (
     id SERIAL PRIMARY KEY,
     "messageId" BIGINT NOT NULL,
     "messageCreatedAt" TIMESTAMP NOT NULL,

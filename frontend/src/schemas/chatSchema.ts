@@ -26,42 +26,50 @@ export const chatUserSchema = z.object({
   id: z.number(),
   name: z.string(),
   email: z.string().email(),
-  avatar: z.string().optional(),
+  profilePictureUrl: z.string().optional(),
   status: z.enum(["online", "offline", "away"]).default("offline"),
   lastSeen: z.string().optional(),
 });
 
 export type ChatUser = z.infer<typeof chatUserSchema>;
 
-// Message Reaction schema
+// Message Reaction schema (for frontend use)
 export const messageReactionSchema = z.object({
   id: z.number(),
-  messageId: z.number(),
-  messageCreatedAt: z.string(),
+  messageId: z.number().optional(), // Optional for API response
+  messageCreatedAt: z.string().optional(), // Optional for API response
   userId: z.number(),
-  user: chatUserSchema,
   reaction: z.string(), // Emoji or string
   createdAt: z.string(),
 });
 
 export type MessageReaction = z.infer<typeof messageReactionSchema>;
 
+// Message Receipt schema
+export const messageReceiptSchema = z.object({
+  id: z.number(),
+  userId: z.number(),
+  deliveredAt: z.string().nullable(),
+  readAt: z.string().nullable(),
+});
+
+export type MessageReceipt = z.infer<typeof messageReceiptSchema>;
+
 // Chat Message schema (without replyToMessage to avoid circular reference)
 const chatMessageSchemaBase = z.object({
   id: z.number(),
-  messageCreatedAt: z.string(), // For composite key with backend
   channelId: z.number(),
   senderUserId: z.number(),
-  replyToMessageId: z.number().optional(),
-  text: z.string().optional(),
-  mediaUrl: z.string().optional(),
+  replyToMessageId: z.number().optional().nullable(),
+  text: z.string().optional().nullable(),
+  mediaUrl: z.string().optional().nullable(),
   isEdited: z.boolean().default(false),
   isDeleted: z.boolean().default(false),
   deletedAt: z.string().optional(),
   createdAt: z.string(),
   updatedAt: z.string(),
   reactions: z.array(messageReactionSchema).default([]),
-  readBy: z.array(z.number()).default([]), // Array of user IDs who read
+  receipt: z.array(messageReceiptSchema).default([]), // Array of receipt objects
 });
 
 // Chat Message type
@@ -74,21 +82,6 @@ export const chatMessageSchema = chatMessageSchemaBase.extend({
   replyToMessage: z.custom<ChatMessage>().optional(),
 });
 
-export const chatMessageApiSchema = z.object({
-  id: z.number(),
-  channelId: z.number(),
-  senderUserId: z.number(),
-  text: z.string().nullable().optional(),
-  mediaUrl: z.string().nullable().optional(),
-  replyToMessageId: z.number().nullable().optional(),
-  deliveredTo: z.array(z.number()).default([]),
-  readBy: z.array(z.number()).default([]),
-  createdAt: z.string(),
-  updatedAt: z.string(),
-});
-
-export type ChatMessageApiResponse = z.infer<typeof chatMessageApiSchema>;
-
 // API payload types
 export type SendChannelMessagePayload = {
   channelId: number;
@@ -97,7 +90,7 @@ export type SendChannelMessagePayload = {
   replyToMessageId?: number;
 };
 
-export type FetchChannelMessagesPayload = {
+export type FetchChannelMessagesParam = {
   channelId: number;
   before?: string;
   limit?: number;
@@ -107,11 +100,9 @@ export type FetchChannelMessagesPayload = {
 export type ChannelState = {
   channelId: number;
   messages: ChatMessage[];
-  hasMore: boolean;
   loading: boolean;
   error: string | null;
   typingUserIds: number[];
-  lastFetchedAt?: string;
   lastReadAt?: string;
   // channel metadata for sidebar/UX
   name?: string;
@@ -122,7 +113,6 @@ export type ChannelState = {
   unreadCount?: number;
   createdAt?: string;
   updatedAt?: string;
-  lastMessage?: ChatMessage;
 };
 
 export type ChannelStateMap = Map<number, ChannelState>;
@@ -187,7 +177,6 @@ export type SendMessageData = z.infer<typeof sendMessageSchema>;
 // Edit Message schema
 export const editMessageSchema = z.object({
   messageId: z.number(),
-  messageCreatedAt: z.string(),
   channelId: z.number(),
   text: z.string().min(1, "Message cannot be empty"),
 });
@@ -197,7 +186,6 @@ export type EditMessageData = z.infer<typeof editMessageSchema>;
 // Add Reaction schema
 export const addReactionSchema = z.object({
   messageId: z.number(),
-  messageCreatedAt: z.string(),
   channelId: z.number(),
   reaction: z.string().min(1, "Reaction is required"),
 });

@@ -13,7 +13,7 @@ This document provides comprehensive documentation for the chat system, includin
 **Current Issue:** Using JSON fields (`deliveredTo`, `readBy`) makes queries inefficient and breaks referential integrity.
 
 **Solution:** Create separate tables:
-- `chat_message_status` - Tracks message delivery and read status per user
+- `chat_message_receipt` - Tracks message delivery and read status per user
 - Normalized structure with `messageId`, `userId`, `deliveredAt`, `readAt`
 
 **Benefits:**
@@ -126,7 +126,7 @@ This document provides comprehensive documentation for the chat system, includin
 - `chat_message.replyToMessageId`
 - `chat_channel_user_mapping.chatChannelId`
 - `chat_channel_user_mapping.userId`
-- `chat_message_status.messageId`, `messageCreatedAt`, `userId`
+- `chat_message_receipt.messageId`, `messageCreatedAt`, `userId`
 - `chat_message_reaction.messageId`, `messageCreatedAt`, `userId`
 
 **Benefits:**
@@ -158,7 +158,7 @@ This document provides comprehensive documentation for the chat system, includin
 ### 2. **Fast Unread Count Tracking**
 
 #### Problem
-With millions of messages, counting unread messages by scanning the `chat_message_status` table becomes slow:
+With millions of messages, counting unread messages by scanning the `chat_message_receipt` table becomes slow:
 - 1M messages × 100 users = 100M read records
 - COUNT with NOT EXISTS on millions of rows = slow
 
@@ -331,7 +331,7 @@ const unreadCount = await db.query(`
     SELECT COUNT(*) FROM chat_message cm
     WHERE cm."chatChannelId" = $1
         AND NOT EXISTS (
-            SELECT 1 FROM chat_message_status cmr
+            SELECT 1 FROM chat_message_receipt cmr
             WHERE cmr."messageId" = cm.id
                 AND cmr."userId" = $2
                 AND cmr."readAt" IS NOT NULL
@@ -344,7 +344,7 @@ const unreadCount = await db.query(`
 ```typescript
 // ✅ Good - Batch mark as read
 await db.query(`
-    INSERT INTO chat_message_status ("messageId", "messageCreatedAt", "userId", "readAt")
+    INSERT INTO chat_message_receipt ("messageId", "messageCreatedAt", "userId", "readAt")
     SELECT id, "createdAt", $1, NOW()
     FROM chat_message
     WHERE "chatChannelId" = $2
@@ -364,7 +364,7 @@ await db.query(`
 // ❌ Bad - Individual read receipts
 for (const messageId of messageIds) {
     await db.query(`
-        INSERT INTO chat_message_status ("messageId", "messageCreatedAt", "userId", "readAt")
+        INSERT INTO chat_message_receipt ("messageId", "messageCreatedAt", "userId", "readAt")
         VALUES ($1, $2, $3, NOW())
     `, [messageId, messageCreatedAt, userId]);
 }
@@ -444,7 +444,7 @@ SELECT
     COUNT(*) as unread_count
 FROM chat_channel_user_mapping ccu
 LEFT JOIN chat_message cm ON ccu."chatChannelId" = cm."chatChannelId"
-LEFT JOIN chat_message_status cmr ON 
+LEFT JOIN chat_message_receipt cmr ON 
     cm.id = cmr."messageId" 
     AND cm."createdAt" = cmr."messageCreatedAt"
     AND cmr."userId" = ccu."userId"
@@ -486,7 +486,7 @@ WHERE "readBy" @> '[{"userId": 123}]'::jsonb;
 ```sql
 -- Efficient: Indexed foreign key lookup
 SELECT cm.* FROM chat_message cm
-INNER JOIN chat_message_status cmr ON 
+INNER JOIN chat_message_receipt cmr ON 
     cm.id = cmr."messageId" 
     AND cm."createdAt" = cmr."messageCreatedAt"
 WHERE cmr."userId" = 123 AND cmr."readAt" IS NULL;
@@ -505,7 +505,7 @@ UPDATE chat_channel_user_mapping ccu
 SET "lastReadMessageId" = (
     SELECT MAX(cm.id) 
     FROM chat_message cm
-    INNER JOIN chat_message_status cmr ON 
+    INNER JOIN chat_message_receipt cmr ON 
         cm.id = cmr."messageId" 
         AND cm."createdAt" = cmr."messageCreatedAt"
     WHERE cm."chatChannelId" = ccu."chatChannelId"
@@ -513,7 +513,7 @@ SET "lastReadMessageId" = (
         AND cmr."readAt" IS NOT NULL
 )
 WHERE EXISTS (
-    SELECT 1 FROM chat_message_status cmr
+    SELECT 1 FROM chat_message_receipt cmr
     INNER JOIN chat_message cm ON 
         cmr."messageId" = cm.id 
         AND cmr."messageCreatedAt" = cm."createdAt"
@@ -596,7 +596,7 @@ ORDER BY idx_scan DESC;
 ```sql
 -- Analyze tables regularly
 ANALYZE chat_message;
-ANALYZE chat_message_status;
+ANALYZE chat_message_receipt;
 ANALYZE chat_message_reaction;
 
 -- Reindex if needed (run during maintenance window)

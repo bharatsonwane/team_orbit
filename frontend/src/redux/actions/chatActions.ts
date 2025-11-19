@@ -4,10 +4,9 @@ import {
   type CreateChatChannelSchema,
   chatChannelListResponseSchema,
   type ChatChannelListResponse,
-  chatMessageApiSchema,
-  type ChatMessageApiResponse,
   type SendChannelMessagePayload,
-  type FetchChannelMessagesPayload,
+  type FetchChannelMessagesParam,
+  type ChatMessage,
 } from "@/schemas/chatSchema";
 
 export const createChatChannelAction = createAsyncThunk(
@@ -39,8 +38,8 @@ export const fetchChatChannelsAction = createAsyncThunk<
 });
 
 export const fetchChannelMessagesAction = createAsyncThunk<
-  ChatMessageApiResponse[],
-  FetchChannelMessagesPayload,
+  ChatMessage[],
+  FetchChannelMessagesParam,
   { rejectValue: string }
 >("chat/fetchChannelMessagesAction", async (payload, { rejectWithValue }) => {
   try {
@@ -61,7 +60,7 @@ export const fetchChannelMessagesAction = createAsyncThunk<
 });
 
 export const sendChannelMessageAction = createAsyncThunk<
-  ChatMessageApiResponse,
+  ChatMessage,
   SendChannelMessagePayload,
   { rejectValue: string }
 >("chat/sendChannelMessageAction", async (payload, { rejectWithValue }) => {

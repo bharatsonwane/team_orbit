@@ -13,29 +13,35 @@ interface ChannelListProps {
 }
 
 export function ChannelList({ channelType }: ChannelListProps) {
-  const { channelStateMap, selectedChannelId, selectChannel, isLoading } =
+  const { channelStateMap, selectedChannelId, handleSelectChannel, isLoading } =
     useChat();
   const [searchQuery, setSearchQuery] = useState("");
   const [isCreateChannelOpen, setIsCreateChannelOpen] = useState(false);
 
   // Derive channels list from channelStateMap
   const channels: ChatChannel[] = useMemo(() => {
-    const list: ChatChannel[] = Array.from(channelStateMap.values()).map(s => ({
-      id: s.channelId,
-      name: s.name ?? `Channel ${s.channelId}`,
-      description: s.description,
-      type: (s.type as "direct" | "group") ?? "group",
-      avatar:
-        s.image ||
-        `https://api.dicebear.com/7.x/shapes/svg?radius=50&seed=${encodeURIComponent(
-          s.name ?? String(s.channelId)
-        )}`,
-      members: s.members ?? [],
-      lastMessage: s.lastMessage,
-      unreadCount: s.unreadCount ?? 0,
-      createdAt: s.createdAt ?? new Date().toISOString(),
-      updatedAt: s.updatedAt ?? s.lastFetchedAt ?? new Date().toISOString(),
-    }));
+    const list: ChatChannel[] = Array.from(channelStateMap.values()).map(s => {
+      // Derive lastMessage from messages array (last item)
+      const lastMessage =
+        s.messages.length > 0 ? s.messages[s.messages.length - 1] : undefined;
+
+      return {
+        id: s.channelId,
+        name: s.name ?? `Channel ${s.channelId}`,
+        description: s.description,
+        type: (s.type as "direct" | "group") ?? "group",
+        avatar:
+          s.image ||
+          `https://api.dicebear.com/7.x/shapes/svg?radius=50&seed=${encodeURIComponent(
+            s.name ?? String(s.channelId)
+          )}`,
+        members: s.members ?? [],
+        lastMessage,
+        unreadCount: s.unreadCount ?? 0,
+        createdAt: s.createdAt ?? new Date().toISOString(),
+        updatedAt: s.updatedAt ?? new Date().toISOString(),
+      };
+    });
     // Sort by updatedAt desc
     return list.sort(
       (a, b) =>
@@ -123,7 +129,7 @@ export function ChannelList({ channelType }: ChannelListProps) {
                       key={channel.id}
                       channel={channel}
                   isSelected={selectedChannelId === channel.id}
-                      onClick={() => selectChannel(channel)}
+                      onClick={() => handleSelectChannel(channel)}
                     />
                   ))}
                 </div>

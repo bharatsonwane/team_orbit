@@ -10,7 +10,7 @@ interface ChatMessageInputProps {
 }
 
 export function ChatMessageInput({ channel }: ChatMessageInputProps) {
-  const { sendMessage, setTyping } = useChat();
+  const { handleSendMessage, handleSetTyping } = useChat();
   const [message, setMessage] = useState("");
   const [isTyping, setIsTyping] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -23,7 +23,7 @@ export function ChatMessageInput({ channel }: ChatMessageInputProps) {
   useEffect(() => {
     if (message.trim() && !isTyping) {
       setIsTyping(true);
-      setTyping(channelId, true);
+      handleSetTyping(channelId, true);
     }
 
     // Clear existing timeout
@@ -34,7 +34,7 @@ export function ChatMessageInput({ channel }: ChatMessageInputProps) {
     // Set timeout to stop typing indicator
     typingTimeoutRef.current = setTimeout(() => {
       setIsTyping(false);
-      setTyping(channelId, false);
+      handleSetTyping(channelId, false);
     }, 1000);
 
     return () => {
@@ -42,7 +42,7 @@ export function ChatMessageInput({ channel }: ChatMessageInputProps) {
         clearTimeout(typingTimeoutRef.current);
       }
     };
-  }, [message, channelId, setTyping]);
+  }, [message, channelId, handleSetTyping]);
 
   // Auto-resize textarea
   useEffect(() => {
@@ -55,14 +55,14 @@ export function ChatMessageInput({ channel }: ChatMessageInputProps) {
   const handleSend = () => {
     if (!message.trim()) return;
 
-    sendMessage({
+    handleSendMessage({
       channelId: channelId,
       text: message.trim(),
     });
 
     setMessage("");
     setIsTyping(false);
-    setTyping(channelId, false);
+    handleSetTyping(channelId, false);
 
     // Reset textarea height
     if (textareaRef.current) {

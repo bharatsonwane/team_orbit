@@ -25,8 +25,13 @@ export function MessageBubble({
   message,
   showAvatar = true,
 }: MessageBubbleProps) {
-  const { editMessage, deleteMessage, addReaction, removeReaction, chatUsers } =
-    useChat();
+  const {
+    handleEditMessage,
+    handleDeleteMessage,
+    handleAddReaction,
+    handleRemoveReaction,
+    chatUsers,
+  } = useChat();
   const { loggedInUser } = useAuthService();
   const [isEditing, setIsEditing] = useState(false);
   const [editText, setEditText] = useState(message.text || "");
@@ -38,9 +43,8 @@ export function MessageBubble({
 
   const handleEdit = () => {
     if (editText.trim() && editText !== message.text) {
-      editMessage({
+      handleEditMessage({
         messageId: message.id,
-        messageCreatedAt: message.messageCreatedAt,
         channelId: message.channelId,
         text: editText.trim(),
       });
@@ -49,7 +53,7 @@ export function MessageBubble({
   };
 
   const handleDelete = () => {
-    deleteMessage(message.id, message.messageCreatedAt, message.channelId);
+    handleDeleteMessage(message.id, message.channelId);
   };
 
   const handleReaction = (reaction: string) => {
@@ -58,11 +62,10 @@ export function MessageBubble({
     );
 
     if (existingReaction) {
-      removeReaction(message.id, message.messageCreatedAt, message.channelId);
+      handleRemoveReaction(message.id, message.channelId);
     } else {
-      addReaction({
+      handleAddReaction({
         messageId: message.id,
-        messageCreatedAt: message.messageCreatedAt,
         channelId: message.channelId,
         reaction,
       });
@@ -79,7 +82,7 @@ export function MessageBubble({
       {/* Avatar */}
       {showAvatar && (
         <Avatar className="w-8 h-8 flex-shrink-0">
-          <AvatarImage src={sender.avatar} alt={sender.name} />
+          <AvatarImage src={sender.profilePictureUrl} alt={sender.name} />
           <AvatarFallback className="text-xs">
             {sender.name
               .split(" ")
@@ -118,11 +121,13 @@ export function MessageBubble({
           {message.replyToMessage && (
             <div className="mb-2 pb-2 border-b border-border/50">
               <div className="text-xs font-medium opacity-75">
-                {getSenderUser(
-                  message.replyToMessage.senderUserId,
-                  loggedInUser,
-                  chatUsers
-                ).name}
+                {
+                  getSenderUser(
+                    message.replyToMessage.senderUserId,
+                    loggedInUser,
+                    chatUsers
+                  ).name
+                }
               </div>
               <div className="text-xs opacity-60 truncate">
                 {message.replyToMessage.text || "Media"}
@@ -213,7 +218,7 @@ export function MessageBubble({
           <span className="text-xs text-muted-foreground">
             {formatMessageTime(message.createdAt)}
           </span>
-          {isCurrentUser && message.readBy.length > 1 && (
+          {isCurrentUser && message.receipt.length > 1 && (
             <span className="text-xs text-muted-foreground">✓ Read</span>
           )}
         </div>

@@ -33,6 +33,7 @@ export interface AuthContextType {
   loggedInUser: User | null;
   isLoading: boolean;
   error: string | null;
+  /** for platform users, this is the tenantId from the url */
   tenantId: number | null;
 
   login: (credentials: LoginCredentials) => Promise<void>;

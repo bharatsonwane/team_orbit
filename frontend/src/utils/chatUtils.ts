@@ -2,7 +2,6 @@ import type {
   ChatMessage,
   ChatChannel,
   ChatChannelListItem,
-  ChatMessageApiResponse,
   ChatUser,
 } from "../schemas/chatSchema";
 import type { User } from "../schemas/userSchema";
@@ -176,28 +175,3 @@ export const getSenderUser = (
     status: "online",
   };
 };
-
-/**
- * Map API message response to ChatMessage
- * @param message - The API message response
- * @param loggedInUser - The logged in user object (unused, kept for API compatibility)
- * @returns The mapped ChatMessage
- */
-export const mapApiMessageToChatMessage = (
-  message: ChatMessageApiResponse,
-  loggedInUser: User | null // eslint-disable-line @typescript-eslint/no-unused-vars
-): ChatMessage => ({
-  id: message.id,
-  messageCreatedAt: message.createdAt,
-  channelId: message.channelId,
-  senderUserId: message.senderUserId,
-  replyToMessageId: message.replyToMessageId ?? undefined,
-  text: message.text ?? undefined,
-  mediaUrl: message.mediaUrl ?? undefined,
-  isEdited: false,
-  isDeleted: false,
-  createdAt: message.createdAt,
-  updatedAt: message.updatedAt,
-  reactions: [],
-  readBy: message.readBy ?? [],
-});
