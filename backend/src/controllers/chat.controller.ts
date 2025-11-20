@@ -82,8 +82,8 @@ export const saveChannelMessage = async (
       ...payload,
     });
 
-    res.status(201).json(message);
     ChatSocket.notifyChatMessage(tenantId, chatChannelId, message);
+    res.status(201).json(message);
   } catch (error) {
     next(error);
   }

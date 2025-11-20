@@ -127,7 +127,7 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
 
   useEffect(() => {
     const socket = SocketManager.socketInstance;
-    socket.on("chat:new_message", handleNewMessage);
+    socket.on("chat:new_message", handleNotifyChatMessage);
     socket.on("chat:channel_updated", handleChannelUpdated);
 
     // Join selected channel when socket connects
@@ -139,7 +139,7 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
     }
 
     return () => {
-      socket.off("chat:new_message", handleNewMessage);
+      socket.off("chat:new_message", handleNotifyChatMessage);
       socket.off("chat:channel_updated", handleChannelUpdated);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -154,7 +154,11 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
   };
 
   // Listen for new messages
-  const handleNewMessage = (data: ChatMessage) => {
+  const handleNotifyChatMessage = (data: ChatMessage) => {
+    if (data.senderUserId === loggedInUser?.id) {
+      return;
+    }
+
     const message: ChatMessage = {
       id: data.id,
       chatChannelId: data.chatChannelId,
@@ -353,7 +357,6 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
     }
 
     const chatChannelId = data.chatChannelId;
-    const previousChannelState = channelStateMap.get(chatChannelId);
 
     const tempId = Date.now();
     const now = new Date().toISOString();
@@ -389,18 +392,6 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
       return tempChannelStateMap;
     });
 
-    // Update channel updatedAt
-    setChannelStateMap(prev => {
-      const existing = prev.get(chatChannelId);
-      if (!existing) return prev;
-      const tempChannelStateMap = new Map(prev);
-      tempChannelStateMap.set(chatChannelId, {
-        ...existing,
-        updatedAt: now,
-      });
-      return tempChannelStateMap;
-    });
-
     const send = async () => {
       try {
         const result = await dispatch(
@@ -430,24 +421,13 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
         setChannelStateMap(prev => {
           const existing = prev.get(chatChannelId);
           if (!existing) return prev;
-          const updated = existing.messages.map(message =>
+          const updatedMessage = existing.messages.map(message =>
             message.id === tempId ? persistedMessage : message
           );
           const tempChannelStateMap = new Map(prev);
           tempChannelStateMap.set(chatChannelId, {
             ...existing,
-            messages: updated,
-          });
-          return tempChannelStateMap;
-        });
-
-        // Update channel updatedAt
-        setChannelStateMap(prev => {
-          const existing = prev.get(chatChannelId);
-          if (!existing) return prev;
-          const tempChannelStateMap = new Map(prev);
-          tempChannelStateMap.set(chatChannelId, {
-            ...existing,
+            messages: updatedMessage,
             updatedAt: persistedMessage.updatedAt,
           });
           return tempChannelStateMap;
@@ -463,23 +443,10 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
           tempChannelStateMap.set(chatChannelId, {
             ...existing,
             messages: updated,
+            updatedAt: existing.updatedAt,
           });
           return tempChannelStateMap;
         });
-
-        // Rollback channel updatedAt if needed
-        if (previousChannelState) {
-          setChannelStateMap(prev => {
-            const existing = prev.get(chatChannelId);
-            if (!existing) return prev;
-            const tempChannelStateMap = new Map(prev);
-            tempChannelStateMap.set(chatChannelId, {
-              ...existing,
-              updatedAt: previousChannelState.updatedAt ?? existing.updatedAt,
-            });
-            return tempChannelStateMap;
-          });
-        }
 
         setError(
           typeof err === "string"
@@ -690,7 +657,6 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
 
   // Set typing indicator
   const handleSetTyping = (chatChannelId: number, isTyping: boolean) => {
-    console.log("bharat-handleSetTyping");
     const userId = 1; // Current user ID (replace with real)
     setChannelStateMap(prev => {
       const existing =
