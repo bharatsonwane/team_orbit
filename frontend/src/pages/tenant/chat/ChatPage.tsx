@@ -26,14 +26,14 @@ export default function ChatPage({ channelType = "group" }: ChatPageProps) {
         : undefined;
 
     return {
-      id: state.channelId,
-      name: state.name ?? `Channel ${state.channelId}`,
+      id: state.chatChannelId,
+      name: state.name ?? `Channel ${state.chatChannelId}`,
       description: state.description,
       type: (state.type as "direct" | "group") ?? "group",
       avatar:
         state.image ||
         `https://api.dicebear.com/7.x/shapes/svg?radius=50&seed=${encodeURIComponent(
-          state.name ?? String(state.channelId)
+          state.name ?? String(state.chatChannelId)
         )}`,
       members: state.members ?? [],
       lastMessage,

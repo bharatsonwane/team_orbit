@@ -41,20 +41,20 @@ registrar.get("/chat/channel/list", {
   controller: getChannelsForUser,
 });
 
-registrar.post("/chat/channel/:channelId/message", {
+registrar.post("/chat/channel/:chatChannelId/message", {
   middlewares: [ensureTenantMiddleware(), authRoleMiddleware()],
   requestSchema: {
-    paramsSchema: { channelId: idValidation },
+    paramsSchema: { chatChannelId: idValidation },
     bodySchema: sendChatMessageSchema,
   },
   responseSchemas: [{ statusCode: 201, schema: chatMessageSchema }],
   controller: saveChannelMessage,
 });
 
-registrar.get("/chat/channel/:channelId/messages", {
+registrar.get("/chat/channel/:chatChannelId/messages", {
   middlewares: [ensureTenantMiddleware(), authRoleMiddleware()],
   requestSchema: {
-    paramsSchema: { channelId: idValidation },
+    paramsSchema: { chatChannelId: idValidation },
     querySchema: chatMessageListQuerySchema,
   },
   responseSchemas: [{ statusCode: 200, schema: chatMessageListResponseSchema }],

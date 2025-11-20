@@ -421,7 +421,7 @@ const tenantPool = await db.getSchemaPool(`tenant_${tenantId}`);
 
 // Usage in services
 const user = await UserService.getUserById(id, req.mainPool);
-const messages = await ChatService.getMessages(channelId, req.tenantPool);
+const messages = await ChatService.getMessages(chatChannelId, req.tenantPool);
 ```
 
 ## 🔄 Real-time Architecture (Ready)

@@ -90,7 +90,7 @@ export const chatMessageSchema = z.object({
   mediaUrl: z.string().url().optional(),
   replyToMessageId: z.number().int().optional(),
   reactions: z.array(messageReactionSchema).optional(),
-  channelId: z.number().int().optional(),
+  chatChannelId: z.number().int().optional(),
   senderUserId: z.number().int().optional(),
   receipt: z.array(messageReceiptSchema).optional(),
   createdAt: z.string().datetime().optional(),

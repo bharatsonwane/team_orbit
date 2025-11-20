@@ -26,14 +26,14 @@ export function ChannelList({ channelType }: ChannelListProps) {
         s.messages.length > 0 ? s.messages[s.messages.length - 1] : undefined;
 
       return {
-        id: s.channelId,
-        name: s.name ?? `Channel ${s.channelId}`,
+        id: s.chatChannelId,
+        name: s.name ?? `Channel ${s.chatChannelId}`,
         description: s.description,
         type: (s.type as "direct" | "group") ?? "group",
         avatar:
           s.image ||
           `https://api.dicebear.com/7.x/shapes/svg?radius=50&seed=${encodeURIComponent(
-            s.name ?? String(s.channelId)
+            s.name ?? String(s.chatChannelId)
           )}`,
         members: s.members ?? [],
         lastMessage,
@@ -60,13 +60,13 @@ export function ChannelList({ channelType }: ChannelListProps) {
 
     // Filter by search query
     if (searchQuery.trim()) {
-    const query = searchQuery.toLowerCase();
+      const query = searchQuery.toLowerCase();
       filtered = filtered.filter(
-      channel =>
-        channel.name.toLowerCase().includes(query) ||
-        channel.description?.toLowerCase().includes(query) ||
-        channel.lastMessage?.text?.toLowerCase().includes(query)
-    );
+        channel =>
+          channel.name.toLowerCase().includes(query) ||
+          channel.description?.toLowerCase().includes(query) ||
+          channel.lastMessage?.text?.toLowerCase().includes(query)
+      );
     }
 
     return filtered;
@@ -94,15 +94,15 @@ export function ChannelList({ channelType }: ChannelListProps) {
           />
         </div>
         {channelType !== "direct" && (
-        <Button
-          variant="outline"
-          size="sm"
-          className="w-full mt-2"
-          onClick={() => setIsCreateChannelOpen(true)}
-        >
-          <Hash className="w-4 h-4 mr-2" />
-          Create Channel
-        </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            className="w-full mt-2"
+            onClick={() => setIsCreateChannelOpen(true)}
+          >
+            <Hash className="w-4 h-4 mr-2" />
+            Create Channel
+          </Button>
         )}
       </div>
 
@@ -120,19 +120,19 @@ export function ChannelList({ channelType }: ChannelListProps) {
                 : `No ${channelType === "direct" ? "conversations" : "channels"} yet`}
             </div>
           ) : (
-                <div>
-                  <div className="px-4 py-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+            <div>
+              <div className="px-4 py-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
                 {channelType === "group" ? "Group Channels" : "Direct Channels"}
-                  </div>
+              </div>
               {filteredChannelList.map(channel => (
-                    <ChannelListItem
-                      key={channel.id}
-                      channel={channel}
+                <ChannelListItem
+                  key={channel.id}
+                  channel={channel}
                   isSelected={selectedChannelId === channel.id}
-                      onClick={() => handleSelectChannel(channel)}
-                    />
-                  ))}
-                </div>
+                  onClick={() => handleSelectChannel(channel)}
+                />
+              ))}
+            </div>
           )}
         </div>
       </ScrollArea>

@@ -49,11 +49,11 @@ export const dummyChatUsers: ChatUser[] = [
 const getDummyChatData = (loggedInUserId: number = 3001) => {
   const dummyChatList = [
     {
-      channelId: 4000,
+      chatChannelId: 4000,
       messages: [
         {
           id: 5199,
-          channelId: 4000,
+          chatChannelId: 4000,
           senderUserId: 3002,
           text: "Perfect! 24",
           isEdited: false,
@@ -72,7 +72,7 @@ const getDummyChatData = (loggedInUserId: number = 3001) => {
         },
         {
           id: 5198,
-          channelId: 4000,
+          chatChannelId: 4000,
           senderUserId: 3001,
           text: "I'll take a look",
           isEdited: false,
@@ -91,7 +91,7 @@ const getDummyChatData = (loggedInUserId: number = 3001) => {
         },
         {
           id: 5197,
-          channelId: 4000,
+          chatChannelId: 4000,
           senderUserId: 3004,
           text: "Can someone review this?",
           isEdited: false,
@@ -110,7 +110,7 @@ const getDummyChatData = (loggedInUserId: number = 3001) => {
         },
         {
           id: 5196,
-          channelId: 4000,
+          chatChannelId: 4000,
           senderUserId: 3003,
           text: "Thanks for the update 23",
           isEdited: false,
@@ -129,7 +129,7 @@ const getDummyChatData = (loggedInUserId: number = 3001) => {
         },
         {
           id: 5195,
-          channelId: 4000,
+          chatChannelId: 4000,
           senderUserId: 3002,
           text: "I'll send the details",
           isEdited: false,
@@ -148,7 +148,7 @@ const getDummyChatData = (loggedInUserId: number = 3001) => {
         },
         {
           id: 5194,
-          channelId: 4000,
+          chatChannelId: 4000,
           senderUserId: 3001,
           text: "Let's schedule a meeting",
           isEdited: false,
@@ -167,7 +167,7 @@ const getDummyChatData = (loggedInUserId: number = 3001) => {
         },
         {
           id: 5193,
-          channelId: 4000,
+          chatChannelId: 4000,
           senderUserId: 3004,
           text: "That sounds great! 22",
           isEdited: false,
@@ -193,7 +193,7 @@ const getDummyChatData = (loggedInUserId: number = 3001) => {
         },
         {
           id: 5192,
-          channelId: 4000,
+          chatChannelId: 4000,
           senderUserId: 3003,
           text: "Working on the project",
           isEdited: false,
@@ -212,7 +212,7 @@ const getDummyChatData = (loggedInUserId: number = 3001) => {
         },
         {
           id: 5191,
-          channelId: 4000,
+          chatChannelId: 4000,
           senderUserId: 3002,
           text: "How's it going?",
           isEdited: false,
@@ -231,7 +231,7 @@ const getDummyChatData = (loggedInUserId: number = 3001) => {
         },
         {
           id: 5190,
-          channelId: 4000,
+          chatChannelId: 4000,
           senderUserId: 3001,
           replyToMessageId: 5189,
           text: "Hey everyone! 21",
@@ -251,7 +251,7 @@ const getDummyChatData = (loggedInUserId: number = 3001) => {
         },
         {
           id: 5189,
-          channelId: 4000,
+          chatChannelId: 4000,
           senderUserId: 3004,
           text: "That makes sense",
           isEdited: false,
@@ -270,7 +270,7 @@ const getDummyChatData = (loggedInUserId: number = 3001) => {
         },
         {
           id: 5188,
-          channelId: 4000,
+          chatChannelId: 4000,
           senderUserId: 3003,
           text: "We should consider this",
           isEdited: false,
@@ -289,7 +289,7 @@ const getDummyChatData = (loggedInUserId: number = 3001) => {
         },
         {
           id: 5187,
-          channelId: 4000,
+          chatChannelId: 4000,
           senderUserId: 3002,
           text: "Good point! 20",
           isEdited: false,
@@ -308,7 +308,7 @@ const getDummyChatData = (loggedInUserId: number = 3001) => {
         },
         {
           id: 5186,
-          channelId: 4000,
+          chatChannelId: 4000,
           senderUserId: 3001,
           text: "I agree with that",
           isEdited: false,
@@ -346,7 +346,7 @@ const getDummyChatData = (loggedInUserId: number = 3001) => {
         },
         {
           id: 5185,
-          channelId: 4000,
+          chatChannelId: 4000,
           senderUserId: 3004,
           text: "Let's discuss this further",
           isEdited: false,
@@ -365,7 +365,7 @@ const getDummyChatData = (loggedInUserId: number = 3001) => {
         },
         {
           id: 5184,
-          channelId: 4000,
+          chatChannelId: 4000,
           senderUserId: 3003,
           text: "Sounds good to me 19",
           isEdited: false,
@@ -384,7 +384,7 @@ const getDummyChatData = (loggedInUserId: number = 3001) => {
         },
         {
           id: 5183,
-          channelId: 4000,
+          chatChannelId: 4000,
           senderUserId: 3002,
           text: "I'm available now",
           isEdited: false,
@@ -403,7 +403,7 @@ const getDummyChatData = (loggedInUserId: number = 3001) => {
         },
         {
           id: 5182,
-          channelId: 4000,
+          chatChannelId: 4000,
           senderUserId: 3001,
           text: "Let me know if you need help",
           isEdited: false,
@@ -422,7 +422,7 @@ const getDummyChatData = (loggedInUserId: number = 3001) => {
         },
         {
           id: 5181,
-          channelId: 4000,
+          chatChannelId: 4000,
           senderUserId: 3004,
           text: "Any questions? 18",
           isEdited: false,
@@ -441,7 +441,7 @@ const getDummyChatData = (loggedInUserId: number = 3001) => {
         },
         {
           id: 5180,
-          channelId: 4000,
+          chatChannelId: 4000,
           senderUserId: 3003,
           text: "Great work team!",
           isEdited: false,
@@ -460,7 +460,7 @@ const getDummyChatData = (loggedInUserId: number = 3001) => {
         },
         {
           id: 5179,
-          channelId: 4000,
+          chatChannelId: 4000,
           senderUserId: 3002,
           text: "Perfect!",
           isEdited: false,
@@ -492,7 +492,7 @@ const getDummyChatData = (loggedInUserId: number = 3001) => {
         },
         {
           id: 5178,
-          channelId: 4000,
+          chatChannelId: 4000,
           senderUserId: 3001,
           text: "I'll take a look 17",
           isEdited: false,
@@ -511,7 +511,7 @@ const getDummyChatData = (loggedInUserId: number = 3001) => {
         },
         {
           id: 5177,
-          channelId: 4000,
+          chatChannelId: 4000,
           senderUserId: 3004,
           text: "Can someone review this?",
           isEdited: false,
@@ -530,7 +530,7 @@ const getDummyChatData = (loggedInUserId: number = 3001) => {
         },
         {
           id: 5176,
-          channelId: 4000,
+          chatChannelId: 4000,
           senderUserId: 3003,
           text: "Thanks for the update",
           isEdited: false,
@@ -549,7 +549,7 @@ const getDummyChatData = (loggedInUserId: number = 3001) => {
         },
         {
           id: 5175,
-          channelId: 4000,
+          chatChannelId: 4000,
           senderUserId: 3002,
           text: "I'll send the details 16",
           isEdited: false,
@@ -568,7 +568,7 @@ const getDummyChatData = (loggedInUserId: number = 3001) => {
         },
         {
           id: 5174,
-          channelId: 4000,
+          chatChannelId: 4000,
           senderUserId: 3001,
           text: "Let's schedule a meeting",
           isEdited: false,
@@ -587,7 +587,7 @@ const getDummyChatData = (loggedInUserId: number = 3001) => {
         },
         {
           id: 5173,
-          channelId: 4000,
+          chatChannelId: 4000,
           senderUserId: 3004,
           text: "That sounds great!",
           isEdited: false,
@@ -606,7 +606,7 @@ const getDummyChatData = (loggedInUserId: number = 3001) => {
         },
         {
           id: 5172,
-          channelId: 4000,
+          chatChannelId: 4000,
           senderUserId: 3003,
           text: "Working on the project 15",
           isEdited: false,
@@ -632,7 +632,7 @@ const getDummyChatData = (loggedInUserId: number = 3001) => {
         },
         {
           id: 5171,
-          channelId: 4000,
+          chatChannelId: 4000,
           senderUserId: 3002,
           text: "How's it going?",
           isEdited: false,
@@ -651,7 +651,7 @@ const getDummyChatData = (loggedInUserId: number = 3001) => {
         },
         {
           id: 5170,
-          channelId: 4000,
+          chatChannelId: 4000,
           senderUserId: 3001,
           replyToMessageId: 5169,
           text: "Hey everyone!",
@@ -671,7 +671,7 @@ const getDummyChatData = (loggedInUserId: number = 3001) => {
         },
         {
           id: 5169,
-          channelId: 4000,
+          chatChannelId: 4000,
           senderUserId: 3004,
           text: "That makes sense 14",
           isEdited: false,
@@ -690,7 +690,7 @@ const getDummyChatData = (loggedInUserId: number = 3001) => {
         },
         {
           id: 5168,
-          channelId: 4000,
+          chatChannelId: 4000,
           senderUserId: 3003,
           text: "We should consider this",
           isEdited: false,
@@ -709,7 +709,7 @@ const getDummyChatData = (loggedInUserId: number = 3001) => {
         },
         {
           id: 5167,
-          channelId: 4000,
+          chatChannelId: 4000,
           senderUserId: 3002,
           text: "Good point!",
           isEdited: false,
@@ -728,7 +728,7 @@ const getDummyChatData = (loggedInUserId: number = 3001) => {
         },
         {
           id: 5166,
-          channelId: 4000,
+          chatChannelId: 4000,
           senderUserId: 3001,
           text: "I agree with that 13",
           isEdited: false,
@@ -747,7 +747,7 @@ const getDummyChatData = (loggedInUserId: number = 3001) => {
         },
         {
           id: 5165,
-          channelId: 4000,
+          chatChannelId: 4000,
           senderUserId: 3004,
           text: "Let's discuss this further",
           isEdited: false,
@@ -785,7 +785,7 @@ const getDummyChatData = (loggedInUserId: number = 3001) => {
         },
         {
           id: 5164,
-          channelId: 4000,
+          chatChannelId: 4000,
           senderUserId: 3003,
           text: "Sounds good to me",
           isEdited: false,
@@ -804,7 +804,7 @@ const getDummyChatData = (loggedInUserId: number = 3001) => {
         },
         {
           id: 5163,
-          channelId: 4000,
+          chatChannelId: 4000,
           senderUserId: 3002,
           text: "I'm available now 12",
           isEdited: false,
@@ -823,7 +823,7 @@ const getDummyChatData = (loggedInUserId: number = 3001) => {
         },
         {
           id: 5162,
-          channelId: 4000,
+          chatChannelId: 4000,
           senderUserId: 3001,
           text: "Let me know if you need help",
           isEdited: false,
@@ -842,7 +842,7 @@ const getDummyChatData = (loggedInUserId: number = 3001) => {
         },
         {
           id: 5161,
-          channelId: 4000,
+          chatChannelId: 4000,
           senderUserId: 3004,
           text: "Any questions?",
           isEdited: false,
@@ -861,7 +861,7 @@ const getDummyChatData = (loggedInUserId: number = 3001) => {
         },
         {
           id: 5160,
-          channelId: 4000,
+          chatChannelId: 4000,
           senderUserId: 3003,
           text: "Great work team! 11",
           isEdited: false,
@@ -880,7 +880,7 @@ const getDummyChatData = (loggedInUserId: number = 3001) => {
         },
         {
           id: 5159,
-          channelId: 4000,
+          chatChannelId: 4000,
           senderUserId: 3002,
           text: "Perfect!",
           isEdited: false,
@@ -899,7 +899,7 @@ const getDummyChatData = (loggedInUserId: number = 3001) => {
         },
         {
           id: 5158,
-          channelId: 4000,
+          chatChannelId: 4000,
           senderUserId: 3001,
           text: "I'll take a look",
           isEdited: false,
@@ -931,7 +931,7 @@ const getDummyChatData = (loggedInUserId: number = 3001) => {
         },
         {
           id: 5157,
-          channelId: 4000,
+          chatChannelId: 4000,
           senderUserId: 3004,
           text: "Can someone review this? 10",
           isEdited: false,
@@ -950,7 +950,7 @@ const getDummyChatData = (loggedInUserId: number = 3001) => {
         },
         {
           id: 5156,
-          channelId: 4000,
+          chatChannelId: 4000,
           senderUserId: 3003,
           text: "Thanks for the update",
           isEdited: false,
@@ -969,7 +969,7 @@ const getDummyChatData = (loggedInUserId: number = 3001) => {
         },
         {
           id: 5155,
-          channelId: 4000,
+          chatChannelId: 4000,
           senderUserId: 3002,
           text: "I'll send the details",
           isEdited: false,
@@ -988,7 +988,7 @@ const getDummyChatData = (loggedInUserId: number = 3001) => {
         },
         {
           id: 5154,
-          channelId: 4000,
+          chatChannelId: 4000,
           senderUserId: 3001,
           text: "Let's schedule a meeting 9",
           isEdited: false,
@@ -1007,7 +1007,7 @@ const getDummyChatData = (loggedInUserId: number = 3001) => {
         },
         {
           id: 5153,
-          channelId: 4000,
+          chatChannelId: 4000,
           senderUserId: 3004,
           text: "That sounds great!",
           isEdited: false,
@@ -1026,7 +1026,7 @@ const getDummyChatData = (loggedInUserId: number = 3001) => {
         },
         {
           id: 5152,
-          channelId: 4000,
+          chatChannelId: 4000,
           senderUserId: 3003,
           text: "Working on the project",
           isEdited: false,
@@ -1045,7 +1045,7 @@ const getDummyChatData = (loggedInUserId: number = 3001) => {
         },
         {
           id: 5151,
-          channelId: 4000,
+          chatChannelId: 4000,
           senderUserId: 3002,
           text: "How's it going? 8",
           isEdited: false,
@@ -1071,7 +1071,7 @@ const getDummyChatData = (loggedInUserId: number = 3001) => {
         },
         {
           id: 5150,
-          channelId: 4000,
+          chatChannelId: 4000,
           senderUserId: 3001,
           replyToMessageId: 5149,
           text: "Hey everyone!",
@@ -1091,7 +1091,7 @@ const getDummyChatData = (loggedInUserId: number = 3001) => {
         },
         {
           id: 5149,
-          channelId: 4000,
+          chatChannelId: 4000,
           senderUserId: 3004,
           text: "That makes sense",
           isEdited: false,
@@ -1110,7 +1110,7 @@ const getDummyChatData = (loggedInUserId: number = 3001) => {
         },
         {
           id: 5148,
-          channelId: 4000,
+          chatChannelId: 4000,
           senderUserId: 3003,
           text: "We should consider this 7",
           isEdited: false,
@@ -1129,7 +1129,7 @@ const getDummyChatData = (loggedInUserId: number = 3001) => {
         },
         {
           id: 5147,
-          channelId: 4000,
+          chatChannelId: 4000,
           senderUserId: 3002,
           text: "Good point!",
           isEdited: false,
@@ -1148,7 +1148,7 @@ const getDummyChatData = (loggedInUserId: number = 3001) => {
         },
         {
           id: 5146,
-          channelId: 4000,
+          chatChannelId: 4000,
           senderUserId: 3001,
           text: "I agree with that",
           isEdited: false,
@@ -1167,7 +1167,7 @@ const getDummyChatData = (loggedInUserId: number = 3001) => {
         },
         {
           id: 5145,
-          channelId: 4000,
+          chatChannelId: 4000,
           senderUserId: 3004,
           text: "Let's discuss this further 6",
           isEdited: false,
@@ -1186,7 +1186,7 @@ const getDummyChatData = (loggedInUserId: number = 3001) => {
         },
         {
           id: 5144,
-          channelId: 4000,
+          chatChannelId: 4000,
           senderUserId: 3003,
           text: "Sounds good to me",
           isEdited: false,
@@ -1224,7 +1224,7 @@ const getDummyChatData = (loggedInUserId: number = 3001) => {
         },
         {
           id: 5143,
-          channelId: 4000,
+          chatChannelId: 4000,
           senderUserId: 3002,
           text: "I'm available now",
           isEdited: false,
@@ -1243,7 +1243,7 @@ const getDummyChatData = (loggedInUserId: number = 3001) => {
         },
         {
           id: 5142,
-          channelId: 4000,
+          chatChannelId: 4000,
           senderUserId: 3001,
           text: "Let me know if you need help 5",
           isEdited: false,
@@ -1262,7 +1262,7 @@ const getDummyChatData = (loggedInUserId: number = 3001) => {
         },
         {
           id: 5141,
-          channelId: 4000,
+          chatChannelId: 4000,
           senderUserId: 3004,
           text: "Any questions?",
           isEdited: false,
@@ -1281,7 +1281,7 @@ const getDummyChatData = (loggedInUserId: number = 3001) => {
         },
         {
           id: 5140,
-          channelId: 4000,
+          chatChannelId: 4000,
           senderUserId: 3003,
           text: "Great work team!",
           isEdited: false,
@@ -1300,7 +1300,7 @@ const getDummyChatData = (loggedInUserId: number = 3001) => {
         },
         {
           id: 5139,
-          channelId: 4000,
+          chatChannelId: 4000,
           senderUserId: 3002,
           text: "Perfect! 4",
           isEdited: false,
@@ -1319,7 +1319,7 @@ const getDummyChatData = (loggedInUserId: number = 3001) => {
         },
         {
           id: 5138,
-          channelId: 4000,
+          chatChannelId: 4000,
           senderUserId: 3001,
           text: "I'll take a look",
           isEdited: false,
@@ -1338,7 +1338,7 @@ const getDummyChatData = (loggedInUserId: number = 3001) => {
         },
         {
           id: 5137,
-          channelId: 4000,
+          chatChannelId: 4000,
           senderUserId: 3004,
           text: "Can someone review this?",
           isEdited: false,
@@ -1370,7 +1370,7 @@ const getDummyChatData = (loggedInUserId: number = 3001) => {
         },
         {
           id: 5136,
-          channelId: 4000,
+          chatChannelId: 4000,
           senderUserId: 3003,
           text: "Thanks for the update 3",
           isEdited: false,
@@ -1389,7 +1389,7 @@ const getDummyChatData = (loggedInUserId: number = 3001) => {
         },
         {
           id: 5135,
-          channelId: 4000,
+          chatChannelId: 4000,
           senderUserId: 3002,
           text: "I'll send the details",
           isEdited: false,
@@ -1408,7 +1408,7 @@ const getDummyChatData = (loggedInUserId: number = 3001) => {
         },
         {
           id: 5134,
-          channelId: 4000,
+          chatChannelId: 4000,
           senderUserId: 3001,
           text: "Let's schedule a meeting",
           isEdited: false,
@@ -1427,7 +1427,7 @@ const getDummyChatData = (loggedInUserId: number = 3001) => {
         },
         {
           id: 5133,
-          channelId: 4000,
+          chatChannelId: 4000,
           senderUserId: 3004,
           text: "That sounds great! 2",
           isEdited: false,
@@ -1446,7 +1446,7 @@ const getDummyChatData = (loggedInUserId: number = 3001) => {
         },
         {
           id: 5132,
-          channelId: 4000,
+          chatChannelId: 4000,
           senderUserId: 3003,
           text: "Working on the project",
           isEdited: false,
@@ -1465,7 +1465,7 @@ const getDummyChatData = (loggedInUserId: number = 3001) => {
         },
         {
           id: 5131,
-          channelId: 4000,
+          chatChannelId: 4000,
           senderUserId: 3002,
           text: "How's it going?",
           isEdited: false,
@@ -1484,7 +1484,7 @@ const getDummyChatData = (loggedInUserId: number = 3001) => {
         },
         {
           id: 5130,
-          channelId: 4000,
+          chatChannelId: 4000,
           senderUserId: 3001,
           replyToMessageId: 5129,
           text: "Hey everyone! 1",
@@ -1511,7 +1511,7 @@ const getDummyChatData = (loggedInUserId: number = 3001) => {
         },
         {
           id: 5129,
-          channelId: 4000,
+          chatChannelId: 4000,
           senderUserId: 3002,
           text: "Perfect! 24",
           isEdited: false,
@@ -1530,7 +1530,7 @@ const getDummyChatData = (loggedInUserId: number = 3001) => {
         },
         {
           id: 5128,
-          channelId: 4000,
+          chatChannelId: 4000,
           senderUserId: 3001,
           text: "I'll take a look",
           isEdited: false,
@@ -1549,7 +1549,7 @@ const getDummyChatData = (loggedInUserId: number = 3001) => {
         },
         {
           id: 5127,
-          channelId: 4000,
+          chatChannelId: 4000,
           senderUserId: 3004,
           text: "Can someone review this?",
           isEdited: false,
@@ -1568,7 +1568,7 @@ const getDummyChatData = (loggedInUserId: number = 3001) => {
         },
         {
           id: 5126,
-          channelId: 4000,
+          chatChannelId: 4000,
           senderUserId: 3003,
           text: "Thanks for the update 23",
           isEdited: false,
@@ -1587,7 +1587,7 @@ const getDummyChatData = (loggedInUserId: number = 3001) => {
         },
         {
           id: 5125,
-          channelId: 4000,
+          chatChannelId: 4000,
           senderUserId: 3002,
           text: "I'll send the details",
           isEdited: false,
@@ -1606,7 +1606,7 @@ const getDummyChatData = (loggedInUserId: number = 3001) => {
         },
         {
           id: 5124,
-          channelId: 4000,
+          chatChannelId: 4000,
           senderUserId: 3001,
           text: "Let's schedule a meeting",
           isEdited: false,
@@ -1625,7 +1625,7 @@ const getDummyChatData = (loggedInUserId: number = 3001) => {
         },
         {
           id: 5123,
-          channelId: 4000,
+          chatChannelId: 4000,
           senderUserId: 3004,
           text: "That sounds great! 22",
           isEdited: false,
@@ -1651,7 +1651,7 @@ const getDummyChatData = (loggedInUserId: number = 3001) => {
         },
         {
           id: 5122,
-          channelId: 4000,
+          chatChannelId: 4000,
           senderUserId: 3003,
           text: "Working on the project",
           isEdited: false,
@@ -1670,7 +1670,7 @@ const getDummyChatData = (loggedInUserId: number = 3001) => {
         },
         {
           id: 5121,
-          channelId: 4000,
+          chatChannelId: 4000,
           senderUserId: 3002,
           text: "How's it going?",
           isEdited: false,
@@ -1689,7 +1689,7 @@ const getDummyChatData = (loggedInUserId: number = 3001) => {
         },
         {
           id: 5120,
-          channelId: 4000,
+          chatChannelId: 4000,
           senderUserId: 3001,
           replyToMessageId: 5119,
           text: "Hey everyone! 21",
@@ -1709,7 +1709,7 @@ const getDummyChatData = (loggedInUserId: number = 3001) => {
         },
         {
           id: 5119,
-          channelId: 4000,
+          chatChannelId: 4000,
           senderUserId: 3004,
           text: "That makes sense",
           isEdited: false,
@@ -1728,7 +1728,7 @@ const getDummyChatData = (loggedInUserId: number = 3001) => {
         },
         {
           id: 5118,
-          channelId: 4000,
+          chatChannelId: 4000,
           senderUserId: 3003,
           text: "We should consider this",
           isEdited: false,
@@ -1747,7 +1747,7 @@ const getDummyChatData = (loggedInUserId: number = 3001) => {
         },
         {
           id: 5117,
-          channelId: 4000,
+          chatChannelId: 4000,
           senderUserId: 3002,
           text: "Good point! 20",
           isEdited: false,
@@ -1766,7 +1766,7 @@ const getDummyChatData = (loggedInUserId: number = 3001) => {
         },
         {
           id: 5116,
-          channelId: 4000,
+          chatChannelId: 4000,
           senderUserId: 3001,
           text: "I agree with that",
           isEdited: false,
@@ -1804,7 +1804,7 @@ const getDummyChatData = (loggedInUserId: number = 3001) => {
         },
         {
           id: 5115,
-          channelId: 4000,
+          chatChannelId: 4000,
           senderUserId: 3004,
           text: "Let's discuss this further",
           isEdited: false,
@@ -1823,7 +1823,7 @@ const getDummyChatData = (loggedInUserId: number = 3001) => {
         },
         {
           id: 5114,
-          channelId: 4000,
+          chatChannelId: 4000,
           senderUserId: 3003,
           text: "Sounds good to me 19",
           isEdited: false,
@@ -1842,7 +1842,7 @@ const getDummyChatData = (loggedInUserId: number = 3001) => {
         },
         {
           id: 5113,
-          channelId: 4000,
+          chatChannelId: 4000,
           senderUserId: 3002,
           text: "I'm available now",
           isEdited: false,
@@ -1861,7 +1861,7 @@ const getDummyChatData = (loggedInUserId: number = 3001) => {
         },
         {
           id: 5112,
-          channelId: 4000,
+          chatChannelId: 4000,
           senderUserId: 3001,
           text: "Let me know if you need help",
           isEdited: false,
@@ -1880,7 +1880,7 @@ const getDummyChatData = (loggedInUserId: number = 3001) => {
         },
         {
           id: 5111,
-          channelId: 4000,
+          chatChannelId: 4000,
           senderUserId: 3004,
           text: "Any questions? 18",
           isEdited: false,
@@ -1899,7 +1899,7 @@ const getDummyChatData = (loggedInUserId: number = 3001) => {
         },
         {
           id: 5110,
-          channelId: 4000,
+          chatChannelId: 4000,
           senderUserId: 3003,
           text: "Great work team!",
           isEdited: false,
@@ -1918,7 +1918,7 @@ const getDummyChatData = (loggedInUserId: number = 3001) => {
         },
         {
           id: 5109,
-          channelId: 4000,
+          chatChannelId: 4000,
           senderUserId: 3002,
           text: "Perfect!",
           isEdited: false,
@@ -1950,7 +1950,7 @@ const getDummyChatData = (loggedInUserId: number = 3001) => {
         },
         {
           id: 5108,
-          channelId: 4000,
+          chatChannelId: 4000,
           senderUserId: 3001,
           text: "I'll take a look 17",
           isEdited: false,
@@ -1969,7 +1969,7 @@ const getDummyChatData = (loggedInUserId: number = 3001) => {
         },
         {
           id: 5107,
-          channelId: 4000,
+          chatChannelId: 4000,
           senderUserId: 3004,
           text: "Can someone review this?",
           isEdited: false,
@@ -1988,7 +1988,7 @@ const getDummyChatData = (loggedInUserId: number = 3001) => {
         },
         {
           id: 5106,
-          channelId: 4000,
+          chatChannelId: 4000,
           senderUserId: 3003,
           text: "Thanks for the update",
           isEdited: false,
@@ -2007,7 +2007,7 @@ const getDummyChatData = (loggedInUserId: number = 3001) => {
         },
         {
           id: 5105,
-          channelId: 4000,
+          chatChannelId: 4000,
           senderUserId: 3002,
           text: "I'll send the details 16",
           isEdited: false,
@@ -2026,7 +2026,7 @@ const getDummyChatData = (loggedInUserId: number = 3001) => {
         },
         {
           id: 5104,
-          channelId: 4000,
+          chatChannelId: 4000,
           senderUserId: 3001,
           text: "Let's schedule a meeting",
           isEdited: false,
@@ -2045,7 +2045,7 @@ const getDummyChatData = (loggedInUserId: number = 3001) => {
         },
         {
           id: 5103,
-          channelId: 4000,
+          chatChannelId: 4000,
           senderUserId: 3004,
           text: "That sounds great!",
           isEdited: false,
@@ -2064,7 +2064,7 @@ const getDummyChatData = (loggedInUserId: number = 3001) => {
         },
         {
           id: 5102,
-          channelId: 4000,
+          chatChannelId: 4000,
           senderUserId: 3003,
           text: "Working on the project 15",
           isEdited: false,
@@ -2090,7 +2090,7 @@ const getDummyChatData = (loggedInUserId: number = 3001) => {
         },
         {
           id: 5101,
-          channelId: 4000,
+          chatChannelId: 4000,
           senderUserId: 3002,
           text: "How's it going?",
           isEdited: false,
@@ -2109,7 +2109,7 @@ const getDummyChatData = (loggedInUserId: number = 3001) => {
         },
         {
           id: 5100,
-          channelId: 4000,
+          chatChannelId: 4000,
           senderUserId: 3001,
           replyToMessageId: 5099,
           text: "Hey everyone!",
@@ -2129,7 +2129,7 @@ const getDummyChatData = (loggedInUserId: number = 3001) => {
         },
         {
           id: 5099,
-          channelId: 4000,
+          chatChannelId: 4000,
           senderUserId: 3004,
           text: "That makes sense 14",
           isEdited: false,
@@ -2148,7 +2148,7 @@ const getDummyChatData = (loggedInUserId: number = 3001) => {
         },
         {
           id: 5098,
-          channelId: 4000,
+          chatChannelId: 4000,
           senderUserId: 3003,
           text: "We should consider this",
           isEdited: false,
@@ -2167,7 +2167,7 @@ const getDummyChatData = (loggedInUserId: number = 3001) => {
         },
         {
           id: 5097,
-          channelId: 4000,
+          chatChannelId: 4000,
           senderUserId: 3002,
           text: "Good point!",
           isEdited: false,
@@ -2186,7 +2186,7 @@ const getDummyChatData = (loggedInUserId: number = 3001) => {
         },
         {
           id: 5096,
-          channelId: 4000,
+          chatChannelId: 4000,
           senderUserId: 3001,
           text: "I agree with that 13",
           isEdited: false,
@@ -2205,7 +2205,7 @@ const getDummyChatData = (loggedInUserId: number = 3001) => {
         },
         {
           id: 5095,
-          channelId: 4000,
+          chatChannelId: 4000,
           senderUserId: 3004,
           text: "Let's discuss this further",
           isEdited: false,
@@ -2243,7 +2243,7 @@ const getDummyChatData = (loggedInUserId: number = 3001) => {
         },
         {
           id: 5094,
-          channelId: 4000,
+          chatChannelId: 4000,
           senderUserId: 3003,
           text: "Sounds good to me",
           isEdited: false,
@@ -2262,7 +2262,7 @@ const getDummyChatData = (loggedInUserId: number = 3001) => {
         },
         {
           id: 5093,
-          channelId: 4000,
+          chatChannelId: 4000,
           senderUserId: 3002,
           text: "I'm available now 12",
           isEdited: false,
@@ -2281,7 +2281,7 @@ const getDummyChatData = (loggedInUserId: number = 3001) => {
         },
         {
           id: 5092,
-          channelId: 4000,
+          chatChannelId: 4000,
           senderUserId: 3001,
           text: "Let me know if you need help",
           isEdited: false,
@@ -2300,7 +2300,7 @@ const getDummyChatData = (loggedInUserId: number = 3001) => {
         },
         {
           id: 5091,
-          channelId: 4000,
+          chatChannelId: 4000,
           senderUserId: 3004,
           text: "Any questions?",
           isEdited: false,
@@ -2319,7 +2319,7 @@ const getDummyChatData = (loggedInUserId: number = 3001) => {
         },
         {
           id: 5090,
-          channelId: 4000,
+          chatChannelId: 4000,
           senderUserId: 3003,
           text: "Great work team! 11",
           isEdited: false,
@@ -2338,7 +2338,7 @@ const getDummyChatData = (loggedInUserId: number = 3001) => {
         },
         {
           id: 5089,
-          channelId: 4000,
+          chatChannelId: 4000,
           senderUserId: 3002,
           text: "Perfect!",
           isEdited: false,
@@ -2357,7 +2357,7 @@ const getDummyChatData = (loggedInUserId: number = 3001) => {
         },
         {
           id: 5088,
-          channelId: 4000,
+          chatChannelId: 4000,
           senderUserId: 3001,
           text: "I'll take a look",
           isEdited: false,
@@ -2389,7 +2389,7 @@ const getDummyChatData = (loggedInUserId: number = 3001) => {
         },
         {
           id: 5087,
-          channelId: 4000,
+          chatChannelId: 4000,
           senderUserId: 3004,
           text: "Can someone review this? 10",
           isEdited: false,
@@ -2408,7 +2408,7 @@ const getDummyChatData = (loggedInUserId: number = 3001) => {
         },
         {
           id: 5086,
-          channelId: 4000,
+          chatChannelId: 4000,
           senderUserId: 3003,
           text: "Thanks for the update",
           isEdited: false,
@@ -2427,7 +2427,7 @@ const getDummyChatData = (loggedInUserId: number = 3001) => {
         },
         {
           id: 5085,
-          channelId: 4000,
+          chatChannelId: 4000,
           senderUserId: 3002,
           text: "I'll send the details",
           isEdited: false,
@@ -2446,7 +2446,7 @@ const getDummyChatData = (loggedInUserId: number = 3001) => {
         },
         {
           id: 5084,
-          channelId: 4000,
+          chatChannelId: 4000,
           senderUserId: 3001,
           text: "Let's schedule a meeting 9",
           isEdited: false,
@@ -2465,7 +2465,7 @@ const getDummyChatData = (loggedInUserId: number = 3001) => {
         },
         {
           id: 5083,
-          channelId: 4000,
+          chatChannelId: 4000,
           senderUserId: 3004,
           text: "That sounds great!",
           isEdited: false,
@@ -2484,7 +2484,7 @@ const getDummyChatData = (loggedInUserId: number = 3001) => {
         },
         {
           id: 5082,
-          channelId: 4000,
+          chatChannelId: 4000,
           senderUserId: 3003,
           text: "Working on the project",
           isEdited: false,
@@ -2503,7 +2503,7 @@ const getDummyChatData = (loggedInUserId: number = 3001) => {
         },
         {
           id: 5081,
-          channelId: 4000,
+          chatChannelId: 4000,
           senderUserId: 3002,
           text: "How's it going? 8",
           isEdited: false,
@@ -2529,7 +2529,7 @@ const getDummyChatData = (loggedInUserId: number = 3001) => {
         },
         {
           id: 5080,
-          channelId: 4000,
+          chatChannelId: 4000,
           senderUserId: 3001,
           replyToMessageId: 5079,
           text: "Hey everyone!",
@@ -2549,7 +2549,7 @@ const getDummyChatData = (loggedInUserId: number = 3001) => {
         },
         {
           id: 5079,
-          channelId: 4000,
+          chatChannelId: 4000,
           senderUserId: 3004,
           text: "That makes sense",
           isEdited: false,
@@ -2568,7 +2568,7 @@ const getDummyChatData = (loggedInUserId: number = 3001) => {
         },
         {
           id: 5078,
-          channelId: 4000,
+          chatChannelId: 4000,
           senderUserId: 3003,
           text: "We should consider this 7",
           isEdited: false,
@@ -2587,7 +2587,7 @@ const getDummyChatData = (loggedInUserId: number = 3001) => {
         },
         {
           id: 5077,
-          channelId: 4000,
+          chatChannelId: 4000,
           senderUserId: 3002,
           text: "Good point!",
           isEdited: false,
@@ -2606,7 +2606,7 @@ const getDummyChatData = (loggedInUserId: number = 3001) => {
         },
         {
           id: 5076,
-          channelId: 4000,
+          chatChannelId: 4000,
           senderUserId: 3001,
           text: "I agree with that",
           isEdited: false,
@@ -2625,7 +2625,7 @@ const getDummyChatData = (loggedInUserId: number = 3001) => {
         },
         {
           id: 5075,
-          channelId: 4000,
+          chatChannelId: 4000,
           senderUserId: 3004,
           text: "Let's discuss this further 6",
           isEdited: false,
@@ -2644,7 +2644,7 @@ const getDummyChatData = (loggedInUserId: number = 3001) => {
         },
         {
           id: 5074,
-          channelId: 4000,
+          chatChannelId: 4000,
           senderUserId: 3003,
           text: "Sounds good to me",
           isEdited: false,
@@ -2682,7 +2682,7 @@ const getDummyChatData = (loggedInUserId: number = 3001) => {
         },
         {
           id: 5073,
-          channelId: 4000,
+          chatChannelId: 4000,
           senderUserId: 3002,
           text: "I'm available now",
           isEdited: false,
@@ -2701,7 +2701,7 @@ const getDummyChatData = (loggedInUserId: number = 3001) => {
         },
         {
           id: 5072,
-          channelId: 4000,
+          chatChannelId: 4000,
           senderUserId: 3001,
           text: "Let me know if you need help 5",
           isEdited: false,
@@ -2720,7 +2720,7 @@ const getDummyChatData = (loggedInUserId: number = 3001) => {
         },
         {
           id: 5071,
-          channelId: 4000,
+          chatChannelId: 4000,
           senderUserId: 3004,
           text: "Any questions?",
           isEdited: false,
@@ -2739,7 +2739,7 @@ const getDummyChatData = (loggedInUserId: number = 3001) => {
         },
         {
           id: 5070,
-          channelId: 4000,
+          chatChannelId: 4000,
           senderUserId: 3003,
           text: "Great work team!",
           isEdited: false,
@@ -2758,7 +2758,7 @@ const getDummyChatData = (loggedInUserId: number = 3001) => {
         },
         {
           id: 5069,
-          channelId: 4000,
+          chatChannelId: 4000,
           senderUserId: 3002,
           text: "Perfect! 4",
           isEdited: false,
@@ -2777,7 +2777,7 @@ const getDummyChatData = (loggedInUserId: number = 3001) => {
         },
         {
           id: 5068,
-          channelId: 4000,
+          chatChannelId: 4000,
           senderUserId: 3001,
           text: "I'll take a look",
           isEdited: false,
@@ -2796,7 +2796,7 @@ const getDummyChatData = (loggedInUserId: number = 3001) => {
         },
         {
           id: 5067,
-          channelId: 4000,
+          chatChannelId: 4000,
           senderUserId: 3004,
           text: "Can someone review this?",
           isEdited: false,
@@ -2828,7 +2828,7 @@ const getDummyChatData = (loggedInUserId: number = 3001) => {
         },
         {
           id: 5066,
-          channelId: 4000,
+          chatChannelId: 4000,
           senderUserId: 3003,
           text: "Thanks for the update 3",
           isEdited: false,
@@ -2847,7 +2847,7 @@ const getDummyChatData = (loggedInUserId: number = 3001) => {
         },
         {
           id: 5065,
-          channelId: 4000,
+          chatChannelId: 4000,
           senderUserId: 3002,
           text: "I'll send the details",
           isEdited: false,
@@ -2866,7 +2866,7 @@ const getDummyChatData = (loggedInUserId: number = 3001) => {
         },
         {
           id: 5064,
-          channelId: 4000,
+          chatChannelId: 4000,
           senderUserId: 3001,
           text: "Let's schedule a meeting",
           isEdited: false,
@@ -2885,7 +2885,7 @@ const getDummyChatData = (loggedInUserId: number = 3001) => {
         },
         {
           id: 5063,
-          channelId: 4000,
+          chatChannelId: 4000,
           senderUserId: 3004,
           text: "That sounds great! 2",
           isEdited: false,
@@ -2904,7 +2904,7 @@ const getDummyChatData = (loggedInUserId: number = 3001) => {
         },
         {
           id: 5062,
-          channelId: 4000,
+          chatChannelId: 4000,
           senderUserId: 3003,
           text: "Working on the project",
           isEdited: false,
@@ -2923,7 +2923,7 @@ const getDummyChatData = (loggedInUserId: number = 3001) => {
         },
         {
           id: 5061,
-          channelId: 4000,
+          chatChannelId: 4000,
           senderUserId: 3002,
           text: "How's it going?",
           isEdited: false,
@@ -2942,7 +2942,7 @@ const getDummyChatData = (loggedInUserId: number = 3001) => {
         },
         {
           id: 5060,
-          channelId: 4000,
+          chatChannelId: 4000,
           senderUserId: 3001,
           replyToMessageId: 5059,
           text: "Hey everyone! 1",
@@ -2969,7 +2969,7 @@ const getDummyChatData = (loggedInUserId: number = 3001) => {
         },
         {
           id: 5059,
-          channelId: 4000,
+          chatChannelId: 4000,
           senderUserId: 3004,
           text: "That makes sense",
           isEdited: false,
@@ -2988,7 +2988,7 @@ const getDummyChatData = (loggedInUserId: number = 3001) => {
         },
         {
           id: 5058,
-          channelId: 4000,
+          chatChannelId: 4000,
           senderUserId: 3003,
           text: "We should consider this",
           isEdited: false,
@@ -3007,7 +3007,7 @@ const getDummyChatData = (loggedInUserId: number = 3001) => {
         },
         {
           id: 5057,
-          channelId: 4000,
+          chatChannelId: 4000,
           senderUserId: 3002,
           text: "Good point! 20",
           isEdited: false,
@@ -3026,7 +3026,7 @@ const getDummyChatData = (loggedInUserId: number = 3001) => {
         },
         {
           id: 5056,
-          channelId: 4000,
+          chatChannelId: 4000,
           senderUserId: 3001,
           text: "I agree with that",
           isEdited: false,
@@ -3064,7 +3064,7 @@ const getDummyChatData = (loggedInUserId: number = 3001) => {
         },
         {
           id: 5055,
-          channelId: 4000,
+          chatChannelId: 4000,
           senderUserId: 3004,
           text: "Let's discuss this further",
           isEdited: false,
@@ -3083,7 +3083,7 @@ const getDummyChatData = (loggedInUserId: number = 3001) => {
         },
         {
           id: 5054,
-          channelId: 4000,
+          chatChannelId: 4000,
           senderUserId: 3003,
           text: "Sounds good to me 19",
           isEdited: false,
@@ -3102,7 +3102,7 @@ const getDummyChatData = (loggedInUserId: number = 3001) => {
         },
         {
           id: 5053,
-          channelId: 4000,
+          chatChannelId: 4000,
           senderUserId: 3002,
           text: "I'm available now",
           isEdited: false,
@@ -3121,7 +3121,7 @@ const getDummyChatData = (loggedInUserId: number = 3001) => {
         },
         {
           id: 5052,
-          channelId: 4000,
+          chatChannelId: 4000,
           senderUserId: 3001,
           text: "Let me know if you need help",
           isEdited: false,
@@ -3140,7 +3140,7 @@ const getDummyChatData = (loggedInUserId: number = 3001) => {
         },
         {
           id: 5051,
-          channelId: 4000,
+          chatChannelId: 4000,
           senderUserId: 3004,
           text: "Any questions? 18",
           isEdited: false,
@@ -3159,7 +3159,7 @@ const getDummyChatData = (loggedInUserId: number = 3001) => {
         },
         {
           id: 5050,
-          channelId: 4000,
+          chatChannelId: 4000,
           senderUserId: 3003,
           text: "Great work team!",
           isEdited: false,
@@ -3178,7 +3178,7 @@ const getDummyChatData = (loggedInUserId: number = 3001) => {
         },
         {
           id: 5049,
-          channelId: 4000,
+          chatChannelId: 4000,
           senderUserId: 3002,
           text: "Perfect!",
           isEdited: false,
@@ -3210,7 +3210,7 @@ const getDummyChatData = (loggedInUserId: number = 3001) => {
         },
         {
           id: 5048,
-          channelId: 4000,
+          chatChannelId: 4000,
           senderUserId: 3001,
           text: "I'll take a look 17",
           isEdited: false,
@@ -3229,7 +3229,7 @@ const getDummyChatData = (loggedInUserId: number = 3001) => {
         },
         {
           id: 5047,
-          channelId: 4000,
+          chatChannelId: 4000,
           senderUserId: 3004,
           text: "Can someone review this?",
           isEdited: false,
@@ -3248,7 +3248,7 @@ const getDummyChatData = (loggedInUserId: number = 3001) => {
         },
         {
           id: 5046,
-          channelId: 4000,
+          chatChannelId: 4000,
           senderUserId: 3003,
           text: "Thanks for the update",
           isEdited: false,
@@ -3267,7 +3267,7 @@ const getDummyChatData = (loggedInUserId: number = 3001) => {
         },
         {
           id: 5045,
-          channelId: 4000,
+          chatChannelId: 4000,
           senderUserId: 3002,
           text: "I'll send the details 16",
           isEdited: false,
@@ -3286,7 +3286,7 @@ const getDummyChatData = (loggedInUserId: number = 3001) => {
         },
         {
           id: 5044,
-          channelId: 4000,
+          chatChannelId: 4000,
           senderUserId: 3001,
           text: "Let's schedule a meeting",
           isEdited: false,
@@ -3305,7 +3305,7 @@ const getDummyChatData = (loggedInUserId: number = 3001) => {
         },
         {
           id: 5043,
-          channelId: 4000,
+          chatChannelId: 4000,
           senderUserId: 3004,
           text: "That sounds great!",
           isEdited: false,
@@ -3324,7 +3324,7 @@ const getDummyChatData = (loggedInUserId: number = 3001) => {
         },
         {
           id: 5042,
-          channelId: 4000,
+          chatChannelId: 4000,
           senderUserId: 3003,
           text: "Working on the project 15",
           isEdited: false,
@@ -3350,7 +3350,7 @@ const getDummyChatData = (loggedInUserId: number = 3001) => {
         },
         {
           id: 5041,
-          channelId: 4000,
+          chatChannelId: 4000,
           senderUserId: 3002,
           text: "How's it going?",
           isEdited: false,
@@ -3369,7 +3369,7 @@ const getDummyChatData = (loggedInUserId: number = 3001) => {
         },
         {
           id: 5040,
-          channelId: 4000,
+          chatChannelId: 4000,
           senderUserId: 3001,
           replyToMessageId: 5039,
           text: "Hey everyone!",
@@ -3389,7 +3389,7 @@ const getDummyChatData = (loggedInUserId: number = 3001) => {
         },
         {
           id: 5039,
-          channelId: 4000,
+          chatChannelId: 4000,
           senderUserId: 3004,
           text: "That makes sense 14",
           isEdited: false,
@@ -3408,7 +3408,7 @@ const getDummyChatData = (loggedInUserId: number = 3001) => {
         },
         {
           id: 5038,
-          channelId: 4000,
+          chatChannelId: 4000,
           senderUserId: 3003,
           text: "We should consider this",
           isEdited: false,
@@ -3427,7 +3427,7 @@ const getDummyChatData = (loggedInUserId: number = 3001) => {
         },
         {
           id: 5037,
-          channelId: 4000,
+          chatChannelId: 4000,
           senderUserId: 3002,
           text: "Good point!",
           isEdited: false,
@@ -3446,7 +3446,7 @@ const getDummyChatData = (loggedInUserId: number = 3001) => {
         },
         {
           id: 5036,
-          channelId: 4000,
+          chatChannelId: 4000,
           senderUserId: 3001,
           text: "I agree with that 13",
           isEdited: false,
@@ -3465,7 +3465,7 @@ const getDummyChatData = (loggedInUserId: number = 3001) => {
         },
         {
           id: 5035,
-          channelId: 4000,
+          chatChannelId: 4000,
           senderUserId: 3004,
           text: "Let's discuss this further",
           isEdited: false,
@@ -3503,7 +3503,7 @@ const getDummyChatData = (loggedInUserId: number = 3001) => {
         },
         {
           id: 5034,
-          channelId: 4000,
+          chatChannelId: 4000,
           senderUserId: 3003,
           text: "Sounds good to me",
           isEdited: false,
@@ -3522,7 +3522,7 @@ const getDummyChatData = (loggedInUserId: number = 3001) => {
         },
         {
           id: 5033,
-          channelId: 4000,
+          chatChannelId: 4000,
           senderUserId: 3002,
           text: "I'm available now 12",
           isEdited: false,
@@ -3541,7 +3541,7 @@ const getDummyChatData = (loggedInUserId: number = 3001) => {
         },
         {
           id: 5032,
-          channelId: 4000,
+          chatChannelId: 4000,
           senderUserId: 3001,
           text: "Let me know if you need help",
           isEdited: false,
@@ -3560,7 +3560,7 @@ const getDummyChatData = (loggedInUserId: number = 3001) => {
         },
         {
           id: 5031,
-          channelId: 4000,
+          chatChannelId: 4000,
           senderUserId: 3004,
           text: "Any questions?",
           isEdited: false,
@@ -3579,7 +3579,7 @@ const getDummyChatData = (loggedInUserId: number = 3001) => {
         },
         {
           id: 5030,
-          channelId: 4000,
+          chatChannelId: 4000,
           senderUserId: 3003,
           text: "Great work team! 11",
           isEdited: false,
@@ -3598,7 +3598,7 @@ const getDummyChatData = (loggedInUserId: number = 3001) => {
         },
         {
           id: 5029,
-          channelId: 4000,
+          chatChannelId: 4000,
           senderUserId: 3002,
           text: "Perfect!",
           isEdited: false,
@@ -3617,7 +3617,7 @@ const getDummyChatData = (loggedInUserId: number = 3001) => {
         },
         {
           id: 5028,
-          channelId: 4000,
+          chatChannelId: 4000,
           senderUserId: 3001,
           text: "I'll take a look",
           isEdited: false,
@@ -3649,7 +3649,7 @@ const getDummyChatData = (loggedInUserId: number = 3001) => {
         },
         {
           id: 5027,
-          channelId: 4000,
+          chatChannelId: 4000,
           senderUserId: 3004,
           text: "Can someone review this? 10",
           isEdited: false,
@@ -3668,7 +3668,7 @@ const getDummyChatData = (loggedInUserId: number = 3001) => {
         },
         {
           id: 5026,
-          channelId: 4000,
+          chatChannelId: 4000,
           senderUserId: 3003,
           text: "Thanks for the update",
           isEdited: false,
@@ -3687,7 +3687,7 @@ const getDummyChatData = (loggedInUserId: number = 3001) => {
         },
         {
           id: 5025,
-          channelId: 4000,
+          chatChannelId: 4000,
           senderUserId: 3002,
           text: "I'll send the details",
           isEdited: false,
@@ -3706,7 +3706,7 @@ const getDummyChatData = (loggedInUserId: number = 3001) => {
         },
         {
           id: 5024,
-          channelId: 4000,
+          chatChannelId: 4000,
           senderUserId: 3001,
           text: "Let's schedule a meeting 9",
           isEdited: false,
@@ -3725,7 +3725,7 @@ const getDummyChatData = (loggedInUserId: number = 3001) => {
         },
         {
           id: 5023,
-          channelId: 4000,
+          chatChannelId: 4000,
           senderUserId: 3004,
           text: "That sounds great!",
           isEdited: false,
@@ -3744,7 +3744,7 @@ const getDummyChatData = (loggedInUserId: number = 3001) => {
         },
         {
           id: 5022,
-          channelId: 4000,
+          chatChannelId: 4000,
           senderUserId: 3003,
           text: "Working on the project",
           isEdited: false,
@@ -3763,7 +3763,7 @@ const getDummyChatData = (loggedInUserId: number = 3001) => {
         },
         {
           id: 5021,
-          channelId: 4000,
+          chatChannelId: 4000,
           senderUserId: 3002,
           text: "How's it going? 8",
           isEdited: false,
@@ -3789,7 +3789,7 @@ const getDummyChatData = (loggedInUserId: number = 3001) => {
         },
         {
           id: 5020,
-          channelId: 4000,
+          chatChannelId: 4000,
           senderUserId: 3001,
           replyToMessageId: 5019,
           text: "Hey everyone!",
@@ -3809,7 +3809,7 @@ const getDummyChatData = (loggedInUserId: number = 3001) => {
         },
         {
           id: 5019,
-          channelId: 4000,
+          chatChannelId: 4000,
           senderUserId: 3004,
           text: "That makes sense",
           isEdited: false,
@@ -3828,7 +3828,7 @@ const getDummyChatData = (loggedInUserId: number = 3001) => {
         },
         {
           id: 5018,
-          channelId: 4000,
+          chatChannelId: 4000,
           senderUserId: 3003,
           text: "We should consider this 7",
           isEdited: false,
@@ -3847,7 +3847,7 @@ const getDummyChatData = (loggedInUserId: number = 3001) => {
         },
         {
           id: 5017,
-          channelId: 4000,
+          chatChannelId: 4000,
           senderUserId: 3002,
           text: "Good point!",
           isEdited: false,
@@ -3866,7 +3866,7 @@ const getDummyChatData = (loggedInUserId: number = 3001) => {
         },
         {
           id: 5016,
-          channelId: 4000,
+          chatChannelId: 4000,
           senderUserId: 3001,
           text: "I agree with that",
           isEdited: false,
@@ -3885,7 +3885,7 @@ const getDummyChatData = (loggedInUserId: number = 3001) => {
         },
         {
           id: 5015,
-          channelId: 4000,
+          chatChannelId: 4000,
           senderUserId: 3004,
           text: "Let's discuss this further 6",
           isEdited: false,
@@ -3904,7 +3904,7 @@ const getDummyChatData = (loggedInUserId: number = 3001) => {
         },
         {
           id: 5014,
-          channelId: 4000,
+          chatChannelId: 4000,
           senderUserId: 3003,
           text: "Sounds good to me",
           isEdited: false,
@@ -3942,7 +3942,7 @@ const getDummyChatData = (loggedInUserId: number = 3001) => {
         },
         {
           id: 5013,
-          channelId: 4000,
+          chatChannelId: 4000,
           senderUserId: 3002,
           text: "I'm available now",
           isEdited: false,
@@ -3961,7 +3961,7 @@ const getDummyChatData = (loggedInUserId: number = 3001) => {
         },
         {
           id: 5012,
-          channelId: 4000,
+          chatChannelId: 4000,
           senderUserId: 3001,
           text: "Let me know if you need help 5",
           isEdited: false,
@@ -3980,7 +3980,7 @@ const getDummyChatData = (loggedInUserId: number = 3001) => {
         },
         {
           id: 5011,
-          channelId: 4000,
+          chatChannelId: 4000,
           senderUserId: 3004,
           text: "Any questions?",
           isEdited: false,
@@ -3999,7 +3999,7 @@ const getDummyChatData = (loggedInUserId: number = 3001) => {
         },
         {
           id: 5010,
-          channelId: 4000,
+          chatChannelId: 4000,
           senderUserId: 3003,
           text: "Great work team!",
           isEdited: false,
@@ -4018,7 +4018,7 @@ const getDummyChatData = (loggedInUserId: number = 3001) => {
         },
         {
           id: 5009,
-          channelId: 4000,
+          chatChannelId: 4000,
           senderUserId: 3002,
           text: "Perfect! 4",
           isEdited: false,
@@ -4037,7 +4037,7 @@ const getDummyChatData = (loggedInUserId: number = 3001) => {
         },
         {
           id: 5008,
-          channelId: 4000,
+          chatChannelId: 4000,
           senderUserId: 3001,
           text: "I'll take a look",
           isEdited: false,
@@ -4056,7 +4056,7 @@ const getDummyChatData = (loggedInUserId: number = 3001) => {
         },
         {
           id: 5007,
-          channelId: 4000,
+          chatChannelId: 4000,
           senderUserId: 3004,
           text: "Can someone review this?",
           isEdited: false,
@@ -4088,7 +4088,7 @@ const getDummyChatData = (loggedInUserId: number = 3001) => {
         },
         {
           id: 5006,
-          channelId: 4000,
+          chatChannelId: 4000,
           senderUserId: 3003,
           text: "Thanks for the update 3",
           isEdited: false,
@@ -4107,7 +4107,7 @@ const getDummyChatData = (loggedInUserId: number = 3001) => {
         },
         {
           id: 5005,
-          channelId: 4000,
+          chatChannelId: 4000,
           senderUserId: 3002,
           text: "I'll send the details",
           isEdited: false,
@@ -4126,7 +4126,7 @@ const getDummyChatData = (loggedInUserId: number = 3001) => {
         },
         {
           id: 5004,
-          channelId: 4000,
+          chatChannelId: 4000,
           senderUserId: 3001,
           text: "Let's schedule a meeting",
           isEdited: false,
@@ -4145,7 +4145,7 @@ const getDummyChatData = (loggedInUserId: number = 3001) => {
         },
         {
           id: 5003,
-          channelId: 4000,
+          chatChannelId: 4000,
           senderUserId: 3004,
           text: "That sounds great! 2",
           isEdited: false,
@@ -4164,7 +4164,7 @@ const getDummyChatData = (loggedInUserId: number = 3001) => {
         },
         {
           id: 5002,
-          channelId: 4000,
+          chatChannelId: 4000,
           senderUserId: 3003,
           text: "Working on the project",
           isEdited: false,
@@ -4183,7 +4183,7 @@ const getDummyChatData = (loggedInUserId: number = 3001) => {
         },
         {
           id: 5001,
-          channelId: 4000,
+          chatChannelId: 4000,
           senderUserId: 3002,
           text: "How's it going?",
           isEdited: false,
@@ -4202,7 +4202,7 @@ const getDummyChatData = (loggedInUserId: number = 3001) => {
         },
         {
           id: 5000,
-          channelId: 4000,
+          chatChannelId: 4000,
           senderUserId: 3001,
           text: "Hey everyone! 1",
           isEdited: false,
@@ -4233,11 +4233,11 @@ const getDummyChatData = (loggedInUserId: number = 3001) => {
       updatedAt: "2025-11-16T21:00:00.000Z",
     },
     {
-      channelId: 4001,
+      chatChannelId: 4001,
       messages: [
         {
           id: 5219,
-          channelId: 4001,
+          chatChannelId: 4001,
           senderUserId: 3002,
           text: "Perfect!",
           isEdited: false,
@@ -4256,7 +4256,7 @@ const getDummyChatData = (loggedInUserId: number = 3001) => {
         },
         {
           id: 5218,
-          channelId: 4001,
+          chatChannelId: 4001,
           senderUserId: 3001,
           text: "Great, see you at 12",
           isEdited: false,
@@ -4275,7 +4275,7 @@ const getDummyChatData = (loggedInUserId: number = 3001) => {
         },
         {
           id: 5217,
-          channelId: 4001,
+          chatChannelId: 4001,
           senderUserId: 3002,
           text: "Sure, sounds good!",
           isEdited: false,
@@ -4294,7 +4294,7 @@ const getDummyChatData = (loggedInUserId: number = 3001) => {
         },
         {
           id: 5216,
-          channelId: 4001,
+          chatChannelId: 4001,
           senderUserId: 3001,
           text: "Want to grab lunch?",
           isEdited: false,
@@ -4313,7 +4313,7 @@ const getDummyChatData = (loggedInUserId: number = 3001) => {
         },
         {
           id: 5215,
-          channelId: 4001,
+          chatChannelId: 4001,
           senderUserId: 3002,
           text: "Same here",
           isEdited: false,
@@ -4332,7 +4332,7 @@ const getDummyChatData = (loggedInUserId: number = 3001) => {
         },
         {
           id: 5214,
-          channelId: 4001,
+          chatChannelId: 4001,
           senderUserId: 3001,
           text: "Not much, just working",
           isEdited: false,
@@ -4351,7 +4351,7 @@ const getDummyChatData = (loggedInUserId: number = 3001) => {
         },
         {
           id: 5213,
-          channelId: 4001,
+          chatChannelId: 4001,
           senderUserId: 3002,
           text: "What's up?",
           isEdited: false,
@@ -4370,7 +4370,7 @@ const getDummyChatData = (loggedInUserId: number = 3001) => {
         },
         {
           id: 5212,
-          channelId: 4001,
+          chatChannelId: 4001,
           senderUserId: 3001,
           text: "I'm doing well, thanks!",
           isEdited: false,
@@ -4389,7 +4389,7 @@ const getDummyChatData = (loggedInUserId: number = 3001) => {
         },
         {
           id: 5211,
-          channelId: 4001,
+          chatChannelId: 4001,
           senderUserId: 3002,
           text: "How are you?",
           isEdited: false,
@@ -4408,7 +4408,7 @@ const getDummyChatData = (loggedInUserId: number = 3001) => {
         },
         {
           id: 5210,
-          channelId: 4001,
+          chatChannelId: 4001,
           senderUserId: 3001,
           text: "Hey!",
           isEdited: false,
@@ -4427,7 +4427,7 @@ const getDummyChatData = (loggedInUserId: number = 3001) => {
         },
         {
           id: 5209,
-          channelId: 4001,
+          chatChannelId: 4001,
           senderUserId: 3002,
           text: "Perfect!",
           isEdited: false,
@@ -4446,7 +4446,7 @@ const getDummyChatData = (loggedInUserId: number = 3001) => {
         },
         {
           id: 5208,
-          channelId: 4001,
+          chatChannelId: 4001,
           senderUserId: 3001,
           text: "Great, see you at 12",
           isEdited: false,
@@ -4465,7 +4465,7 @@ const getDummyChatData = (loggedInUserId: number = 3001) => {
         },
         {
           id: 5207,
-          channelId: 4001,
+          chatChannelId: 4001,
           senderUserId: 3002,
           text: "Sure, sounds good!",
           isEdited: false,
@@ -4484,7 +4484,7 @@ const getDummyChatData = (loggedInUserId: number = 3001) => {
         },
         {
           id: 5206,
-          channelId: 4001,
+          chatChannelId: 4001,
           senderUserId: 3001,
           text: "Want to grab lunch?",
           isEdited: false,
@@ -4503,7 +4503,7 @@ const getDummyChatData = (loggedInUserId: number = 3001) => {
         },
         {
           id: 5205,
-          channelId: 4001,
+          chatChannelId: 4001,
           senderUserId: 3002,
           text: "Same here",
           isEdited: false,
@@ -4522,7 +4522,7 @@ const getDummyChatData = (loggedInUserId: number = 3001) => {
         },
         {
           id: 5204,
-          channelId: 4001,
+          chatChannelId: 4001,
           senderUserId: 3001,
           text: "Not much, just working",
           isEdited: false,
@@ -4541,7 +4541,7 @@ const getDummyChatData = (loggedInUserId: number = 3001) => {
         },
         {
           id: 5203,
-          channelId: 4001,
+          chatChannelId: 4001,
           senderUserId: 3002,
           text: "What's up?",
           isEdited: false,
@@ -4560,7 +4560,7 @@ const getDummyChatData = (loggedInUserId: number = 3001) => {
         },
         {
           id: 5202,
-          channelId: 4001,
+          chatChannelId: 4001,
           senderUserId: 3001,
           text: "I'm doing well, thanks!",
           isEdited: false,
@@ -4579,7 +4579,7 @@ const getDummyChatData = (loggedInUserId: number = 3001) => {
         },
         {
           id: 5201,
-          channelId: 4001,
+          chatChannelId: 4001,
           senderUserId: 3002,
           text: "How are you?",
           isEdited: false,
@@ -4598,7 +4598,7 @@ const getDummyChatData = (loggedInUserId: number = 3001) => {
         },
         {
           id: 5200,
-          channelId: 4001,
+          chatChannelId: 4001,
           senderUserId: 3001,
           text: "Hey!",
           isEdited: false,
@@ -4643,10 +4643,10 @@ export const setDummyChatData = ({
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   dummyChatList.forEach((channelData: any) => {
-    const channelId = channelData.channelId;
+    const chatChannelId = channelData.chatChannelId;
 
-    channelStateMap.set(channelId, {
-      channelId,
+    channelStateMap.set(chatChannelId, {
+      chatChannelId,
       messages: channelData.messages ?? [],
       loading: false,
       error: null,

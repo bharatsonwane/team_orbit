@@ -45,7 +45,7 @@ export function MessageBubble({
     if (editText.trim() && editText !== message.text) {
       handleEditMessage({
         messageId: message.id,
-        channelId: message.channelId,
+        chatChannelId: message.chatChannelId,
         text: editText.trim(),
       });
     }
@@ -53,7 +53,7 @@ export function MessageBubble({
   };
 
   const handleDelete = () => {
-    handleDeleteMessage(message.id, message.channelId);
+    handleDeleteMessage(message.id, message.chatChannelId);
   };
 
   const handleReaction = (reaction: string) => {
@@ -62,11 +62,11 @@ export function MessageBubble({
     );
 
     if (existingReaction) {
-      handleRemoveReaction(message.id, message.channelId);
+      handleRemoveReaction(message.id, message.chatChannelId);
     } else {
       handleAddReaction({
         messageId: message.id,
-        channelId: message.channelId,
+        chatChannelId: message.chatChannelId,
         reaction,
       });
     }

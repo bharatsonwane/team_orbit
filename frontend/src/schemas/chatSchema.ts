@@ -58,7 +58,7 @@ export type MessageReceipt = z.infer<typeof messageReceiptSchema>;
 // Chat Message schema (without replyToMessage to avoid circular reference)
 const chatMessageSchemaBase = z.object({
   id: z.number(),
-  channelId: z.number(),
+  chatChannelId: z.number(),
   senderUserId: z.number(),
   replyToMessageId: z.number().optional().nullable(),
   text: z.string().optional().nullable(),
@@ -84,21 +84,21 @@ export const chatMessageSchema = chatMessageSchemaBase.extend({
 
 // API payload types
 export type SendChannelMessagePayload = {
-  channelId: number;
+  chatChannelId: number;
   text?: string;
   mediaUrl?: string;
   replyToMessageId?: number;
 };
 
 export type FetchChannelMessagesParam = {
-  channelId: number;
+  chatChannelId: number;
   before?: string;
   limit?: number;
 };
 
 // Per-channel UI state
 export type ChannelState = {
-  channelId: number;
+  chatChannelId: number;
   messages: ChatMessage[];
   loading: boolean;
   error: string | null;
@@ -120,7 +120,7 @@ export type ChannelStateMap = Map<number, ChannelState>;
 // Conversation schema (for direct chats)
 export const conversationSchema = z.object({
   id: z.string(), // composite key: "dm_${userId1}_${userId2}"
-  channelId: z.number(),
+  chatChannelId: z.number(),
   participant: chatUserSchema,
   lastMessage: chatMessageSchema.optional(),
   unreadCount: z.number().default(0),
@@ -166,7 +166,7 @@ export type ChatChannelListResponse = z.infer<
 
 // Send Message schema
 export const sendMessageSchema = z.object({
-  channelId: z.number(),
+  chatChannelId: z.number(),
   text: z.string().optional(),
   mediaUrl: z.string().optional(),
   replyToMessageId: z.number().optional(),
@@ -177,7 +177,7 @@ export type SendMessageData = z.infer<typeof sendMessageSchema>;
 // Edit Message schema
 export const editMessageSchema = z.object({
   messageId: z.number(),
-  channelId: z.number(),
+  chatChannelId: z.number(),
   text: z.string().min(1, "Message cannot be empty"),
 });
 
@@ -186,7 +186,7 @@ export type EditMessageData = z.infer<typeof editMessageSchema>;
 // Add Reaction schema
 export const addReactionSchema = z.object({
   messageId: z.number(),
-  channelId: z.number(),
+  chatChannelId: z.number(),
   reaction: z.string().min(1, "Reaction is required"),
 });
 

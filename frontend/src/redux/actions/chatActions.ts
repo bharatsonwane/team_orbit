@@ -43,13 +43,13 @@ export const fetchChannelMessagesAction = createAsyncThunk<
   { rejectValue: string }
 >("chat/fetchChannelMessagesAction", async (payload, { rejectWithValue }) => {
   try {
-    const { channelId, before, limit } = payload;
+    const { chatChannelId, before, limit } = payload;
     const params: Record<string, string | number> = {};
     if (before) params.before = before;
     if (limit) params.limit = limit;
 
     const response = await getAxios().get(
-      `api/chat/channel/${channelId}/messages`,
+      `api/chat/channel/${chatChannelId}/messages`,
       { params }
     );
 
@@ -65,9 +65,9 @@ export const sendChannelMessageAction = createAsyncThunk<
   { rejectValue: string }
 >("chat/sendChannelMessageAction", async (payload, { rejectWithValue }) => {
   try {
-    const { channelId, ...body } = payload;
+    const { chatChannelId, ...body } = payload;
     const response = await getAxios().post(
-      `api/chat/channel/${channelId}/message`,
+      `api/chat/channel/${chatChannelId}/message`,
       body
     );
     return response.data;

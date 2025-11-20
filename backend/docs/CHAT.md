@@ -298,7 +298,7 @@ const messages = await db.query(`
         AND "isDeleted" = false
     ORDER BY id DESC 
     LIMIT 50
-`, [channelId, lastMessageId]);
+`, [chatChannelId, lastMessageId]);
 
 // ❌ Bad - Offset-based pagination
 const messages = await db.query(`
@@ -306,7 +306,7 @@ const messages = await db.query(`
     WHERE "chatChannelId" = $1 
     ORDER BY "createdAt" DESC 
     LIMIT 50 OFFSET $2
-`, [channelId, offset]);
+`, [chatChannelId, offset]);
 ```
 
 ### 2. **Use Fast Unread Count (with lastReadMessageId)**
@@ -324,7 +324,7 @@ const unreadCount = await db.query(`
             FROM chat_channel_user_mapping 
             WHERE "chatChannelId" = $1 AND "userId" = $2
         )
-`, [channelId, userId]);
+`, [chatChannelId, userId]);
 
 // ❌ Bad - Manual count with NOT EXISTS
 const unreadCount = await db.query(`
@@ -336,7 +336,7 @@ const unreadCount = await db.query(`
                 AND cmr."userId" = $2
                 AND cmr."readAt" IS NOT NULL
         )
-`, [channelId, userId]);
+`, [chatChannelId, userId]);
 ```
 
 ### 3. **Batch Read Receipts**
@@ -352,14 +352,14 @@ await db.query(`
         AND "isDeleted" = false
     ON CONFLICT ("messageId", "messageCreatedAt", "userId") 
     DO UPDATE SET "readAt" = NOW();
-`, [userId, channelId, lastMessageId]);
+`, [userId, chatChannelId, lastMessageId]);
 
 // Update lastReadMessageId
 await db.query(`
     UPDATE chat_channel_user_mapping
     SET "lastReadMessageId" = $3
     WHERE "chatChannelId" = $2 AND "userId" = $1
-`, [userId, channelId, lastMessageId]);
+`, [userId, chatChannelId, lastMessageId]);
 
 // ❌ Bad - Individual read receipts
 for (const messageId of messageIds) {
@@ -382,7 +382,7 @@ const messages = await db.query(`
         AND "isDeleted" = false
     ORDER BY "createdAt" DESC 
     LIMIT 50
-`, [channelId, recentCutoff]);
+`, [chatChannelId, recentCutoff]);
 
 // ❌ Bad - Query all messages
 const messages = await db.query(`
@@ -390,7 +390,7 @@ const messages = await db.query(`
     WHERE "chatChannelId" = $1 
     ORDER BY "createdAt" DESC 
     LIMIT 50
-`, [channelId]);
+`, [chatChannelId]);
 ```
 
 ### 5. **Use Partial Indexes for Filtered Queries**
@@ -403,7 +403,7 @@ const messages = await db.query(`
         AND "isDeleted" = false
     ORDER BY "createdAt" DESC 
     LIMIT 50
-`, [channelId]);
+`, [chatChannelId]);
 
 // ❌ Bad - Doesn't use partial index
 const messages = await db.query(`
@@ -411,7 +411,7 @@ const messages = await db.query(`
     WHERE "chatChannelId" = $1 
     ORDER BY "createdAt" DESC 
     LIMIT 50
-`, [channelId]);
+`, [chatChannelId]);
 ```
 
 ### 6. **Handle Partitioned Table Foreign Keys**

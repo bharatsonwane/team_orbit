@@ -74,28 +74,28 @@ import { socketManager } from "@src/socket/managers/SocketManager";
 const chatManager = socketManager.getChat();
 
 // Join channel
-chatManager.joinChannel(socket, channelId);
+chatManager.joinChannel(socket, chatChannelId);
 
 // Leave channel
-chatManager.leaveChannel(socket, channelId);
+chatManager.leaveChannel(socket, chatChannelId);
 
 // Emit new message
-chatManager.emitNewMessage(channelId, {
+chatManager.emitNewMessage(chatChannelId, {
   messageId: 123,
   messageCreatedAt: "2024-01-01T00:00:00Z",
-  channelId: 456,
+  chatChannelId: 456,
   senderUserId: 789,
   message: "Hello!",
 });
 
 // Emit typing indicator
-chatManager.emitTyping(channelId, userId, true);
+chatManager.emitTyping(chatChannelId, userId, true);
 
 // Get users in channel
-const users = chatManager.getUsersInChannel(channelId);
+const users = chatManager.getUsersInChannel(chatChannelId);
 
 // Check if user is in channel
-const isInChannel = chatManager.isUserInChannel(userId, channelId);
+const isInChannel = chatManager.isUserInChannel(userId, chatChannelId);
 ```
 
 ### Notification Operations
@@ -154,7 +154,7 @@ dataRefreshManager.emitToEntityType("project", "create", projectData);
 dataRefreshManager.emitToUser(userId, "task", "update", taskData);
 
 // Emit refresh to channel
-dataRefreshManager.emitToChannel(channelId, "message", "create", messageData);
+dataRefreshManager.emitToChannel(chatChannelId, "message", "create", messageData);
 ```
 
 ### Common Operations (Base Manager)
@@ -194,7 +194,7 @@ const io = socketManager.getIO();
 - ✅ Ping/pong health checks
 
 ### ChatSocketManager
-- ✅ Channel room management (`channel_{channelId}`)
+- ✅ Channel room management (`channel_{chatChannelId}`)
 - ✅ Join/leave channels
 - ✅ Emit new messages
 - ✅ Emit message edits
@@ -226,8 +226,8 @@ const io = socketManager.getIO();
 ```typescript
 import socketService from "@src/socket/socketService";
 
-socketService.joinChannel(socket, channelId);
-socketService.emitToChannel(channelId, "new_message", data);
+socketService.joinChannel(socket, chatChannelId);
+socketService.emitToChannel(chatChannelId, "new_message", data);
 ```
 
 ### After
@@ -235,8 +235,8 @@ socketService.emitToChannel(channelId, "new_message", data);
 import { socketManager } from "@src/socket/managers/SocketManager";
 
 // Chat operations
-socketManager.getChat().joinChannel(socket, channelId);
-socketManager.getChat().emitNewMessage(channelId, data);
+socketManager.getChat().joinChannel(socket, chatChannelId);
+socketManager.getChat().emitNewMessage(chatChannelId, data);
 
 // Notification operations
 socketManager.getNotification().sendNotification(userId, notification);

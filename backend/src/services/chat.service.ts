@@ -14,14 +14,14 @@ interface CreateChannelParams extends CreateChatChannelSchema {
 }
 
 interface SendChatMessageParams extends SendChatMessageSchema {
-  channelId: number;
+  chatChannelId: number;
   senderUserId: number;
 }
 
 export default class Chat {
   static async isUserChannelMember(
     dbClient: dbClientPool,
-    channelId: number,
+    chatChannelId: number,
     userId: number
   ): Promise<boolean> {
     const membership = await dbClient.tenantPool!.query(
@@ -32,7 +32,7 @@ export default class Chat {
           AND "userId" = $2
           AND "isActive" = TRUE;
       `,
-      [channelId, userId]
+      [chatChannelId, userId]
     );
 
     return (membership?.rowCount ?? 0) > 0;
@@ -71,7 +71,7 @@ export default class Chat {
 
       const channel = channelResult?.rows[0] as ChatChannelSchema;
 
-      /** channelId, userId, isAdmin */
+      /** chatChannelId, userId, isAdmin */
       let userMappingRows = `(${channel.id!}, ${createdBy}, TRUE)`; // createdBy is admin
 
       uniqueMemberIds.forEach(userId => {
@@ -205,7 +205,7 @@ export default class Chat {
   static async saveChannelMessage(
     dbClient: dbClientPool,
     {
-      channelId,
+      chatChannelId,
       senderUserId,
       text,
       mediaUrl,
@@ -225,7 +225,7 @@ export default class Chat {
         "updatedAt"
       )
       VALUES (
-        ${channelId},
+        ${chatChannelId},
         ${senderUserId},
         ${replyToMessageId ?? null},
         '${text ?? ""}',
@@ -243,12 +243,12 @@ export default class Chat {
   static async getChannelMessages(
     dbClient: dbClientPool,
     {
-      channelId,
+      chatChannelId,
       userId,
       before,
       limit = 50,
     }: {
-      channelId: number;
+      chatChannelId: number;
       userId: number;
       before?: string;
       limit?: number;
@@ -256,7 +256,7 @@ export default class Chat {
   ): Promise<ChatMessageSchema[]> {
     const tenantPool = dbClient.tenantPool!;
 
-    let where = `WHERE m."chatChannelId" = ${channelId}`;
+    let where = `WHERE m."chatChannelId" = ${chatChannelId}`;
     if (before) {
       where += ` AND m."createdAt" < '${before}'`;
     }
@@ -279,7 +279,7 @@ export default class Chat {
         m."senderUserId",
         m."createdAt",
         m."updatedAt",
-        m."chatChannelId" AS "channelId",
+        m."chatChannelId" AS "chatChannelId",
         COALESCE(
           JSON_AGG(
             JSONB_BUILD_OBJECT(

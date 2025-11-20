@@ -6,18 +6,18 @@ import { Separator } from "@/components/ui/separator";
 import { groupMessagesByDate } from "@/utils/chatUtils";
 
 interface ChatMessageListProps {
-  channelId: number;
+  chatChannelId: number;
 }
 
-export function ChatMessageList({ channelId }: ChatMessageListProps) {
+export function ChatMessageList({ chatChannelId }: ChatMessageListProps) {
   const { channelStateMap } = useChat();
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   // Use useMemo to ensure we get the latest state and React detects changes
   const channelState = useMemo(() => {
-    return channelStateMap.get(channelId);
-  }, [channelStateMap, channelId]);
+    return channelStateMap.get(chatChannelId);
+  }, [channelStateMap, chatChannelId]);
 
   const conversationMessages = useMemo(() => {
     return channelState?.messages || [];
@@ -31,7 +31,7 @@ export function ChatMessageList({ channelId }: ChatMessageListProps) {
 
   // Debug logging
   useEffect(() => {
-    console.log("ChatMessageList - channelId:", channelId);
+    console.log("ChatMessageList - chatChannelId:", chatChannelId);
     console.log("ChatMessageList - channelState:", channelState);
     console.log(
       "ChatMessageList - conversationMessages:",
@@ -45,7 +45,7 @@ export function ChatMessageList({ channelId }: ChatMessageListProps) {
       "ChatMessageList - channelStateMap keys:",
       Array.from(channelStateMap.keys())
     );
-  }, [channelId, channelState, conversationMessages, channelStateMap]);
+  }, [chatChannelId, channelState, conversationMessages, channelStateMap]);
 
   // Auto-scroll to bottom when new messages arrive
   useEffect(() => {

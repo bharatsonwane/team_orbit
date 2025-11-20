@@ -1,6 +1,6 @@
 import { NextFunction, Request, Response } from "express";
 import Chat from "@src/services/chat.service";
-import { chatSocket } from "@src/socket/chat.socket";
+import ChatSocket from "@src/socket/chat.socket";
 import {
   ChatChannelListQuerySchema,
   chatChannelListQuerySchema,
@@ -59,11 +59,16 @@ export const saveChannelMessage = async (
   next: NextFunction
 ): Promise<void> => {
   try {
+    const tenantId = req.user.tenantId;
     const userId = req.user.userId;
-    const channelId = Number(req.params.channelId);
+    const chatChannelId = Number(req.params.chatChannelId);
     const payload = req.body as SendChatMessageSchema;
 
-    const isMember = await Chat.isUserChannelMember(req.db, channelId, userId);
+    const isMember = await Chat.isUserChannelMember(
+      req.db,
+      chatChannelId,
+      userId
+    );
     if (!isMember) {
       throw {
         statusCode: 403,
@@ -72,13 +77,13 @@ export const saveChannelMessage = async (
     }
 
     const message = await Chat.saveChannelMessage(req.db, {
-      channelId,
+      chatChannelId,
       senderUserId: userId,
       ...payload,
     });
 
     res.status(201).json(message);
-    chatSocket.emitNewMessage(channelId, message);
+    ChatSocket.notifyChatMessage(tenantId, chatChannelId, message);
   } catch (error) {
     next(error);
   }
@@ -93,9 +98,13 @@ export const getChannelMessages = async (
     const query = req.query as unknown as ChatMessageListQuerySchema;
     const { before, limit } = query;
     const userId = req.user?.userId!;
-    const channelId = Number(req.params.channelId);
+    const chatChannelId = Number(req.params.chatChannelId);
 
-    const isMember = await Chat.isUserChannelMember(req.db, channelId, userId);
+    const isMember = await Chat.isUserChannelMember(
+      req.db,
+      chatChannelId,
+      userId
+    );
     if (!isMember) {
       throw {
         statusCode: 403,
@@ -104,7 +113,7 @@ export const getChannelMessages = async (
     }
 
     const messages = await Chat.getChannelMessages(req.db, {
-      channelId,
+      chatChannelId,
       userId,
       before,
       limit,

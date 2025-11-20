@@ -39,17 +39,17 @@ All events follow the format: `category:eventName`
 ```typescript
 // Join a channel
 socket.emit("chat:join_channel", {
-  channelId: 123
+  chatChannelId: 123
 });
 
 // Leave a channel
 socket.emit("chat:leave_channel", {
-  channelId: 123
+  chatChannelId: 123
 });
 
 // Send a message
 socket.emit("chat:send_message", {
-  channelId: 123,
+  chatChannelId: 123,
   message: "Hello!",
   mediaUrl: "https://example.com/image.jpg" // optional
 });
@@ -61,7 +61,7 @@ socket.emit("chat:send_message", {
 // New message received
 socket.on("chat:new_message", (data) => {
   console.log("New message:", data);
-  // data: { messageId, messageCreatedAt, channelId, senderUserId, message, mediaUrl, createdAt }
+  // data: { messageId, messageCreatedAt, chatChannelId, senderUserId, message, mediaUrl, createdAt }
 });
 
 // User joined channel
@@ -87,11 +87,11 @@ eventHandler.emitToCategory(
   {
     messageId: 123,
     messageCreatedAt: "2024-01-01T00:00:00Z",
-    channelId: 456,
+    chatChannelId: 456,
     senderUserId: 789,
     message: "Hello!",
   },
-  { channelId: 456 }
+  { chatChannelId: 456 }
 );
 ```
 
@@ -216,8 +216,8 @@ eventHandler.emitDataRefresh(
 eventHandler.emitDataRefresh(
   "channel",
   "update",
-  { channelId: 123, name: "Updated Channel Name" },
-  { channelId: 123 }
+  { chatChannelId: 123, name: "Updated Channel Name" },
+  { chatChannelId: 123 }
 );
 ```
 
@@ -277,7 +277,7 @@ eventHandler.registerHandlers([
 - **Auto-joined**: Yes, on connection
 
 ### Channel Rooms
-- **Format**: `channel_{channelId}`
+- **Format**: `channel_{chatChannelId}`
 - **Purpose**: Chat messages for specific channels
 - **Join**: Use `chat:join_channel` event
 
@@ -378,7 +378,7 @@ const connections = connectionManager.getAllConnections();
 ```typescript
 import { connectionManager } from "@src/socket";
 
-const userIds = connectionManager.getUsersInChannel(channelId);
+const userIds = connectionManager.getUsersInChannel(chatChannelId);
 console.log("Users in channel:", userIds);
 ```
 
@@ -427,7 +427,7 @@ socket.on("connected", (data) => {
 });
 
 // Chat
-socket.emit("chat:join_channel", { channelId: 123 });
+socket.emit("chat:join_channel", { chatChannelId: 123 });
 socket.on("chat:new_message", (data) => {
   console.log("New message:", data);
 });

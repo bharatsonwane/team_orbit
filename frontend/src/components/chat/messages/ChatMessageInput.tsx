@@ -12,37 +12,10 @@ interface ChatMessageInputProps {
 export function ChatMessageInput({ channel }: ChatMessageInputProps) {
   const { handleSendMessage, handleSetTyping } = useChat();
   const [message, setMessage] = useState("");
-  const [isTyping, setIsTyping] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-  const channelId = channel?.id;
-  if (!channelId) return null;
-
-  // Handle typing indicator
-  useEffect(() => {
-    if (message.trim() && !isTyping) {
-      setIsTyping(true);
-      handleSetTyping(channelId, true);
-    }
-
-    // Clear existing timeout
-    if (typingTimeoutRef.current) {
-      clearTimeout(typingTimeoutRef.current);
-    }
-
-    // Set timeout to stop typing indicator
-    typingTimeoutRef.current = setTimeout(() => {
-      setIsTyping(false);
-      handleSetTyping(channelId, false);
-    }, 1000);
-
-    return () => {
-      if (typingTimeoutRef.current) {
-        clearTimeout(typingTimeoutRef.current);
-      }
-    };
-  }, [message, channelId, handleSetTyping]);
+  const chatChannelId = channel?.id;
 
   // Auto-resize textarea
   useEffect(() => {
@@ -56,18 +29,29 @@ export function ChatMessageInput({ channel }: ChatMessageInputProps) {
     if (!message.trim()) return;
 
     handleSendMessage({
-      channelId: channelId,
+      chatChannelId: chatChannelId,
       text: message.trim(),
     });
 
     setMessage("");
-    setIsTyping(false);
-    handleSetTyping(channelId, false);
+    handleSetTyping(chatChannelId, false);
 
     // Reset textarea height
     if (textareaRef.current) {
       textareaRef.current.style.height = "auto";
     }
+  };
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    // Clear existing timeout
+    if (typingTimeoutRef.current) {
+      clearTimeout(typingTimeoutRef.current);
+    }
+    // Set timeout to stop typing indicator
+    typingTimeoutRef.current = setTimeout(() => {
+      handleSetTyping(chatChannelId, false);
+    }, 1000);
+    setMessage(e.target.value);
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
@@ -77,6 +61,7 @@ export function ChatMessageInput({ channel }: ChatMessageInputProps) {
     }
   };
 
+  if (!chatChannelId) return null;
   return (
     <div className="p-4 border-t border-border bg-card">
       <div className="flex items-end gap-2">
@@ -90,7 +75,7 @@ export function ChatMessageInput({ channel }: ChatMessageInputProps) {
           <Textarea
             ref={textareaRef}
             value={message}
-            onChange={e => setMessage(e.target.value)}
+            onChange={handleInputChange}
             onKeyDown={handleKeyDown}
             placeholder="Type a message..."
             className="min-h-[44px] max-h-32 resize-none pr-10"

@@ -27,6 +27,7 @@ import { getLookupListAction } from "@/redux/actions/lookupAction";
 import { useDispatch } from "react-redux";
 import { getTenantLookupListAction } from "@/redux/actions/tenantLookupActions";
 import { getTenantAction } from "@/redux/actions/tenantActions";
+import { SocketManager } from "@/lib/socketManager";
 
 // Auth context type
 export interface AuthContextType {
@@ -120,11 +121,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   }, [dispatch]);
 
   useEffect(() => {
-    if (tenantIdFromUrl) {
+    if (tenantIdFromUrl && loggedInUser?.id) {
+      void SocketManager.connect({ tenantId: tenantIdFromUrl });
       dispatch(getTenantLookupListAction());
       dispatch(getTenantAction(tenantIdFromUrl));
     }
-  }, [dispatch, tenantIdFromUrl]);
+  }, [dispatch, tenantIdFromUrl, loggedInUser?.id]);
 
   const manageUserSessionAndAuthNavigation = async () => {
     const publicRoutes = publicRouteList.map(route => route.path);

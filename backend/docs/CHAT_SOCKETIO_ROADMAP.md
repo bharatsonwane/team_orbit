@@ -513,7 +513,7 @@ This roadmap outlines the step-by-step implementation plan for integrating Socke
 - Use `mark_messages_read_until` for better performance
 
 ### 3. Room Management
-- Use `chatChannelId` as room name: `socket.join(channelId)`
+- Use `chatChannelId` as room name: `socket.join(chatChannelId)`
 - Automatically join users to their channel rooms on connection
 
 ### 4. Connection Management

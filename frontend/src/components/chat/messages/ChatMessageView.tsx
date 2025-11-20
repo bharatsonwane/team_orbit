@@ -12,8 +12,8 @@ export function ChatMessageView({
   channel,
   channelType,
 }: ChatMessageViewProps) {
-  const channelId = channel?.id;
-  if (!channelId) return null;
+  const chatChannelId = channel?.id;
+  if (!chatChannelId) return null;
 
   return (
     <div className="flex flex-col h-full overflow-hidden">
@@ -22,7 +22,7 @@ export function ChatMessageView({
 
       {/* Messages */}
       <div className="flex-1 min-h-0 overflow-hidden">
-        <ChatMessageList channelId={channelId} />
+        <ChatMessageList chatChannelId={chatChannelId} />
       </div>
 
       {/* Input */}
