@@ -180,14 +180,6 @@ export class SocketManager {
       socket.user.userId
     )!.size;
 
-    logger.info("Socket connection added to user", {
-      socketId: socket.id,
-      userId: socket.user.userId,
-      tenantId: socket.tenantId,
-      userConnectionCount: connectionCount,
-      timestamp: new Date().toISOString(),
-    });
-
     const totalConnections = SocketManager.getActiveConnectionsCount();
 
     logger.info("Socket connection added to user", {
