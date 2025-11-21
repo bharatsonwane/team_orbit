@@ -30,11 +30,6 @@ export const initializeSocket = (server: HttpServer): void => {
     /**@description Handle disconnection*/
     socket.on("disconnect", reason => {
       SocketManager.removeConnection(socket);
-      console.log("Socket disconnected:", {
-        socketId: socket.id,
-        userId,
-        reason,
-      });
     });
   });
 };
