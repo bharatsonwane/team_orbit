@@ -126,7 +126,7 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
   }, [loggedInUser?.id, tenantId]);
 
   useEffect(() => {
-    const socket = SocketManager.socketInstance;
+    const socket = SocketManager.socketIo;
     socket.on("chat:new_message", handleNotifyChatMessage);
     socket.on("chat:channel_updated", handleChannelUpdated);
 
@@ -321,10 +321,10 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
     setChannelStateMap(tempChannelStateMap);
 
     /**@description Join socket rooms for all loaded channels */
-    if (SocketManager.socketInstance && tenantId) {
+    if (SocketManager.socketIo && tenantId) {
       const channelIds = Array.from(tempChannelStateMap.keys());
       channelIds.forEach(chatChannelId => {
-        SocketManager.socketInstance.emit("chat:joinChannel", {
+        SocketManager.socketIo.emit("chat:joinChannel", {
           tenantId,
           chatChannelId,
         });
@@ -644,8 +644,8 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
     setSelectedChannelId(channel.id);
 
     // Join channel via socket
-    if (SocketManager.socketInstance && tenantId) {
-      SocketManager.socketInstance.emit("chat:joinChannel", {
+    if (SocketManager.socketIo && tenantId) {
+      SocketManager.socketIo.emit("chat:joinChannel", {
         tenantId,
         chatChannelId: channel.id,
       });
@@ -749,8 +749,6 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
 
     return newChannel;
   };
-
-  console.log("bharat123");
 
   const value = useMemo<ChatContextType>(
     () => ({

@@ -8,7 +8,7 @@ interface AuthPayload {
 
 export class SocketManager {
   private static isConnecting = false;
-  static socketInstance: Socket = io(envVariable.API_BASE_URL, {
+  static socketIo: Socket = io(envVariable.API_BASE_URL, {
     autoConnect: false,
     transports: ["websocket"],
     withCredentials: true,
@@ -20,12 +20,12 @@ export class SocketManager {
     tenantId: string | number;
   }): Promise<Socket> => {
     try {
-      if (SocketManager.socketInstance.connected) {
-        return SocketManager.socketInstance;
+      if (SocketManager.socketIo.connected) {
+        return SocketManager.socketIo;
       }
       // Prevent parallel .connect() calls
       if (SocketManager.isConnecting) {
-        return SocketManager.socketInstance;
+        return SocketManager.socketIo;
       }
       SocketManager.isConnecting = true;
 
@@ -37,9 +37,9 @@ export class SocketManager {
 
       const auth: AuthPayload = { token: jwtToken, tenantId };
 
-      SocketManager.socketInstance.auth = auth;
+      SocketManager.socketIo.auth = auth;
 
-      SocketManager.socketInstance.connect();
+      SocketManager.socketIo.connect();
       await new Promise(resolve => {
         const successEvents = ["connect", "reconnect"] as const;
         const failureEvents = [
@@ -50,19 +50,19 @@ export class SocketManager {
         ] as const;
 
         const cleanup = () => {
-          successEvents.forEach(e => SocketManager.socketInstance.off(e));
-          failureEvents.forEach(e => SocketManager.socketInstance.off(e));
+          successEvents.forEach(e => SocketManager.socketIo.off(e));
+          failureEvents.forEach(e => SocketManager.socketIo.off(e));
         };
 
         successEvents.forEach(event => {
-          SocketManager.socketInstance.on(event, () => {
-            resolve(SocketManager.socketInstance);
+          SocketManager.socketIo.on(event, () => {
+            resolve(SocketManager.socketIo);
             cleanup();
           });
         });
 
         failureEvents.forEach(event => {
-          SocketManager.socketInstance.on(event, () => {
+          SocketManager.socketIo.on(event, () => {
             resolve(undefined);
             cleanup();
           });
@@ -70,16 +70,16 @@ export class SocketManager {
       });
 
       SocketManager.isConnecting = false;
-      return SocketManager.socketInstance;
+      return SocketManager.socketIo;
     } catch (error) {
       SocketManager.isConnecting = false;
-      return SocketManager.socketInstance;
+      return SocketManager.socketIo;
     }
   };
 
   static async disconnect(): Promise<void> {
-    if (SocketManager.socketInstance) {
-      SocketManager.socketInstance.disconnect();
+    if (SocketManager.socketIo) {
+      SocketManager.socketIo.disconnect();
     }
   }
 }

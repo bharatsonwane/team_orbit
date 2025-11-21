@@ -4,16 +4,20 @@ import {
   ChatMessageSchema,
   SendChatMessageSchema,
 } from "@src/schemas/chat.schema";
+import Chat from "@src/services/chat.service";
 
 export default class ChatSocket {
   constructor(
-    private io: Server,
+    private socketIo: Server,
     private socket: AuthenticatedSocket
   ) {
     this.registerEvents();
   }
 
   private registerEvents() {
+    this.socket.on("chat:joinUserChannels", data => {
+      this.handleJoinUserChannels(data);
+    });
     this.socket.on("chat:joinChannel", data => {
       this.handleJoinChannel(data);
     });
@@ -31,7 +35,24 @@ export default class ChatSocket {
     });
   }
 
+  private handleJoinUserChannels(data: {
+    tenantId: number;
+    chatChannelIds: number[];
+  }) {
+    const user = this.socket.user;
+    const tenantId = user?.tenantId;
+    const db = this.socket.db;
+    if (!data.tenantId || !data.chatChannelIds) {
+      this.socket.emit("error", {
+        message: "tenantId and chatChannelIds are required",
+        category: "chat",
+      });
+      return;
+    }
+  }
+
   private handleJoinChannel(data: { tenantId: number; chatChannelId: number }) {
+    const db = this.socket.db;
     if (!data.tenantId || !data.chatChannelId) {
       this.socket.emit("error", {
         message: "tenantId and chatChannelId are required",
@@ -78,7 +99,7 @@ export default class ChatSocket {
     const roomName = `chatChannel?tenantId=${payload.tenantId}&chatChannelId=${payload.chatChannelId}`;
 
     // Emit typing indicator to channel room
-    this.io.to(roomName).emit("chat:typing:update", {
+    this.socketIo.to(roomName).emit("chat:typing:update", {
       ...payload,
       timestamp: new Date().toISOString(),
     });
@@ -94,7 +115,7 @@ export default class ChatSocket {
     chatChannelId: number,
     message: SendChatMessageSchema
   ) {
-    const io = SocketManager.getIO();
+    const io = SocketManager.getSocketIo();
     const roomName = `chatChannel?tenantId=${tenantId}&chatChannelId=${chatChannelId}`;
     io.to(roomName).emit("chat:new_message", {
       ...message,
@@ -110,7 +131,7 @@ export default class ChatSocket {
     chatChannelId: number,
     channelData: any
   ) {
-    const io = SocketManager.getIO();
+    const io = SocketManager.getSocketIo();
     const roomName = `chatChannel?tenantId=${tenantId}&chatChannelId=${chatChannelId}`;
     io.to(roomName).emit("chat:channel_updated", {
       ...channelData,

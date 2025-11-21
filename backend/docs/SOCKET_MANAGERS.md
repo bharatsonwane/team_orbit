@@ -178,7 +178,7 @@ socketManager.emitToUser(userId, "user:update", userData);
 socketManager.broadcast("system:announcement", announcementData);
 
 // Get IO instance
-const io = socketManager.getIO();
+const io = socketManager.getSocketIo();
 ```
 
 ## 📊 Manager Responsibilities
