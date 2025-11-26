@@ -1,4 +1,5 @@
 import React, {
+  Fragment,
   useState,
   useEffect,
   createContext,
@@ -28,10 +29,14 @@ import { useDispatch } from "react-redux";
 import { getTenantLookupListAction } from "@/redux/actions/tenantLookupActions";
 import { getTenantAction } from "@/redux/actions/tenantActions";
 import { SocketManager } from "@/lib/socketManager";
+import {
+  LoadingOverlay,
+  LoadingSpinner,
+} from "@/components/ui/loading-indicator";
 
 // Auth context type
 export interface AuthContextType {
-  loggedInUser: User | null;
+  loggedInUser: User | null | undefined;
   isLoading: boolean;
   error: string | null;
   /** for platform users, this is the tenantId from the url */
@@ -44,7 +49,7 @@ export interface AuthContextType {
 }
 
 export const defaultContext: AuthContextType = {
-  loggedInUser: null,
+  loggedInUser: undefined,
   isLoading: false,
   error: null,
   tenantId: null,
@@ -76,7 +81,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   const location = useLocation();
   const dispatch = useDispatch<AppDispatch>();
 
-  const [loggedInUser, setLoggedInUser] = useState<User | null>(null);
+  const [loggedInUser, setLoggedInUser] = useState<User | null | undefined>(
+    undefined
+  );
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
   const tenantIdFromUrl = getTenantIdFromUrl();
@@ -130,55 +137,42 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
 
   const manageUserSessionAndAuthNavigation = async () => {
     const publicRoutes = publicRouteList.map(route => route.path);
+    const isPublicRoute = publicRoutes.includes(location.pathname);
+    const isRootPath = location.pathname === "/";
     const token = Cookies.get(envVariable.JWT_STORAGE_KEY);
 
-    if (token) {
-      if (!loggedInUser) {
-        try {
-          /* Get user details using the token */
-          const userData = await dispatch(getUserProfileAction()).unwrap();
+    if (!token) {
+      /* No token: set user to null and redirect to login if not on public route */
+      setLoggedInUser(null);
 
-          if (userData && userData) {
-            setLoggedInUser(userData);
-          }
-        } catch (error: unknown) {
-          /* Token might be invalid/expired, remove it */
-          Cookies.remove(envVariable.JWT_STORAGE_KEY);
-          setLoggedInUser(null);
-          console.error("Failed to restore user session:  ", error);
-        } finally {
-          setIsLoading(false);
-        }
-      } else if (loggedInUser) {
-        if (
-          location.pathname === "/" ||
-          publicRoutes.includes(location.pathname)
-        ) {
-          if (hasPlatformRole) {
-            navigate("/platform/dashboard", { replace: true });
-          } else {
-            /* Navigate to tenant home with tenantId */
-            navigate(`/tenant/${tenantId}/home`, { replace: true });
-          }
-        } else if (
-          !hasPlatformRole &&
-          tenantIdFromUrl &&
-          tenantIdFromUrl !== tenantId
-        ) {
-          /* Tenant users: Check if they're trying to access a different tenant
-             and Redirect to their own tenant
-          */
-          navigate(`/tenant/${tenantId}/home`, { replace: true });
-        }
-      }
-    } else {
-      if (
-        location.pathname === "/" ||
-        !publicRoutes.includes(location.pathname)
-      ) {
+      if (isRootPath || !isPublicRoute) {
         navigate("/login", { replace: true });
       }
+    } else if (loggedInUser === undefined || loggedInUser === null) {
+      /* Token exists but no user: restore session */
+      try {
+        const userData = await dispatch(getUserProfileAction()).unwrap();
+        setLoggedInUser(userData || null);
+      } catch (error: unknown) {
+        Cookies.remove(envVariable.JWT_STORAGE_KEY);
+        setLoggedInUser(null);
+        console.error("Failed to restore user session:", error);
+      }
+    } else if (isRootPath || isPublicRoute) {
+      /* User logged in: Redirect from public routes to appropriate dashboard */
+      const targetPath = hasPlatformRole
+        ? "/platform/dashboard"
+        : `/tenant/${tenantId}/home`;
+      navigate(targetPath, { replace: true });
+    } else if (
+      !hasPlatformRole &&
+      tenantIdFromUrl &&
+      tenantIdFromUrl !== tenantId
+    ) {
+      /* Tenant users: prevent access to other tenants */
+      navigate(`/tenant/${tenantId}/home`, { replace: true });
     }
+    setIsLoading(false);
   };
 
   /** Login function - handles all auth logic */
@@ -264,7 +258,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   };
 
   const value: AuthContextType = {
-    loggedInUser,
+    loggedInUser: loggedInUser,
     isLoading,
     error,
     tenantId,
@@ -274,5 +268,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     clearError,
   };
 
-  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+  return (
+    <Fragment>
+      {loggedInUser !== undefined ? (
+        <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
+      ) : (
+        <LoadingOverlay />
+      )}
+    </Fragment>
+  );
 };

@@ -62,6 +62,8 @@ export const sendChatMessageSchema = z
       .optional(),
     mediaUrl: z.string().url().max(1000).optional(),
     replyToMessageId: z.number().int().positive().optional(),
+    tempId: z.number().int().positive().optional(), // Temporary ID from frontend
+    socketId: z.string().optional(), // Socket ID from frontend
   })
   .refine(data => data.text || data.mediaUrl, {
     message: "Either text or mediaUrl is required",

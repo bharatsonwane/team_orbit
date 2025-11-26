@@ -98,7 +98,7 @@ export default class Chat {
     }
   }
 
-  static async getChannelsForUser(
+  static async getChatChannelsForUser(
     dbClient: dbClientPool,
     userId: number,
     { search, type, limit = 50, offset = 0 }: ChatChannelListQuerySchema

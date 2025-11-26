@@ -1,7 +1,7 @@
 import RouteRegistrar from "@src/middleware/RouteRegistrar";
 import {
   createChannel,
-  getChannelsForUser,
+  getChatChannelsForUser,
   saveChannelMessage,
   getChannelMessages,
 } from "@src/controllers/chat.controller";
@@ -38,7 +38,7 @@ registrar.get("/chat/channel/list", {
     querySchema: chatChannelListQuerySchema,
   },
   responseSchemas: [{ statusCode: 200, schema: chatChannelListResponseSchema }],
-  controller: getChannelsForUser,
+  controller: getChatChannelsForUser,
 });
 
 registrar.post("/chat/channel/:chatChannelId/message", {

@@ -228,6 +228,11 @@ export class SocketManager {
     return sockets ? sockets.size > 0 : false;
   }
 
+  /**@description Get all socket IDs for a user*/
+  static getUserSockets(userId: number): Set<string> {
+    return SocketManager.userConnections.get(userId) || new Set();
+  }
+
   /**@description Emit event to all of a user's devices*/
   static emitToUser(user: JwtTokenPayload, event: string, data: any): void {
     const socketIo = SocketManager.getSocketIo();

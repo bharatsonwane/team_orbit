@@ -70,6 +70,8 @@ const chatMessageSchemaBase = z.object({
   updatedAt: z.string(),
   reactions: z.array(messageReactionSchema).default([]),
   receipt: z.array(messageReceiptSchema).default([]), // Array of receipt objects
+  senderSocketId: z.string().optional(), // Socket ID of the sender device
+  tempId: z.number().optional(), // Temporary ID for matching sent messages
 });
 
 // Chat Message type
@@ -88,6 +90,8 @@ export type SendChannelMessagePayload = {
   text?: string;
   mediaUrl?: string;
   replyToMessageId?: number;
+  tempId?: number; // Temporary ID for matching sent messages
+  socketId?: string; // Socket ID of the sending device
 };
 
 export type FetchChannelMessagesParam = {
@@ -170,6 +174,8 @@ export const sendMessageSchema = z.object({
   text: z.string().optional(),
   mediaUrl: z.string().optional(),
   replyToMessageId: z.number().optional(),
+  tempId: z.number().optional(), // Temporary ID for matching sent messages
+  socketId: z.string().optional(), // Socket ID of the sending device
 });
 
 export type SendMessageData = z.infer<typeof sendMessageSchema>;

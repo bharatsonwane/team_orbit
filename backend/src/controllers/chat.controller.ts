@@ -1,6 +1,7 @@
 import { NextFunction, Request, Response } from "express";
 import Chat from "@src/services/chat.service";
 import ChatSocket from "@src/socket/chat.socket";
+import { SocketManager } from "@src/socket/socketManager";
 import {
   ChatChannelListQuerySchema,
   chatChannelListQuerySchema,
@@ -34,7 +35,7 @@ export const createChannel = async (
   }
 };
 
-export const getChannelsForUser = async (
+export const getChatChannelsForUser = async (
   req: AuthenticatedRequest,
   res: Response,
   next: NextFunction
@@ -45,7 +46,7 @@ export const getChannelsForUser = async (
       req.query
     ) as ChatChannelListQuerySchema;
 
-    const channels = await Chat.getChannelsForUser(req.db, userId, query);
+    const channels = await Chat.getChatChannelsForUser(req.db, userId, query);
 
     res.status(200).json(channels);
   } catch (error) {
@@ -79,10 +80,22 @@ export const saveChannelMessage = async (
     const message = await Chat.saveChannelMessage(req.db, {
       chatChannelId,
       senderUserId: userId,
-      ...payload,
+      text: payload.text,
+      mediaUrl: payload.mediaUrl,
+      replyToMessageId: payload.replyToMessageId,
     });
 
-    ChatSocket.notifyChatMessage(tenantId, chatChannelId, message);
+    const userSockets = SocketManager.getUserSockets(userId);
+    const senderSocketId = userSockets?.has(payload.socketId ?? "")
+      ? (payload.socketId ?? "")
+      : undefined;
+
+    // Include tempId and senderSocketId in the broadcast
+    ChatSocket.notifyChatMessage(tenantId, chatChannelId, {
+      ...message,
+      tempId: payload.tempId,
+      senderSocketId: senderSocketId,
+    });
     res.status(201).json(message);
   } catch (error) {
     next(error);

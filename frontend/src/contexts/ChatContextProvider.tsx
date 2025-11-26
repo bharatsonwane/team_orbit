@@ -126,24 +126,14 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
   }, [loggedInUser?.id, tenantId]);
 
   useEffect(() => {
-    const socket = SocketManager.socketIo;
-    socket.on("chat:new_message", handleNotifyChatMessage);
-    socket.on("chat:channel_updated", handleChannelUpdated);
-
-    // Join selected channel when socket connects
-    if (selectedChannelId && tenantId) {
-      socket.emit("chat:joinChannel", {
-        tenantId,
-        chatChannelId: selectedChannelId,
-      });
-    }
-
+    SocketManager.socketIo.on("chat:new_message", handleNotifyChatMessage);
+    SocketManager.socketIo.on("chat:channel_updated", handleChannelUpdated);
     return () => {
-      socket.off("chat:new_message", handleNotifyChatMessage);
-      socket.off("chat:channel_updated", handleChannelUpdated);
+      SocketManager.socketIo.off("chat:new_message", handleNotifyChatMessage);
+      SocketManager.socketIo.off("chat:channel_updated", handleChannelUpdated);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedChannelId]);
+  }, []);
 
   const handleResetChatData = () => {
     setChannelStateMap(new Map());
@@ -154,10 +144,11 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
   };
 
   // Listen for new messages
-  const handleNotifyChatMessage = (data: ChatMessage) => {
-    if (data.senderUserId === loggedInUser?.id) {
-      return;
-    }
+  const handleNotifyChatMessage = (
+    data: ChatMessage & { senderSocketId?: string; tempId?: number }
+  ) => {
+    const currentSocketId = SocketManager.socketIo?.id;
+    const isSentByThisDevice = data.senderSocketId === currentSocketId;
 
     const message: ChatMessage = {
       id: data.id,
@@ -170,27 +161,42 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
       isDeleted: data.isDeleted ?? false,
       createdAt: data.createdAt,
       updatedAt: data.updatedAt,
-      reactions: [],
+      reactions: data.reactions ?? [],
       receipt: data.receipt ?? [],
     };
+
     setChannelStateMap(prev => {
-      const existing = prev.get(message.chatChannelId)!;
+      const existingChannelData = prev.get(message.chatChannelId);
+      if (!existingChannelData) return prev;
 
       // Check if message already exists (avoid duplicates)
-      const messageExists = existing.messages.some(
+      const messageExists = existingChannelData.messages.some(
         msg => msg.id === message.id
       );
       if (messageExists) {
         return prev;
       }
+
+      const existingMessageIndex = existingChannelData.messages.findIndex(
+        msg => msg.id === data.tempId || msg.id === message.id
+      );
+
+      const messages = [...existingChannelData.messages];
+
+      if (existingMessageIndex !== -1) {
+        messages[existingMessageIndex] = message;
+      } else {
+        messages.push(message);
+      }
+
       // Add new message to the end of messages array
-      const updated = {
-        ...existing,
-        messages: [...existing.messages, message],
+      const tempChannelData = {
+        ...existingChannelData,
+        messages,
         updatedAt: message.updatedAt,
       };
       const tempChannelStateMap = new Map(prev);
-      tempChannelStateMap.set(message.chatChannelId, updated);
+      tempChannelStateMap.set(message.chatChannelId, tempChannelData);
       return tempChannelStateMap;
     });
   };
@@ -205,19 +211,19 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
     members?: number[];
   }) => {
     setChannelStateMap(prev => {
-      const existing = prev.get(data.chatChannelId);
-      if (existing) {
+      const existingChannelData = prev.get(data.chatChannelId);
+      if (existingChannelData) {
         // Channel already exists, just update it
-        const updated = {
-          ...existing,
-          name: data.name ?? existing.name,
-          description: data.description ?? existing.description,
-          type: data.type ?? existing.type,
-          image: data.image ?? existing.image,
-          members: data.members ?? existing.members,
+        const tempChannelData = {
+          ...existingChannelData,
+          name: data.name ?? existingChannelData.name,
+          description: data.description ?? existingChannelData.description,
+          type: data.type ?? existingChannelData.type,
+          image: data.image ?? existingChannelData.image,
+          members: data.members ?? existingChannelData.members,
         };
         const tempChannelStateMap = new Map(prev);
-        tempChannelStateMap.set(data.chatChannelId, updated);
+        tempChannelStateMap.set(data.chatChannelId, tempChannelData);
         return tempChannelStateMap;
       } else {
         // New channel, add it to state
@@ -271,6 +277,23 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
     }
   };
 
+  /**@description Join socketIo rooms for all user's chat channels*/
+  const handleJoinUsersChatChannelsRooms = ({
+    userId,
+    tenantId,
+  }: {
+    userId: number;
+    tenantId: number;
+  }) => {
+    if (!SocketManager.socketIo || !tenantId) {
+      return;
+    }
+    SocketManager.socketIo.emit("chat:joinUserChatChannels", {
+      tenantId,
+      userId,
+    });
+  };
+
   const handleLoadChannels = async () => {
     const tempChannelStateMap = new Map<number, ChannelState>();
     try {
@@ -309,6 +332,11 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
           });
         }
       });
+
+      handleJoinUsersChatChannelsRooms({
+        userId: loggedInUser?.id || 0,
+        tenantId: tenantId || 0,
+      });
     } catch (e) {
       setError(
         typeof e === "string" ? e : "Unable to load channels. Please try again."
@@ -319,32 +347,21 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
 
     // Set state once with all data
     setChannelStateMap(tempChannelStateMap);
-
-    /**@description Join socket rooms for all loaded channels */
-    if (SocketManager.socketIo && tenantId) {
-      const channelIds = Array.from(tempChannelStateMap.keys());
-      channelIds.forEach(chatChannelId => {
-        SocketManager.socketIo.emit("chat:joinChannel", {
-          tenantId,
-          chatChannelId,
-        });
-      });
-    }
   };
 
   // Mark as read
   const handleMarkAsRead = (chatChannelId: number) => {
     // Update channel unread count
     setChannelStateMap(prev => {
-      const existing = prev.get(chatChannelId);
-      if (!existing) return prev;
+      const existingChannelData = prev.get(chatChannelId);
+      if (!existingChannelData) return prev;
       const tempChannelStateMap = new Map(prev);
-      tempChannelStateMap.set(chatChannelId, { ...existing, unreadCount: 0 });
+      tempChannelStateMap.set(chatChannelId, {
+        ...existingChannelData,
+        unreadCount: 0,
+      });
       return tempChannelStateMap;
     });
-
-    // TODO: Emit socket event to backend
-    // socket.emit("chat:mark_as_read", { chatChannelId });
   };
 
   /**@description Send message*/
@@ -360,6 +377,7 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
 
     const tempId = Date.now();
     const now = new Date().toISOString();
+    const currentSocketId = SocketManager.socketIo?.id;
 
     const tempNewMessage: ChatMessage = {
       id: tempId,
@@ -377,15 +395,15 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
     };
 
     setChannelStateMap(prev => {
-      const existing = prev.get(chatChannelId);
-      const messages = existing?.messages || [];
+      const existingChannelData = prev.get(chatChannelId);
+      const messages = existingChannelData?.messages || [];
       const nextState: ChannelState = {
         chatChannelId,
         messages: [...messages, tempNewMessage],
         loading: false,
         error: null,
-        typingUserIds: existing?.typingUserIds ?? [],
-        lastReadAt: existing?.lastReadAt,
+        typingUserIds: existingChannelData?.typingUserIds ?? [],
+        lastReadAt: existingChannelData?.lastReadAt,
       };
       const tempChannelStateMap = new Map(prev);
       tempChannelStateMap.set(chatChannelId, nextState);
@@ -400,6 +418,8 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
             text: data.text,
             mediaUrl: data.mediaUrl,
             replyToMessageId: data.replyToMessageId,
+            tempId,
+            socketId: currentSocketId,
           })
         ).unwrap();
 
@@ -419,31 +439,31 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
         };
 
         setChannelStateMap(prev => {
-          const existing = prev.get(chatChannelId);
-          if (!existing) return prev;
-          const updatedMessage = existing.messages.map(message =>
+          const existingChannelData = prev.get(chatChannelId);
+          if (!existingChannelData) return prev;
+          const tempMessages = existingChannelData.messages.map(message =>
             message.id === tempId ? persistedMessage : message
           );
           const tempChannelStateMap = new Map(prev);
           tempChannelStateMap.set(chatChannelId, {
-            ...existing,
-            messages: updatedMessage,
+            ...existingChannelData,
+            messages: tempMessages,
             updatedAt: persistedMessage.updatedAt,
           });
           return tempChannelStateMap;
         });
       } catch (err) {
         setChannelStateMap(prev => {
-          const existing = prev.get(chatChannelId);
-          if (!existing) return prev;
-          const updated = existing.messages.filter(
+          const existingChannelData = prev.get(chatChannelId);
+          if (!existingChannelData) return prev;
+          const tempMessages = existingChannelData.messages.filter(
             message => message.id !== tempId
           );
           const tempChannelStateMap = new Map(prev);
           tempChannelStateMap.set(chatChannelId, {
-            ...existing,
-            messages: updated,
-            updatedAt: existing.updatedAt,
+            ...existingChannelData,
+            messages: tempMessages,
+            updatedAt: existingChannelData.updatedAt,
           });
           return tempChannelStateMap;
         });
@@ -462,9 +482,9 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
   // Edit message
   const handleEditMessage = (data: EditMessageData) => {
     setChannelStateMap(prev => {
-      const existing = prev.get(data.chatChannelId);
-      if (!existing) return prev;
-      const updated = existing.messages.map(msg =>
+      const existingChannelData = prev.get(data.chatChannelId);
+      if (!existingChannelData) return prev;
+      const tempMessages = existingChannelData.messages.map(msg =>
         msg.id === data.messageId
           ? {
               ...msg,
@@ -476,44 +496,38 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
       );
       const tempChannelStateMap = new Map(prev);
       tempChannelStateMap.set(data.chatChannelId, {
-        ...existing,
-        messages: updated,
+        ...existingChannelData,
+        messages: tempMessages,
       });
       return tempChannelStateMap;
     });
-
-    // TODO: Emit socket event to backend
-    // socket.emit("chat:edit_message", data);
   };
 
   // Delete message
   const handleDeleteMessage = (messageId: number, chatChannelId: number) => {
     const now = new Date().toISOString();
     setChannelStateMap(prev => {
-      const existing = prev.get(chatChannelId);
-      if (!existing) return prev;
-      const updated = existing.messages.map(msg =>
+      const existingChannelData = prev.get(chatChannelId);
+      if (!existingChannelData) return prev;
+      const tempMessages = existingChannelData.messages.map(msg =>
         msg.id === messageId ? { ...msg, isDeleted: true, deletedAt: now } : msg
       );
       const tempChannelStateMap = new Map(prev);
       tempChannelStateMap.set(chatChannelId, {
-        ...existing,
-        messages: updated,
+        ...existingChannelData,
+        messages: tempMessages,
       });
       return tempChannelStateMap;
     });
-
-    // TODO: Emit socket event to backend
-    // socket.emit("chat:delete_message", { messageId, messageCreatedAt, chatChannelId });
   };
 
   // Add reaction
   const handleAddReaction = (data: AddReactionData) => {
     const now = new Date().toISOString();
     setChannelStateMap(prev => {
-      const existing = prev.get(data.chatChannelId);
-      if (!existing) return prev;
-      const updated = existing.messages.map(msg => {
+      const existingChannelData = prev.get(data.chatChannelId);
+      if (!existingChannelData) return prev;
+      const tempMessages = existingChannelData.messages.map(msg => {
         if (msg.id === data.messageId) {
           const existingReaction = msg.reactions.find(
             r =>
@@ -522,7 +536,7 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
           );
 
           if (existingReaction) {
-            // Update existing reaction
+            // Update existingChannelData reaction
             return {
               ...msg,
               reactions: msg.reactions.map(r =>
@@ -553,22 +567,19 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
       });
       const tempChannelStateMap = new Map(prev);
       tempChannelStateMap.set(data.chatChannelId, {
-        ...existing,
-        messages: updated,
+        ...existingChannelData,
+        messages: tempMessages,
       });
       return tempChannelStateMap;
     });
-
-    // TODO: Emit socket event to backend
-    // socket.emit("chat:add_reaction", data);
   };
 
   // Remove reaction
   const handleRemoveReaction = (messageId: number, chatChannelId: number) => {
     setChannelStateMap(prev => {
-      const existing = prev.get(chatChannelId);
-      if (!existing) return prev;
-      const updated = existing.messages.map(msg =>
+      const existingChannelData = prev.get(chatChannelId);
+      if (!existingChannelData) return prev;
+      const tempMessages = existingChannelData.messages.map(msg =>
         msg.id === messageId
           ? {
               ...msg,
@@ -580,14 +591,11 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
       );
       const tempChannelStateMap = new Map(prev);
       tempChannelStateMap.set(chatChannelId, {
-        ...existing,
-        messages: updated,
+        ...existingChannelData,
+        messages: tempMessages,
       });
       return tempChannelStateMap;
     });
-
-    // TODO: Emit socket event to backend
-    // socket.emit("chat:remove_reaction", { messageId, messageCreatedAt, chatChannelId });
   };
 
   /**@description Load channel messages from API*/
@@ -598,9 +606,9 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
     limit?: number;
   }) => {
     try {
-      const existing = channelStateMap.get(chatChannelId);
+      const existingChannelData = channelStateMap.get(chatChannelId);
 
-      const loadMessageBefore = existing?.messages[0]?.createdAt;
+      const loadMessageBefore = existingChannelData?.messages[0]?.createdAt;
 
       const query: FetchChannelMessagesParam = {
         chatChannelId,
@@ -643,14 +651,6 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
 
     setSelectedChannelId(channel.id);
 
-    // Join channel via socket
-    if (SocketManager.socketIo && tenantId) {
-      SocketManager.socketIo.emit("chat:joinChannel", {
-        tenantId,
-        chatChannelId: channel.id,
-      });
-    }
-
     // handleMarkAsRead(channel.id);
     void handleLoadChannelMessages({ chatChannelId: channel.id });
   };
@@ -659,7 +659,7 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
   const handleSetTyping = (chatChannelId: number, isTyping: boolean) => {
     const userId = 1; // Current user ID (replace with real)
     setChannelStateMap(prev => {
-      const existing =
+      const existingChannelData =
         prev.get(chatChannelId) ||
         ({
           chatChannelId,
@@ -668,7 +668,7 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
           error: null,
           typingUserIds: [],
         } as ChannelState);
-      let typingUserIds = existing.typingUserIds ?? [];
+      let typingUserIds = existingChannelData.typingUserIds ?? [];
       if (isTyping) {
         if (!typingUserIds.includes(userId)) {
           typingUserIds = [...typingUserIds, userId];
@@ -677,12 +677,12 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
         typingUserIds = typingUserIds.filter(id => id !== userId);
       }
       const tempChannelStateMap = new Map(prev);
-      tempChannelStateMap.set(chatChannelId, { ...existing, typingUserIds });
+      tempChannelStateMap.set(chatChannelId, {
+        ...existingChannelData,
+        typingUserIds,
+      });
       return tempChannelStateMap;
     });
-
-    // TODO: Emit socket event to backend
-    // socket.emit("chat:typing", { chatChannelId, isTyping });
   };
 
   // Clear error
