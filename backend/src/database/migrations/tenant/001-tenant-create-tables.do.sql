@@ -8,17 +8,18 @@ CREATE TABLE IF NOT EXISTS tenant_lookup_types (
     -- Display label (e.g., 'Designation', 'Department')
     "isSystem" BOOLEAN NOT NULL,
     -- System values that cannot be deleted
-    "isArchived" BOOLEAN DEFAULT FALSE NOT NULL,
     "createdAt" TIMESTAMP DEFAULT NOW() NOT NULL,
+    "createdBy" INT DEFAULT NULL REFERENCES main.users (id) ON DELETE SET NULL,
     "updatedAt" TIMESTAMP DEFAULT NOW() NOT NULL,
+    "updatedBy" INT DEFAULT NULL REFERENCES main.users (id) ON DELETE SET NULL,
+    "isArchived" BOOLEAN DEFAULT FALSE NOT NULL,
     "archivedAt" TIMESTAMP DEFAULT NULL,
-    "createdBy" INT DEFAULT NULL,
-    "updatedBy" INT DEFAULT NULL,
-    "archivedBy" INT DEFAULT NULL
+    "archivedBy" INT DEFAULT NULL REFERENCES main.users (id) ON DELETE SET NULL
 );
 -- tenant_lookups Table (tenant-specific lookup values)
 CREATE TABLE IF NOT EXISTS tenant_lookups (
     id SERIAL PRIMARY KEY,
+    "lookupTypeId" INT NOT NULL,
     name VARCHAR(100) NOT NULL,
     -- Internal name (e.g., 'DESIGNATION_DEVELOPER', 'DEPARTMENT_HR')
     label VARCHAR(255) NOT NULL,
@@ -29,14 +30,13 @@ CREATE TABLE IF NOT EXISTS tenant_lookups (
     -- Optional description
     "isSystem" BOOLEAN DEFAULT FALSE NOT NULL,
     "sortOrder" INT DEFAULT 0 NOT NULL,
-    "isArchived" BOOLEAN DEFAULT FALSE NOT NULL,
     "createdAt" TIMESTAMP DEFAULT NOW() NOT NULL,
+    "createdBy" INT DEFAULT NULL REFERENCES main.users (id) ON DELETE SET NULL,
     "updatedAt" TIMESTAMP DEFAULT NOW() NOT NULL,
+    "updatedBy" INT DEFAULT NULL REFERENCES main.users (id) ON DELETE SET NULL,
+    "isArchived" BOOLEAN DEFAULT FALSE NOT NULL,
     "archivedAt" TIMESTAMP DEFAULT NULL,
-    "createdBy" INT DEFAULT NULL,
-    "updatedBy" INT DEFAULT NULL,
-    "archivedBy" INT DEFAULT NULL,
-    "lookupTypeId" INT NOT NULL,
+    "archivedBy" INT DEFAULT NULL REFERENCES main.users (id) ON DELETE SET NULL,
     CONSTRAINT fk_tenant_lookups_tenant_lookup_types FOREIGN KEY ("lookupTypeId") REFERENCES tenant_lookup_types (id) ON DELETE CASCADE,
     CONSTRAINT unique_tenant_lookup_type_id_name UNIQUE ("lookupTypeId", name),
     CONSTRAINT unique_tenant_lookup_type_id_label UNIQUE ("lookupTypeId", label)
@@ -56,7 +56,12 @@ CREATE TABLE IF NOT EXISTS user_contacts (
     "isVerified" BOOLEAN DEFAULT FALSE NOT NULL,
     -- Is this contact verified
     "createdAt" TIMESTAMP DEFAULT NOW() NOT NULL,
+    "createdBy" INT DEFAULT NULL REFERENCES main.users (id) ON DELETE SET NULL,
     "updatedAt" TIMESTAMP DEFAULT NOW() NOT NULL,
+    "updatedBy" INT DEFAULT NULL REFERENCES main.users (id) ON DELETE SET NULL,
+    "isArchived" BOOLEAN DEFAULT FALSE NOT NULL,
+    "archivedAt" TIMESTAMP DEFAULT NULL,
+    "archivedBy" INT DEFAULT NULL REFERENCES main.users (id) ON DELETE SET NULL,
     CONSTRAINT fk_user_contacts_user FOREIGN KEY ("userId") REFERENCES main.users (id) ON DELETE CASCADE,
     CONSTRAINT fk_user_contacts_contact_type FOREIGN KEY ("contactTypeId") REFERENCES tenant_lookups (id),
     CONSTRAINT unique_user_contact_type_value UNIQUE ("userId", "contactTypeId", value) -- Same user can't have duplicate contacts
@@ -78,9 +83,14 @@ CREATE TABLE IF NOT EXISTS user_job_details (
     "department" VARCHAR(255),
     -- Legacy field for backward compatibility (can be removed later)
     "ctc" DECIMAL(15, 2),
-    "reportingManagerId" INT DEFAULT NULL,
+    "reportingManagerId" INT DEFAULT NULL REFERENCES main.users (id) ON DELETE SET NULL,
     "createdAt" TIMESTAMP DEFAULT NOW() NOT NULL,
+    "createdBy" INT DEFAULT NULL REFERENCES main.users (id) ON DELETE SET NULL,
     "updatedAt" TIMESTAMP DEFAULT NOW() NOT NULL,
+    "updatedBy" INT DEFAULT NULL REFERENCES main.users (id) ON DELETE SET NULL,
+    "isArchived" BOOLEAN DEFAULT FALSE NOT NULL,
+    "archivedAt" TIMESTAMP DEFAULT NULL,
+    "archivedBy" INT DEFAULT NULL REFERENCES main.users (id) ON DELETE SET NULL,
     CONSTRAINT fk_user_job_details_user FOREIGN KEY ("userId") REFERENCES main.users (id) ON DELETE CASCADE,
     CONSTRAINT fk_user_job_details_designation FOREIGN KEY ("designationId") REFERENCES tenant_lookups (id) ON DELETE
     SET NULL,

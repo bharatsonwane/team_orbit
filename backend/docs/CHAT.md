@@ -92,9 +92,9 @@ This document provides comprehensive documentation for the chat system, includin
 
 ### 8. **Soft Delete Timestamps** ✅
 
-**Current Issue:** Only boolean `isDeleted`, no timestamp.
+**Current Issue:** Only boolean `isArchived`, no timestamp.
 
-**Solution:** Add `deletedAt` TIMESTAMP (nullable).
+**Solution:** Add `archivedAt` TIMESTAMP (nullable).
 
 **Benefits:**
 - Track when messages were deleted
@@ -146,7 +146,7 @@ This document provides comprehensive documentation for the chat system, includin
 - **`idx_chat_message_active`** - Partial index for non-deleted messages only (smaller, faster)
 
 #### Partial Indexes
-- **`idx_chat_message_active`** - Only indexes non-deleted messages (`WHERE "isDeleted" = false`)
+- **`idx_chat_message_active`** - Only indexes non-deleted messages (`WHERE "isArchived" = false`)
 - **`idx_chat_message_reply_to`** - Only indexes messages with replies (`WHERE "replyToMessageId" IS NOT NULL`)
 - **`idx_chat_message_type`** - Only indexes active messages by type
 
@@ -172,7 +172,7 @@ SELECT COUNT(*)
 FROM chat_message cm
 WHERE cm."chatChannelId" = $1
     AND cm."senderUserId" != $2
-    AND cm."isDeleted" = false
+    AND cm."isArchived" = false
     AND cm.id > (
         SELECT "lastReadMessageId" 
         FROM chat_channel_user_mapping 
@@ -207,7 +207,7 @@ LIMIT 50 OFFSET 1000000;  -- Must scan 1M rows!
 SELECT * FROM chat_message 
 WHERE "chatChannelId" = $1 
     AND id < $cursor_id  -- Use last message ID as cursor
-    AND "isDeleted" = false
+    AND "isArchived" = false
 ORDER BY id DESC, "createdAt" DESC 
 LIMIT 50;
 ```
@@ -295,7 +295,7 @@ const messages = await db.query(`
     SELECT * FROM chat_message 
     WHERE "chatChannelId" = $1 
         AND id < $2
-        AND "isDeleted" = false
+        AND "isArchived" = false
     ORDER BY id DESC 
     LIMIT 50
 `, [chatChannelId, lastMessageId]);
@@ -318,7 +318,7 @@ const unreadCount = await db.query(`
     FROM chat_message cm
     WHERE cm."chatChannelId" = $1
         AND cm."senderUserId" != $2
-        AND cm."isDeleted" = false
+        AND cm."isArchived" = false
         AND cm.id > (
             SELECT "lastReadMessageId" 
             FROM chat_channel_user_mapping 
@@ -349,7 +349,7 @@ await db.query(`
     FROM chat_message
     WHERE "chatChannelId" = $2
         AND id <= $3
-        AND "isDeleted" = false
+        AND "isArchived" = false
     ON CONFLICT ("messageId", "messageCreatedAt", "userId") 
     DO UPDATE SET "readAt" = NOW();
 `, [userId, chatChannelId, lastMessageId]);
@@ -379,7 +379,7 @@ const messages = await db.query(`
     SELECT * FROM chat_message 
     WHERE "chatChannelId" = $1 
         AND "createdAt" >= $2
-        AND "isDeleted" = false
+        AND "isArchived" = false
     ORDER BY "createdAt" DESC 
     LIMIT 50
 `, [chatChannelId, recentCutoff]);
@@ -400,7 +400,7 @@ const messages = await db.query(`
 const messages = await db.query(`
     SELECT * FROM chat_message 
     WHERE "chatChannelId" = $1 
-        AND "isDeleted" = false
+        AND "isArchived" = false
     ORDER BY "createdAt" DESC 
     LIMIT 50
 `, [chatChannelId]);
@@ -449,7 +449,7 @@ LEFT JOIN chat_message_receipt cmr ON
     AND cm."createdAt" = cmr."messageCreatedAt"
     AND cmr."userId" = ccu."userId"
 WHERE ccu."userId" = $1 
-    AND cm."isDeleted" = false
+    AND cm."isArchived" = false
     AND cm."senderUserId" != $1
     AND cmr."readAt" IS NULL
 GROUP BY ccu."chatChannelId";

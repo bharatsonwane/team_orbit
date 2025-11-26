@@ -4,12 +4,12 @@ CREATE TABLE IF NOT EXISTS lookup_types (
     name VARCHAR(255) UNIQUE NOT NULL,  -- Internal name (e.g., 'USER_ROLE', 'USER_STATUS')
     label VARCHAR(255) NOT NULL,        -- Display label (e.g., 'User Role')
     "isSystem" BOOLEAN NOT NULL,        -- System values that cannot be deleted
-    "isArchived" BOOLEAN DEFAULT FALSE NOT NULL, -- Soft delete instead of hard delete
     "createdAt" TIMESTAMP DEFAULT NOW() NOT NULL,
-    "updatedAt" TIMESTAMP DEFAULT NOW() NOT NULL,
-    "archivedAt" TIMESTAMP DEFAULT NULL,
     "createdBy" INT DEFAULT NULL,
+    "updatedAt" TIMESTAMP DEFAULT NOW() NOT NULL,
     "updatedBy" INT DEFAULT NULL,
+    "isArchived" BOOLEAN DEFAULT FALSE NOT NULL, -- Soft delete instead of hard delete
+    "archivedAt" TIMESTAMP DEFAULT NULL,
     "archivedBy" INT DEFAULT NULL
 );
 
@@ -25,14 +25,14 @@ CREATE TABLE IF NOT EXISTS lookups (
 
     "sortOrder" INT DEFAULT 0 NOT NULL, -- Used for ordering
     "isSystem" BOOLEAN DEFAULT FALSE,   -- System-managed (non-deletable)
-    "isArchived" BOOLEAN DEFAULT FALSE, -- Soft delete flag
 
-    "createdBy" INT DEFAULT NULL,
-    "updatedBy" INT DEFAULT NULL,
-    "archivedBy" INT DEFAULT NULL,
     "createdAt" TIMESTAMP DEFAULT NOW() NOT NULL,
+    "createdBy" INT DEFAULT NULL,
     "updatedAt" TIMESTAMP DEFAULT NOW() NOT NULL,
+    "updatedBy" INT DEFAULT NULL,
+    "isArchived" BOOLEAN DEFAULT FALSE, -- Soft delete flag
     "archivedAt" TIMESTAMP DEFAULT NULL,
+    "archivedBy" INT DEFAULT NULL,
 
     CONSTRAINT unique_lookup_name_per_type UNIQUE ("lookupTypeId", name),
     CONSTRAINT unique_lookup_label_per_type UNIQUE ("lookupTypeId", label)
@@ -46,12 +46,12 @@ CREATE TABLE IF NOT EXISTS tenants (
     label VARCHAR(255) NOT NULL UNIQUE,
     description TEXT,
     "statusId" INT NOT NULL REFERENCES lookups (id) ON DELETE CASCADE,
-    "isArchived" BOOLEAN DEFAULT FALSE NOT NULL,
     "createdAt" TIMESTAMP DEFAULT NOW() NOT NULL,
-    "updatedAt" TIMESTAMP DEFAULT NOW() NOT NULL,
-    "archivedAt" TIMESTAMP DEFAULT NULL,
     "createdBy" INT DEFAULT NULL,
+    "updatedAt" TIMESTAMP DEFAULT NOW() NOT NULL,
     "updatedBy" INT DEFAULT NULL,
+    "isArchived" BOOLEAN DEFAULT FALSE NOT NULL,
+    "archivedAt" TIMESTAMP DEFAULT NULL,
     "archivedBy" INT DEFAULT NULL
 );
 
@@ -103,14 +103,14 @@ CREATE TABLE IF NOT EXISTS users (
     "profilePictureUrl" VARCHAR(500),
     bio TEXT, -- User biography
     "isPlatformUser" BOOLEAN DEFAULT FALSE NOT NULL,
-    "isArchived" BOOLEAN DEFAULT FALSE NOT NULL,
     "statusId" INT NOT NULL REFERENCES lookups (id) ON DELETE CASCADE,
     "createdAt" TIMESTAMP DEFAULT NOW() NOT NULL,
+    "createdBy" INT DEFAULT NULL REFERENCES users (id) ON DELETE SET NULL,
     "updatedAt" TIMESTAMP DEFAULT NOW() NOT NULL,
+    "updatedBy" INT DEFAULT NULL REFERENCES users (id) ON DELETE SET NULL,
+    "isArchived" BOOLEAN DEFAULT FALSE NOT NULL,
     "archivedAt" TIMESTAMP DEFAULT NULL,
-    "createdBy" INT DEFAULT NULL,
-    "updatedBy" INT DEFAULT NULL,
-    "archivedBy" INT DEFAULT NULL
+    "archivedBy" INT DEFAULT NULL REFERENCES users (id) ON DELETE SET NULL
 );
 
 -- user_auths Table
@@ -132,8 +132,13 @@ CREATE TABLE IF NOT EXISTS user_auths (
     
     -- Audit
     "lastLoginAt" TIMESTAMP,
-    "createdAt" TIMESTAMP DEFAULT NOW(),
-    "updatedAt" TIMESTAMP DEFAULT NOW()
+    "createdAt" TIMESTAMP DEFAULT NOW() NOT NULL,
+    "createdBy" INT DEFAULT NULL REFERENCES main.users (id) ON DELETE SET NULL,
+    "updatedAt" TIMESTAMP DEFAULT NOW() NOT NULL,
+    "updatedBy" INT DEFAULT NULL REFERENCES main.users (id) ON DELETE SET NULL,
+    "isArchived" BOOLEAN DEFAULT FALSE NOT NULL,
+    "archivedAt" TIMESTAMP DEFAULT NULL,
+    "archivedBy" INT DEFAULT NULL REFERENCES main.users (id) ON DELETE SET NULL
 );
 
 -- user_role_xref Table (junction table, kept singular for relationship clarity)
@@ -142,5 +147,10 @@ CREATE TABLE IF NOT EXISTS user_role_xref (
     "userId" INT NOT NULL REFERENCES users (id) ON DELETE CASCADE,
     "roleId" INT NOT NULL REFERENCES lookups (id) ON DELETE CASCADE,
     "createdAt" TIMESTAMP DEFAULT NOW() NOT NULL,
-    "updatedAt" TIMESTAMP DEFAULT NOW() NOT NULL
+    "createdBy" INT DEFAULT NULL REFERENCES main.users (id) ON DELETE SET NULL,
+    "updatedAt" TIMESTAMP DEFAULT NOW() NOT NULL,
+    "updatedBy" INT DEFAULT NULL REFERENCES main.users (id) ON DELETE SET NULL,
+    "isArchived" BOOLEAN DEFAULT FALSE NOT NULL,
+    "archivedAt" TIMESTAMP DEFAULT NULL,
+    "archivedBy" INT DEFAULT NULL REFERENCES main.users (id) ON DELETE SET NULL
 );

@@ -39,7 +39,7 @@ export function MessageBubble({
   const sender = getSenderUser(message.senderUserId, loggedInUser, chatUsers);
   const isCurrentUser =
     loggedInUser && message.senderUserId === loggedInUser.id;
-  const isDeleted = message.isDeleted;
+  const isArchived = message.isArchived;
 
   const handleEdit = () => {
     if (editText.trim() && editText !== message.text) {
@@ -114,7 +114,7 @@ export function MessageBubble({
             isCurrentUser
               ? "bg-primary text-primary-foreground"
               : "bg-muted text-foreground",
-            isDeleted && "opacity-60 italic"
+            isArchived && "opacity-60 italic"
           )}
         >
           {/* Reply Preview */}
@@ -136,7 +136,7 @@ export function MessageBubble({
           )}
 
           {/* Message Content */}
-          {isDeleted ? (
+          {isArchived ? (
             <span className="text-xs">Message deleted</span>
           ) : isEditing ? (
             <input
@@ -181,7 +181,7 @@ export function MessageBubble({
           )}
 
           {/* Actions Menu */}
-          {!isDeleted && isCurrentUser && (
+          {!isArchived && isCurrentUser && (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button

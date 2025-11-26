@@ -158,7 +158,7 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
       text: data.text ?? undefined,
       mediaUrl: data.mediaUrl ?? undefined,
       isEdited: data.isEdited ?? false,
-      isDeleted: data.isDeleted ?? false,
+      isArchived: data.isArchived ?? false,
       createdAt: data.createdAt,
       updatedAt: data.updatedAt,
       reactions: data.reactions ?? [],
@@ -387,7 +387,7 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
       text: data.text,
       mediaUrl: data.mediaUrl,
       isEdited: false,
-      isDeleted: false,
+      isArchived: false,
       createdAt: now,
       updatedAt: now,
       reactions: [],
@@ -435,7 +435,7 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
             })) ?? [],
           receipt: result.receipt ?? [],
           isEdited: false,
-          isDeleted: false,
+          isArchived: false,
         };
 
         setChannelStateMap(prev => {
@@ -510,7 +510,9 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
       const existingChannelData = prev.get(chatChannelId);
       if (!existingChannelData) return prev;
       const tempMessages = existingChannelData.messages.map(msg =>
-        msg.id === messageId ? { ...msg, isDeleted: true, deletedAt: now } : msg
+        msg.id === messageId
+          ? { ...msg, isArchived: true, archivedAt: now }
+          : msg
       );
       const tempChannelStateMap = new Map(prev);
       tempChannelStateMap.set(chatChannelId, {
@@ -704,7 +706,7 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
       senderUserId: loggedInUser?.id || 0,
       text: `Welcome to #${data.name}!`,
       isEdited: false,
-      isDeleted: false,
+      isArchived: false,
       createdAt: now,
       updatedAt: now,
       reactions: [],

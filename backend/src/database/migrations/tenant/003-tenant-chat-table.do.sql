@@ -13,11 +13,14 @@ CREATE TABLE IF NOT EXISTS chat_channel (
     type chat_channel_type_enum NOT NULL,
     description TEXT,
     image VARCHAR(255),
-    "createdBy" INT REFERENCES main.users (id) ON DELETE
-    SET NULL,
-        "createdAt" TIMESTAMP DEFAULT NOW() NOT NULL,
-        "updatedAt" TIMESTAMP DEFAULT NOW() NOT NULL,
-        "isActive" BOOLEAN DEFAULT TRUE NOT NULL
+    "isActive" BOOLEAN DEFAULT TRUE NOT NULL,
+    "createdAt" TIMESTAMP DEFAULT NOW() NOT NULL,
+    "createdBy" INT DEFAULT NULL REFERENCES main.users (id) ON DELETE SET NULL,
+    "updatedAt" TIMESTAMP DEFAULT NOW() NOT NULL,
+    "updatedBy" INT DEFAULT NULL REFERENCES main.users (id) ON DELETE SET NULL,
+    "isArchived" BOOLEAN DEFAULT FALSE NOT NULL,
+    "archivedAt" TIMESTAMP DEFAULT NULL,
+    "archivedBy" INT DEFAULT NULL REFERENCES main.users (id) ON DELETE SET NULL
 );
 -- ===========================================================
 -- CHAT CHANNEL - USER MAPPING
@@ -33,7 +36,12 @@ CREATE TABLE IF NOT EXISTS chat_channel_user_mapping (
     "joinedAt" TIMESTAMP DEFAULT NOW() NOT NULL,
     "leftAt" TIMESTAMP,
     "createdAt" TIMESTAMP DEFAULT NOW() NOT NULL,
+    "createdBy" INT DEFAULT NULL REFERENCES main.users (id) ON DELETE SET NULL,
     "updatedAt" TIMESTAMP DEFAULT NOW() NOT NULL,
+    "updatedBy" INT DEFAULT NULL REFERENCES main.users (id) ON DELETE SET NULL,
+    "isArchived" BOOLEAN DEFAULT FALSE NOT NULL,
+    "archivedAt" TIMESTAMP DEFAULT NULL,
+    "archivedBy" INT DEFAULT NULL REFERENCES main.users (id) ON DELETE SET NULL,
     CONSTRAINT unique_chat_channel_user UNIQUE ("chatChannelId", "userId")
 );
 -- ===========================================================
@@ -47,10 +55,13 @@ CREATE TABLE IF NOT EXISTS chat_message (
     text TEXT,
     "mediaUrl" VARCHAR(500),
     "isEdited" BOOLEAN DEFAULT FALSE NOT NULL,
-    "isDeleted" BOOLEAN DEFAULT FALSE NOT NULL,
-    "deletedAt" TIMESTAMP,
     "createdAt" TIMESTAMP DEFAULT NOW() NOT NULL,
+    "createdBy" INT DEFAULT NULL REFERENCES main.users (id) ON DELETE SET NULL,
     "updatedAt" TIMESTAMP DEFAULT NOW() NOT NULL,
+    "updatedBy" INT DEFAULT NULL REFERENCES main.users (id) ON DELETE SET NULL,
+    "isArchived" BOOLEAN DEFAULT FALSE NOT NULL,
+    "archivedAt" TIMESTAMP DEFAULT NULL,
+    "archivedBy" INT DEFAULT NULL REFERENCES main.users (id) ON DELETE SET NULL,
     PRIMARY KEY (id, "createdAt")
 ) PARTITION BY RANGE ("createdAt");
 -- ===========================================================
@@ -63,6 +74,13 @@ CREATE TABLE IF NOT EXISTS chat_message_receipt (
     "userId" INT NOT NULL REFERENCES main.users (id) ON DELETE CASCADE,
     "deliveredAt" TIMESTAMP,
     "readAt" TIMESTAMP,
+    "createdAt" TIMESTAMP DEFAULT NOW() NOT NULL,
+    "createdBy" INT DEFAULT NULL REFERENCES main.users (id) ON DELETE SET NULL,
+    "updatedAt" TIMESTAMP DEFAULT NOW() NOT NULL,
+    "updatedBy" INT DEFAULT NULL REFERENCES main.users (id) ON DELETE SET NULL,
+    "isArchived" BOOLEAN DEFAULT FALSE NOT NULL,
+    "archivedAt" TIMESTAMP DEFAULT NULL,
+    "archivedBy" INT DEFAULT NULL REFERENCES main.users (id) ON DELETE SET NULL,
     CONSTRAINT fk_chat_message_status_message FOREIGN KEY ("messageId", "messageCreatedAt") REFERENCES chat_message (id, "createdAt") ON DELETE CASCADE,
     CONSTRAINT unique_message_user_status UNIQUE ("messageId", "messageCreatedAt", "userId")
 );
@@ -76,6 +94,12 @@ CREATE TABLE IF NOT EXISTS chat_message_reaction (
     "userId" INT NOT NULL REFERENCES main.users (id) ON DELETE CASCADE,
     reaction VARCHAR(50) NOT NULL,
     "createdAt" TIMESTAMP DEFAULT NOW() NOT NULL,
+    "createdBy" INT DEFAULT NULL REFERENCES main.users (id) ON DELETE SET NULL,
+    "updatedAt" TIMESTAMP DEFAULT NOW() NOT NULL,
+    "updatedBy" INT DEFAULT NULL REFERENCES main.users (id) ON DELETE SET NULL,
+    "isArchived" BOOLEAN DEFAULT FALSE NOT NULL,
+    "archivedAt" TIMESTAMP DEFAULT NULL,
+    "archivedBy" INT DEFAULT NULL REFERENCES main.users (id) ON DELETE SET NULL,
     CONSTRAINT fk_chat_message_reaction_message FOREIGN KEY ("messageId", "messageCreatedAt") REFERENCES chat_message (id, "createdAt") ON DELETE CASCADE,
     CONSTRAINT unique_message_reaction UNIQUE ("messageId", "messageCreatedAt", "userId")
 );

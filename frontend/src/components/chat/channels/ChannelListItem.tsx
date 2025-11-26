@@ -66,8 +66,7 @@ export function ChannelListItem({
             <div className="flex items-center gap-2 flex-1 min-w-0">
               <p className="text-sm text-muted-foreground truncate">
                 <span className="font-medium">
-                  {loggedInUser &&
-                  lastMessage.senderUserId === loggedInUser.id
+                  {loggedInUser && lastMessage.senderUserId === loggedInUser.id
                     ? "You"
                     : getSenderUser(
                         lastMessage.senderUserId,
@@ -76,7 +75,7 @@ export function ChannelListItem({
                       ).name}
                   :
                 </span>{" "}
-                {lastMessage.isDeleted ? (
+                {lastMessage.isArchived ? (
                   <span className="italic">Message deleted</span>
                 ) : (
                   lastMessage.text || "Media"
