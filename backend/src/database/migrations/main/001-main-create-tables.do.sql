@@ -100,7 +100,7 @@ CREATE TABLE IF NOT EXISTS users (
     dob DATE,
     "bloodGroup" blood_group_enum, -- Use ENUM type
     "marriedStatus" married_status_enum,
-    "profilePictureUrl" VARCHAR(500),
+    "profilePictureKey" VARCHAR(500),
     bio TEXT, -- User biography
     "isPlatformUser" BOOLEAN DEFAULT FALSE NOT NULL,
     "statusId" INT NOT NULL REFERENCES lookups (id) ON DELETE CASCADE,
