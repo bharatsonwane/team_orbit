@@ -38,6 +38,7 @@ import type { BreadcrumbLayoutProps } from "@/components/AppLayout";
 import TenantDepartments from "@/pages/platform/tenant/TenantDepartments";
 import TenantDesignations from "@/pages/platform/tenant/TenantDesignations";
 import ChatPage from "@/pages/tenant/chat/ChatPage";
+import NewsFeed from "@/pages/tenant/posts/Newsfeed";
 
 export interface SidebarRouteWithChildren {
   title: string;
@@ -449,12 +450,7 @@ export const tenantSidebarNavigationItems: SidebarRouteWithChildren[] = [
         href: "/tenant/:tenantId/social/feed",
         path: "/tenant/:tenantId/social/feed",
         allowedRoles: [userRoleKeys.ANY],
-        element: (
-          <ComingSoon
-            title="Newsfeed"
-            description="Stay updated with company news and colleague posts."
-          />
-        ),
+        element: <NewsFeed />,
       },
       {
         title: "Announcements",
@@ -486,25 +482,6 @@ export const tenantSidebarNavigationItems: SidebarRouteWithChildren[] = [
           <ComingSoon
             title="Polls & Surveys"
             description="Participate in company polls and surveys."
-          />
-        ),
-      },
-      {
-        title: "Company Updates",
-        isShownInSidebar: true,
-        icon: FileText,
-        href: "/tenant/:tenantId/social/updates",
-        path: "/tenant/:tenantId/social/updates",
-        allowedRoles: [
-          userRoleKeys.TENANT_ADMIN,
-          userRoleKeys.TENANT_MANAGER,
-          userRoleKeys.PLATFORM_ADMIN,
-          userRoleKeys.PLATFORM_SUPER_ADMIN,
-        ],
-        element: (
-          <ComingSoon
-            title="Company Updates"
-            description="Manage company updates and communications."
           />
         ),
       },
