@@ -1,6 +1,7 @@
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { MoreVertical, Phone, Video, Hash, Lock, Users } from "lucide-react";
+import { MoreVertical, Phone, Video, Hash, Lock, Users, X } from "lucide-react";
+import { useState } from "react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -11,6 +12,7 @@ import type { ChatChannel } from "@/schemas/chatSchema";
 import { Badge } from "@/components/ui/badge";
 import { useChat } from "@/contexts/ChatContextProvider";
 import { useAuthService } from "@/contexts/AuthContextProvider";
+import ChatMembers from "../ChatMembers";
 
 interface ChatHeaderProps {
   channel: ChatChannel;
@@ -20,6 +22,9 @@ interface ChatHeaderProps {
 export function ChatHeader({ channel, channelType }: ChatHeaderProps) {
   const { chatUsers } = useChat();
   const { loggedInUser } = useAuthService();
+
+  // State for showing group members modal
+  const [showMembers, setShowMembers] = useState(false);
 
   if (channelType === "direct" && channel) {
     // For direct chats, find the other participant from channel.members
@@ -43,7 +48,7 @@ export function ChatHeader({ channel, channelType }: ChatHeaderProps) {
         <div className="flex items-center gap-3 flex-1 min-w-0">
           <Avatar className="w-10 h-10">
             <AvatarImage
-              src={channel.avatar || participantUser.avatar}
+              src={channel.avatar || participantUser.profilePictureUrl}
               alt={participantUser.name}
             />
             <AvatarFallback>
@@ -146,9 +151,25 @@ export function ChatHeader({ channel, channelType }: ChatHeaderProps) {
         </div>
 
         <div className="flex items-center gap-1">
-          <Button variant="ghost" size="icon" className="h-9 w-9">
-            <Users className="w-4 h-4" />
-          </Button>
+          <div className="relative">
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-9 w-9"
+              onClick={() => setShowMembers(v => !v)}
+              aria-label="Show group members"
+            >
+              <Users className="w-4 h-4" />
+            </Button>
+            {showMembers && (
+              <ChatMembers
+                channelMembers={channel.members}
+                onClose={() => {
+                  setShowMembers(false);
+                }}
+              />
+            )}
+          </div>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" size="icon" className="h-9 w-9">
