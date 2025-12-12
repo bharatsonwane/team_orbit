@@ -1,11 +1,8 @@
-import { Server, Socket } from "socket.io";
-import { SocketManager } from "./socketManager";
+import { Socket } from "socket.io";
+import { SocketManager } from "../socketManager";
 
 export default class NotificationSocket {
-  constructor(
-    private socketIo: Server,
-    private socket: Socket
-  ) {
+  constructor(private socket: Socket) {
     this.registerEvents();
   }
 
@@ -13,7 +10,8 @@ export default class NotificationSocket {
     // When a client acknowledges notifications
     this.socket.on("notification:read", data => {
       console.log("Notification read:", data);
-      this.socketIo.emit("notification:read:update", data);
+      const io = SocketManager.getSocketIo();
+      io.emit("notification:read:update", data);
     });
   }
 

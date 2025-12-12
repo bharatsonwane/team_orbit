@@ -1,56 +1,27 @@
-import { Server } from "socket.io";
-import { SocketManager, AuthenticatedSocket } from "./socketManager";
-import {
-  ChatMessageSchema,
-  SendChatMessageSchema,
-} from "@src/schemas/chat.schema";
+import { SocketManager, AuthenticatedSocket } from "../socketManager";
+import { SendChatMessageSchema } from "@src/schemaAndTypes/chat.schema";
 import Chat from "@src/services/chat.service";
 import { getChatChannelRoomName } from "@src/utils/chatHelper";
 
-export default class ChatSocket {
-  constructor(
-    private socketIo: Server,
-    private socket: AuthenticatedSocket
-  ) {
-    this.registerEvents();
-  }
-
-  private registerEvents() {
-    this.socket.on("chat:joinUserChatChannels", data => {
-      this.handleJoinUserChatChannels(data);
-    });
-    this.socket.on("chat:joinChannel", data => {
-      this.handleJoinChannel(data);
-    });
-
-    this.socket.on("chat:leaveChannel", data => {
-      this.handleLeaveChannel(data);
-    });
-
-    this.socket.on("chat:send", data => {
-      console.log("Chat message received:", data);
-    });
-
-    this.socket.on("chat:typing", payload => {
-      this.handleTyping(payload);
-    });
-  }
-
-  private async handleJoinUserChatChannels(data: {
-    userId: number;
-    tenantId: number;
+export class ChatSocketController {
+  static async handleJoinUserChatChannels({
+    socket,
+    data,
+  }: {
+    socket: AuthenticatedSocket;
+    data: { userId: number; tenantId: number };
   }) {
-    const user = this.socket.user;
-    const db = this.socket.db;
+    const user = socket.user;
+    const db = socket.db;
 
     if (user?.userId !== data.userId) {
-      this.socket.emit("error", {
+      socket.emit("error", {
         message: "userId does not match",
         category: "chat",
       });
       return;
     } else if (!data.tenantId || !data.userId) {
-      this.socket.emit("error", {
+      socket.emit("error", {
         message: "tenantId and userId are required",
         category: "chat",
       });
@@ -63,38 +34,50 @@ export default class ChatSocket {
     });
 
     chatChannels.forEach(chatChannel => {
-      this.handleJoinChannel({
-        tenantId: data.tenantId,
-        chatChannelId: chatChannel.id,
+      ChatSocketController.handleJoinChannel({
+        socket,
+        data: {
+          tenantId: data.tenantId,
+          chatChannelId: chatChannel.id,
+        },
       });
     });
   }
 
-  private handleJoinChannel(data: { tenantId: number; chatChannelId: number }) {
+  static handleJoinChannel({
+    socket,
+    data,
+  }: {
+    socket: AuthenticatedSocket;
+    data: { tenantId: number; chatChannelId: number };
+  }) {
     if (!data.tenantId || !data.chatChannelId) {
-      this.socket.emit("error", {
+      socket.emit("error", {
         message: "tenantId and chatChannelId are required",
         category: "chat",
       });
       return;
     }
 
-    const user = this.socket.user;
+    const user = socket.user;
 
     const roomName = `chatChannel?tenantId=${data.tenantId}&chatChannelId=${data.chatChannelId}`;
-    this.socket.join(roomName);
+    socket.join(roomName);
 
     console.log(
-      `Socket ${this.socket.id} user ${user?.userId} joined tenant ${data.tenantId} channel ${data.chatChannelId}`
+      `Socket ${socket.id} user ${user?.userId} joined tenant ${data.tenantId} channel ${data.chatChannelId}`
     );
   }
 
-  private handleLeaveChannel(data: {
-    tenantId: number;
-    chatChannelId: number;
+  static handleLeaveChannel({
+    socket,
+    data,
+  }: {
+    socket: AuthenticatedSocket;
+    data: { tenantId: number; chatChannelId: number };
   }) {
     if (!data.tenantId || !data.chatChannelId) {
-      this.socket.emit("error", {
+      socket.emit("error", {
         message: "tenantId and chatChannelId are required",
         category: "chat",
       });
@@ -105,15 +88,21 @@ export default class ChatSocket {
       tenantId: data.tenantId,
       chatChannelId: data.chatChannelId,
     });
-    this.socket.leave(roomName);
+    socket.leave(roomName);
 
-    console.log(`Socket ${this.socket.id} left channel ${data.chatChannelId}`);
+    console.log(`Socket ${socket.id} left channel ${data.chatChannelId}`);
   }
 
-  private handleTyping(payload: {
-    tenantId: number;
-    chatChannelId: number;
-    isTyping: boolean;
+  static handleTyping({
+    socket,
+    payload,
+  }: {
+    socket: AuthenticatedSocket;
+    payload: {
+      tenantId: number;
+      chatChannelId: number;
+      isTyping: boolean;
+    };
   }) {
     if (!payload.tenantId || !payload.chatChannelId) {
       return;
@@ -125,7 +114,8 @@ export default class ChatSocket {
     });
 
     // Emit typing indicator to channel room
-    this.socketIo.to(roomName).emit("chat:typing:update", {
+    const io = SocketManager.getSocketIo();
+    io.to(roomName).emit("chat:typing:update", {
       ...payload,
       timestamp: new Date().toISOString(),
     });
@@ -136,14 +126,18 @@ export default class ChatSocket {
   /**
    * Emit new message to channel room
    */
-  static notifyChatMessage(
-    tenantId: number,
-    chatChannelId: number,
+  static notifyChatMessage({
+    tenantId,
+    chatChannelId,
+    message,
+  }: {
+    tenantId: number;
+    chatChannelId: number;
     message: SendChatMessageSchema & {
       tempId?: number;
       senderSocketId?: string;
-    }
-  ) {
+    };
+  }) {
     const io = SocketManager.getSocketIo();
     const roomName = getChatChannelRoomName({
       tenantId,
@@ -160,11 +154,15 @@ export default class ChatSocket {
   /**
    * Emit channel updated event
    */
-  static notifyChannelUpdated(
-    tenantId: number,
-    chatChannelId: number,
-    channelData: any
-  ) {
+  static notifyChannelUpdated({
+    tenantId,
+    chatChannelId,
+    channelData,
+  }: {
+    tenantId: number;
+    chatChannelId: number;
+    channelData: any;
+  }) {
     const io = SocketManager.getSocketIo();
     const roomName = getChatChannelRoomName({
       tenantId,

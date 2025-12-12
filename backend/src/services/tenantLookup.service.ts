@@ -1,6 +1,6 @@
 import { dbClientPool } from "@src/middleware/dbClientMiddleware";
-import { CreateTenantLookupRequest } from "@src/schemas/tenantLookup.schema";
-import { UpdateTenantLookupRequest } from "@src/schemas/tenantLookup.schema";
+import { CreateTenantLookupRequest } from "@src/schemaAndTypes/tenantLookup.schema";
+import { UpdateTenantLookupRequest } from "@src/schemaAndTypes/tenantLookup.schema";
 
 interface TenantLookupType {
   id: number;

@@ -13,10 +13,10 @@ import {
   chatMessageListResponseSchema,
   createChatChannelSchema,
   sendChatMessageSchema,
-} from "@src/schemas/chat.schema";
+} from "@src/schemaAndTypes/chat.schema";
 import { ensureTenantMiddleware } from "@src/middleware/ensureTenantMiddleware";
 import { authRoleMiddleware } from "@src/middleware/authRoleMiddleware";
-import { idValidation } from "@src/schemas/common.schema";
+import { idValidation } from "@src/schemaAndTypes/common.schema";
 
 const registrar = new RouteRegistrar({
   basePath: "/api",

@@ -1,8 +1,6 @@
 import { Server as HttpServer } from "http";
 import { SocketManager, AuthenticatedSocket } from "./socketManager";
-import ChatSocket from "./chat.socket";
-import DataRefreshSocket from "./dataRefresh.socket";
-import NotificationSocket from "./notification.socket";
+import ChatSocket from "./events/chat.socket.event";
 
 export const initializeSocket = (server: HttpServer): void => {
   const socketIo = SocketManager.init(server);
@@ -23,9 +21,7 @@ export const initializeSocket = (server: HttpServer): void => {
     SocketManager.addConnection(socket);
 
     /**@description Attach socket modules*/
-    new ChatSocket(socketIo, socket);
-    new DataRefreshSocket(socketIo, socket);
-    new NotificationSocket(socketIo, socket);
+    new ChatSocket(socket);
 
     /**@description Handle disconnection*/
     socket.on("disconnect", reason => {

@@ -10,14 +10,14 @@ import {
   updateUserAuthEmailSchema,
   getUsersCountQuerySchema,
   getUsersCountResponseSchema,
-} from "@src/schemas/user.schema";
+} from "@src/schemaAndTypes/user.schema";
 import {
   getUserOASSchema,
   getUserProfileOASSchema,
   getUsersQuerySchema,
   updateUserPasswordOASSchema,
 } from "@src/openApiSpecification/oasDoc/user.oas";
-import { idValidation } from "@src/schemas/common.schema";
+import { idValidation } from "@src/schemaAndTypes/common.schema";
 import {
   getUserById,
   getUserProfile,

@@ -6,7 +6,7 @@ import {
   ChatMessageSchema,
   CreateChatChannelSchema,
   SendChatMessageSchema,
-} from "@src/schemas/chat.schema";
+} from "@src/schemaAndTypes/chat.schema";
 import { dbTransactionKeys } from "@src/utils/constants";
 
 interface CreateChannelParams extends CreateChatChannelSchema {

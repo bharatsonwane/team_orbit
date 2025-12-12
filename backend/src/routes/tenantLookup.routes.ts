@@ -5,7 +5,7 @@ import {
   getTenantLookupTypeById,
   updateTenantLookupById,
 } from "@src/controllers/tenantLookup.controller";
-import { idValidation } from "@src/schemas/common.schema";
+import { idValidation } from "@src/schemaAndTypes/common.schema";
 import {
   createTenantLookupRequestSchema,
   tenantLookupSchema,
@@ -13,7 +13,7 @@ import {
   tenantLookupsListSchema,
   tenantLookupsWithTypeListSchema,
   updateTenantLookupRequestSchema,
-} from "@src/schemas/tenantLookup.schema";
+} from "@src/schemaAndTypes/tenantLookup.schema";
 import { ensureTenantMiddleware } from "@src/middleware/ensureTenantMiddleware";
 import { authRoleMiddleware } from "@src/middleware/authRoleMiddleware";
 import { userRoleKeys } from "@src/utils/constants";

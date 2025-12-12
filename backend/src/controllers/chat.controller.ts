@@ -1,6 +1,6 @@
 import { NextFunction, Request, Response } from "express";
 import Chat from "@src/services/chat.service";
-import ChatSocket from "@src/socket/chat.socket";
+import { ChatSocketController } from "@src/socket/controller/chat.socket.controller";
 import { SocketManager } from "@src/socket/socketManager";
 import {
   ChatChannelListQuerySchema,
@@ -9,7 +9,7 @@ import {
   CreateChatChannelSchema,
   SendChatMessageSchema,
   sendChatMessageSchema,
-} from "@src/schemas/chat.schema";
+} from "@src/schemaAndTypes/chat.schema";
 import { AuthenticatedRequest } from "@src/middleware/authRoleMiddleware";
 
 export const createChannel = async (
@@ -91,10 +91,14 @@ export const saveChannelMessage = async (
       : undefined;
 
     // Include tempId and senderSocketId in the broadcast
-    ChatSocket.notifyChatMessage(tenantId, chatChannelId, {
-      ...message,
-      tempId: payload.tempId,
-      senderSocketId: senderSocketId,
+    ChatSocketController.notifyChatMessage({
+      tenantId,
+      chatChannelId,
+      message: {
+        ...message,
+        tempId: payload.tempId,
+        senderSocketId: senderSocketId,
+      },
     });
     res.status(201).json(message);
   } catch (error) {

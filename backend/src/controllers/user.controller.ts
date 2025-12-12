@@ -6,7 +6,10 @@ import {
   createJwtToken,
 } from "@src/utils/authHelper";
 import Lookup from "@src/services/lookup.service";
-import { UserLoginSchema, CreateUserSchema } from "@src/schemas/user.schema";
+import {
+  UserLoginSchema,
+  CreateUserSchema,
+} from "@src/schemaAndTypes/user.schema";
 import { AuthenticatedRequest } from "@src/middleware/authRoleMiddleware";
 import {
   lookupTypeKeys,

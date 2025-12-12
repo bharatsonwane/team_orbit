@@ -1,17 +1,15 @@
-import { Server, Socket } from "socket.io";
-import { SocketManager } from "./socketManager";
+import { Socket } from "socket.io";
+import { SocketManager } from "../socketManager";
 
 export default class RefreshHandler {
-  constructor(
-    private socketIo: Server,
-    private socket: Socket
-  ) {
+  constructor(private socket: Socket) {
     this.registerEvents();
   }
 
   private registerEvents() {
     this.socket.on("refresh:request", () => {
-      this.socketIo.emit("refresh:update", { ts: Date.now() });
+      const io = SocketManager.getSocketIo();
+      io.emit("refresh:update", { ts: Date.now() });
     });
   }
 

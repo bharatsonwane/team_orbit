@@ -6,7 +6,7 @@ import {
   CreateUserSchema,
   SaveUserContactsSchema,
   SaveUserJobDetailsSchema,
-} from "@src/schemas/user.schema";
+} from "@src/schemaAndTypes/user.schema";
 import { buildUpdateFields } from "@src/utils/queryHelper";
 import { getHashPassword } from "@src/utils/authHelper";
 import { dbTransactionKeys } from "@src/utils/constants";
