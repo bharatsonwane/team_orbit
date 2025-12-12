@@ -305,33 +305,44 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
 
       const apiChannels = await dispatch(fetchChatChannelsAction()).unwrap();
 
-      apiChannels.forEach((channel: ChatChannelListItem) => {
-        const existingChannel = tempChannelStateMap.get(channel.id);
+      await Promise.all(
+        apiChannels.map(async (channel: ChatChannelListItem) => {
+          const existingChannel = tempChannelStateMap.get(channel.id);
 
-        if (existingChannel) {
-          tempChannelStateMap.set(channel.id, {
-            ...existingChannel,
-            unreadCount: existingChannel.unreadCount ?? 0,
-            updatedAt: channel.updatedAt,
-          });
-        } else {
-          tempChannelStateMap.set(channel.id, {
+          const channelMessages = await handleLoadChannelMessages({
             chatChannelId: channel.id,
-            messages: [],
-            loading: false,
-            error: null,
-            typingUserIds: [],
-            name: channel.name,
-            description: channel.description ?? undefined,
-            type: channel.type as "direct" | "group",
-            image: channel.image ?? undefined,
-            members: channel.members ?? [],
-            unreadCount: 0,
-            createdAt: channel.createdAt,
-            updatedAt: channel.updatedAt,
+            isInitialLoading: true,
           });
-        }
-      });
+
+          if (existingChannel) {
+            tempChannelStateMap.set(channel.id, {
+              ...existingChannel,
+              messages: [
+                ...(channelMessages ? channelMessages : []),
+                ...existingChannel.messages,
+              ],
+              unreadCount: existingChannel.unreadCount ?? 0,
+              updatedAt: channel.updatedAt,
+            });
+          } else {
+            tempChannelStateMap.set(channel.id, {
+              chatChannelId: channel.id,
+              messages: [...(channelMessages ? channelMessages : [])],
+              loading: false,
+              error: null,
+              typingUserIds: [],
+              name: channel.name,
+              description: channel.description ?? undefined,
+              type: channel.type as "direct" | "group",
+              image: channel.image ?? undefined,
+              members: channel.members ?? [],
+              unreadCount: 0,
+              createdAt: channel.createdAt,
+              updatedAt: channel.updatedAt,
+            });
+          }
+        })
+      );
 
       handleJoinUsersChatChannelsRooms({
         userId: loggedInUser?.id || 0,
@@ -603,8 +614,10 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
   /**@description Load channel messages from API*/
   const handleLoadChannelMessages = async ({
     chatChannelId,
+    isInitialLoading = false,
   }: {
     chatChannelId: number;
+    isInitialLoading?: boolean;
     limit?: number;
   }) => {
     try {
@@ -620,7 +633,8 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
       const messages = await dispatch(
         fetchChannelMessagesAction(query)
       ).unwrap();
-      if (messages.length > 0) {
+
+      if (messages.length > 0 && !isInitialLoading) {
         // Update channelStateMap with messages
         setChannelStateMap(prev => {
           const tempChannelStateMap = new Map(prev);
@@ -640,6 +654,8 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
           return tempChannelStateMap;
         });
       }
+
+      return messages;
     } catch (e) {
       console.error("Failed to load messages from API:", e);
     }
