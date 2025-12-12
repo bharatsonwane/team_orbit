@@ -1,5 +1,5 @@
 import { Server as HttpServer } from "http";
-import { SocketManager, AuthenticatedSocket } from "./socketManager";
+import { SocketManager, AuthenticatedSocket } from "./utils/socketManager";
 import ChatSocket from "./events/chat.socket.event";
 
 export const initializeSocket = (server: HttpServer): void => {

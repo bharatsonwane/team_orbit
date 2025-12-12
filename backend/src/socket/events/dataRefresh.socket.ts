@@ -1,5 +1,5 @@
 import { Socket } from "socket.io";
-import { SocketManager } from "../socketManager";
+import { SocketManager } from "../utils/socketManager";
 
 export default class RefreshHandler {
   constructor(private socket: Socket) {

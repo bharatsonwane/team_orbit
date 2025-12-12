@@ -1,7 +1,8 @@
-import { SocketManager, AuthenticatedSocket } from "../socketManager";
+import { SocketManager, AuthenticatedSocket } from "../utils/socketManager";
 import { SendChatMessageSchema } from "@src/schemaAndTypes/chat.schema";
 import Chat from "@src/services/chat.service";
 import { getChatChannelRoomName } from "@src/utils/chatHelper";
+import { chatSocketEvents } from "../utils/socketEvents";
 
 export class ChatSocketController {
   static async handleJoinUserChatChannels({
@@ -15,13 +16,13 @@ export class ChatSocketController {
     const db = socket.db;
 
     if (user?.userId !== data.userId) {
-      socket.emit("error", {
+      socket.emit(chatSocketEvents.CHAT_ERROR, {
         message: "userId does not match",
         category: "chat",
       });
       return;
     } else if (!data.tenantId || !data.userId) {
-      socket.emit("error", {
+      socket.emit(chatSocketEvents.CHAT_ERROR, {
         message: "tenantId and userId are required",
         category: "chat",
       });
@@ -52,7 +53,7 @@ export class ChatSocketController {
     data: { tenantId: number; chatChannelId: number };
   }) {
     if (!data.tenantId || !data.chatChannelId) {
-      socket.emit("error", {
+      socket.emit(chatSocketEvents.CHAT_ERROR, {
         message: "tenantId and chatChannelId are required",
         category: "chat",
       });
@@ -77,7 +78,7 @@ export class ChatSocketController {
     data: { tenantId: number; chatChannelId: number };
   }) {
     if (!data.tenantId || !data.chatChannelId) {
-      socket.emit("error", {
+      socket.emit(chatSocketEvents.CHAT_ERROR, {
         message: "tenantId and chatChannelId are required",
         category: "chat",
       });
@@ -115,7 +116,7 @@ export class ChatSocketController {
 
     // Emit typing indicator to channel room
     const io = SocketManager.getSocketIo();
-    io.to(roomName).emit("chat:typing:update", {
+    io.to(roomName).emit(chatSocketEvents.CHAT_TYPING_UPDATE, {
       ...payload,
       timestamp: new Date().toISOString(),
     });
@@ -143,7 +144,7 @@ export class ChatSocketController {
       tenantId,
       chatChannelId,
     });
-    io.to(roomName).emit("chat:new_message", {
+    io.to(roomName).emit(chatSocketEvents.CHAT_NEW_MESSAGE, {
       ...message,
       tempId: message.tempId,
       senderSocketId: message.senderSocketId,
@@ -168,7 +169,7 @@ export class ChatSocketController {
       tenantId,
       chatChannelId,
     });
-    io.to(roomName).emit("chat:channel_updated", {
+    io.to(roomName).emit(chatSocketEvents.CHAT_CHANNEL_UPDATED, {
       ...channelData,
       chatChannelId,
       timestamp: new Date().toISOString(),

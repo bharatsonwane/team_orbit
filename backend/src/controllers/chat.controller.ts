@@ -1,7 +1,7 @@
 import { NextFunction, Request, Response } from "express";
 import Chat from "@src/services/chat.service";
 import { ChatSocketController } from "@src/socket/controller/chat.socket.controller";
-import { SocketManager } from "@src/socket/socketManager";
+import { SocketManager } from "@src/socket/utils/socketManager";
 import {
   ChatChannelListQuerySchema,
   chatChannelListQuerySchema,
