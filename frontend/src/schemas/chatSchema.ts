@@ -194,6 +194,7 @@ export const addReactionSchema = z.object({
   messageId: z.number(),
   chatChannelId: z.number(),
   reaction: z.string().min(1, "Reaction is required"),
+  socketId: z.string().optional(),
 });
 
 export type AddReactionData = z.infer<typeof addReactionSchema>;

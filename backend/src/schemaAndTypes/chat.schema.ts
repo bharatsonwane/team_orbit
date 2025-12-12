@@ -111,6 +111,7 @@ export const addMessageReactionSchema = z.object({
     .string()
     .min(1, "Reaction is required")
     .max(10, "Reaction should be under 10 characters"),
+  socketId: z.string().optional(),
 });
 
 export const removeMessageReactionSchema = z.object({

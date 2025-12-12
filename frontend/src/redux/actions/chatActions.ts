@@ -91,10 +91,10 @@ export const handleMessageReactionAction = createAsyncThunk<
   { rejectValue: string }
 >("chat/handleMessageReactionAction", async (payload, { rejectWithValue }) => {
   try {
-    const { chatChannelId, messageId, reaction } = payload;
+    const { chatChannelId, messageId, reaction, socketId } = payload;
     const response = await getAxios().post(
       `api/chat/channel/${chatChannelId}/message/${messageId}/reaction`,
-      { reaction }
+      { reaction, socketId }
     );
     return response.data;
   } catch (error: unknown) {

@@ -162,6 +162,46 @@ export class ChatSocketController {
   }
 
   /**
+   * Emit message reaction update to channel room
+   */
+  static notifyChatReaction({
+    tenantId,
+    chatChannelId,
+    messageId,
+    userId,
+    reactionId,
+    reaction,
+    action,
+    senderSocketId,
+  }: {
+    tenantId: number;
+    chatChannelId: number;
+    messageId: number;
+    userId: number;
+    reactionId: number;
+    reaction: string;
+    action: "add" | "remove" | "update";
+    senderSocketId?: string;
+  }) {
+    const io = SocketManager.getSocketIo();
+    const roomName = getChatChannelRoomName({
+      tenantId,
+      chatChannelId,
+    });
+
+    io.to(roomName).emit(chatSocketEvents.CHAT_REACTION_UPDATE, {
+      messageId,
+      chatChannelId,
+      userId,
+      reactionId,
+      reaction,
+      action,
+      senderSocketId,
+      timestamp: new Date().toISOString(),
+    });
+  }
+
+  /**
    * Emit channel updated event
    */
   static notifyChannelUpdated({

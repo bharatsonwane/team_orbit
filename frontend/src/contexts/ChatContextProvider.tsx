@@ -126,9 +126,14 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
 
   useEffect(() => {
     SocketManager.socketIo.on("chat:new_message", handleNotifyChatMessage);
+    SocketManager.socketIo.on("chat:reaction_update", handleNotifyChatReaction);
     SocketManager.socketIo.on("chat:channel_updated", handleChannelUpdated);
     return () => {
       SocketManager.socketIo.off("chat:new_message", handleNotifyChatMessage);
+      SocketManager.socketIo.off(
+        "chat:reaction_update",
+        handleNotifyChatReaction
+      );
       SocketManager.socketIo.off("chat:channel_updated", handleChannelUpdated);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -196,6 +201,72 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
       };
       const tempChannelStateMap = new Map(prev);
       tempChannelStateMap.set(message.chatChannelId, tempChannelData);
+      return tempChannelStateMap;
+    });
+  };
+
+  // Handle incoming reaction updates from socket
+  const handleNotifyChatReaction = (data: {
+    messageId: number;
+    chatChannelId: number;
+    userId: number;
+    reactionId: number;
+    reaction: string;
+    action: "add" | "remove" | "update";
+    senderSocketId?: string;
+  }) => {
+    debugger;
+    const currentSocketId = SocketManager.socketIo?.id;
+    const isSentByThisDevice = data.senderSocketId === currentSocketId;
+
+    // Don't update state for reactions sent by this device (already optimistically updated)
+    if (isSentByThisDevice) return;
+
+    setChannelStateMap(prev => {
+      const existingChannelData = prev.get(data.chatChannelId);
+      if (!existingChannelData) return prev;
+
+      const messages = [...existingChannelData.messages];
+      const messageIndex = messages.findIndex(msg => msg.id == data.messageId);
+
+      if (messageIndex === -1) return prev;
+
+      const message = { ...messages[messageIndex] };
+      const reactions = [...(message.reactions || [])];
+      const reactionIndex = reactions.findIndex(
+        r => r.reaction === data.reaction && r.userId === data.userId
+      );
+
+      if (data.action === "remove") {
+        if (reactionIndex !== -1) {
+          reactions.splice(reactionIndex, 1);
+        }
+      } else if (data.action === "add" || data.action === "update") {
+        if (reactionIndex !== -1) {
+          reactions[reactionIndex] = {
+            ...reactions[reactionIndex],
+            reaction: data.reaction,
+          };
+        } else {
+          reactions.push({
+            id: data.reactionId,
+            userId: data.userId,
+            reaction: data.reaction,
+            createdAt: new Date().toISOString(),
+          });
+        }
+      }
+
+      message.reactions = reactions;
+      messages[messageIndex] = message;
+
+      const tempChannelData = {
+        ...existingChannelData,
+        messages,
+      };
+
+      const tempChannelStateMap = new Map(prev);
+      tempChannelStateMap.set(data.chatChannelId, tempChannelData);
       return tempChannelStateMap;
     });
   };
@@ -538,7 +609,10 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
     try {
       // Call API - backend handles whether to add, update, or remove
       const reactionResult = await dispatch(
-        handleMessageReactionAction(data)
+        handleMessageReactionAction({
+          ...data,
+          socketId: SocketManager.socketIo?.id,
+        })
       ).unwrap();
 
       // Update local state based on the response

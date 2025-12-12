@@ -146,10 +146,11 @@ export const handleMessageReaction = async (
   next: NextFunction
 ): Promise<void> => {
   try {
+    const tenantId = req.user.tenantId;
     const userId = req.user?.userId!;
     const chatChannelId = Number(req.params.chatChannelId);
     const messageId = Number(req.params.messageId);
-    const { reaction } = req.body as AddMessageReactionSchema;
+    const { reaction, socketId } = req.body as AddMessageReactionSchema;
 
     // Check if user is a member of the channel
     const isMember = await Chat.isUserChannelMember(
@@ -203,13 +204,14 @@ export const handleMessageReaction = async (
           reaction,
         };
       } else {
-        // Update existing reaction with new emoji
+        // Update existing reaction with new reaction
         const updatedReaction = await Chat.updateMessageReaction(req.db, {
           reactionId: existingReaction.id,
           reaction,
         });
         responseData = {
           ...updatedReaction,
+          reactionId: existingReaction.id,
           action: "updated",
           isUpdated: true,
         };
@@ -224,10 +226,28 @@ export const handleMessageReaction = async (
       });
       responseData = {
         ...newReaction,
+        reactionId: newReaction.id,
         action: "created",
         isUpdated: false,
       };
     }
+
+    // Notify all channel members about the reaction change via socket
+    ChatSocketController.notifyChatReaction({
+      tenantId,
+      chatChannelId,
+      messageId,
+      userId,
+      reactionId: responseData.reactionId,
+      reaction: reaction,
+      action:
+        responseData.action === "removed"
+          ? "remove"
+          : responseData.action === "updated"
+            ? "update"
+            : "add",
+      senderSocketId: socketId,
+    });
 
     res.status(201).json(responseData);
   } catch (error) {

@@ -43,7 +43,7 @@ export function MessageReactions({
   showSmiley = true,
   showCommonReactions = false,
 }: MessageReactionsProps) {
-  // Group reactions by emoji
+  // Group reactions by reaction
   const reactionGroups = reactions.reduce(
     (acc, reaction) => {
       if (!acc[reaction.reaction]) {
@@ -65,15 +65,15 @@ export function MessageReactions({
       {/* Show common reactions if enabled */}
       {showCommonReactions && (
         <>
-          {commonReactions.map(emoji => (
+          {commonReactions.map(reaction => (
             <Button
-              key={emoji}
+              key={reaction}
               variant="ghost"
               size="sm"
               className="h-8 w-8 p-0 text-lg hover:bg-muted transition-colors rounded-md"
-              onClick={() => onReactionClick(emoji)}
+              onClick={() => onReactionClick(reaction)}
             >
-              {emoji}
+              {reaction}
             </Button>
           ))}
         </>
@@ -81,15 +81,15 @@ export function MessageReactions({
 
       {/* Show existing reaction groups */}
       {!showCommonReactions &&
-        Object.entries(reactionGroups).map(([emoji, reactionList]) => (
+        Object.entries(reactionGroups).map(([reaction, reactionList]) => (
           <Button
-            key={emoji}
+            key={reaction}
             variant="outline"
             size="sm"
             className="h-7 px-2 text-sm rounded-full border-border hover:bg-muted"
-            onClick={() => onReactionClick(emoji)}
+            onClick={() => onReactionClick(reaction)}
           >
-            {emoji} {reactionList.length}
+            {reaction} {reactionList.length}
           </Button>
         ))}
 
@@ -106,15 +106,15 @@ export function MessageReactions({
           </PopoverTrigger>
           <PopoverContent className="w-auto p-3">
             <div className="grid grid-cols-6 gap-1">
-              {[...commonReactions, ...moreReactions].map(emoji => (
+              {[...commonReactions, ...moreReactions].map(reaction => (
                 <Button
-                  key={emoji}
+                  key={reaction}
                   variant="ghost"
                   size="sm"
                   className="h-8 w-8 p-0 text-lg hover:bg-muted transition-colors"
-                  onClick={() => onReactionClick(emoji)}
+                  onClick={() => onReactionClick(reaction)}
                 >
-                  {emoji}
+                  {reaction}
                 </Button>
               ))}
             </div>
