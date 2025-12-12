@@ -11,13 +11,37 @@ import { cn } from "@/lib/utils";
 interface MessageReactionsProps {
   reactions: MessageReactionType[];
   onReactionClick: (reaction: string) => void;
+  showSmiley?: boolean;
+  showCommonReactions?: boolean;
 }
 
 const commonReactions = ["👍", "❤️", "😂", "😮", "😢", "🙏"];
+const moreReactions = [
+  "🎉",
+  "🔥",
+  "💯",
+  "👏",
+  "😍",
+  "🤔",
+  "😊",
+  "👌",
+  "🙌",
+  "💪",
+  "😎",
+  "🤗",
+  "😊",
+  "👌",
+  "🙌",
+  "💪",
+  "😎",
+  "🤗",
+];
 
 export function MessageReactions({
   reactions,
   onReactionClick,
+  showSmiley = true,
+  showCommonReactions = false,
 }: MessageReactionsProps) {
   // Group reactions by emoji
   const reactionGroups = reactions.reduce(
@@ -32,40 +56,71 @@ export function MessageReactions({
   );
 
   return (
-    <div className="flex items-center gap-1 mt-2 flex-wrap">
-      {Object.entries(reactionGroups).map(([emoji, reactionList]) => (
-        <Button
-          key={emoji}
-          variant="outline"
-          size="sm"
-          className="h-6 px-2 text-xs"
-          onClick={() => onReactionClick(emoji)}
-        >
-          {emoji} {reactionList.length}
-        </Button>
-      ))}
-      <Popover>
-        <PopoverTrigger asChild>
-          <Button variant="outline" size="sm" className="h-6 w-6 p-0">
-            <SmilePlus className="w-3 h-3" />
+    <div
+      className={cn(
+        "flex items-center gap-1",
+        showCommonReactions ? "mt-0" : "mt-2 flex-wrap"
+      )}
+    >
+      {/* Show common reactions if enabled */}
+      {showCommonReactions && (
+        <>
+          {commonReactions.map(emoji => (
+            <Button
+              key={emoji}
+              variant="ghost"
+              size="sm"
+              className="h-8 w-8 p-0 text-lg hover:bg-muted transition-colors rounded-md"
+              onClick={() => onReactionClick(emoji)}
+            >
+              {emoji}
+            </Button>
+          ))}
+        </>
+      )}
+
+      {/* Show existing reaction groups */}
+      {!showCommonReactions &&
+        Object.entries(reactionGroups).map(([emoji, reactionList]) => (
+          <Button
+            key={emoji}
+            variant="outline"
+            size="sm"
+            className="h-7 px-2 text-sm rounded-full border-border hover:bg-muted"
+            onClick={() => onReactionClick(emoji)}
+          >
+            {emoji} {reactionList.length}
           </Button>
-        </PopoverTrigger>
-        <PopoverContent className="w-auto p-2">
-          <div className="flex gap-1">
-            {commonReactions.map(emoji => (
-              <Button
-                key={emoji}
-                variant="ghost"
-                size="sm"
-                className="h-8 w-8 p-0 text-lg"
-                onClick={() => onReactionClick(emoji)}
-              >
-                {emoji}
-              </Button>
-            ))}
-          </div>
-        </PopoverContent>
-      </Popover>
+        ))}
+
+      {showSmiley && (
+        <Popover>
+          <PopoverTrigger asChild>
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-7 w-7 p-0 rounded-full border-border hover:bg-muted"
+            >
+              <SmilePlus className="w-3 h-3" />
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent className="w-auto p-3">
+            <div className="grid grid-cols-6 gap-1">
+              {[...commonReactions, ...moreReactions].map(emoji => (
+                <Button
+                  key={emoji}
+                  variant="ghost"
+                  size="sm"
+                  className="h-8 w-8 p-0 text-lg hover:bg-muted transition-colors"
+                  onClick={() => onReactionClick(emoji)}
+                >
+                  {emoji}
+                </Button>
+              ))}
+            </div>
+          </PopoverContent>
+        </Popover>
+      )}
     </div>
   );
 }

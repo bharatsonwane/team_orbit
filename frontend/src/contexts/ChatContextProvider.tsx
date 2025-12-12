@@ -26,6 +26,7 @@ import {
   fetchChatChannelsAction,
   sendChannelMessageAction,
   fetchChannelMessagesAction,
+  handleMessageReactionAction,
 } from "@/redux/actions/chatActions";
 import { useAuthService } from "./AuthContextProvider";
 import { SocketManager } from "@/lib/socketManager";
@@ -49,8 +50,7 @@ export interface ChatContextType {
   handleSendMessage: (data: SendMessageData) => void;
   handleEditMessage: (data: EditMessageData) => void;
   handleDeleteMessage: (messageId: number, chatChannelId: number) => void;
-  handleAddReaction: (data: AddReactionData) => void;
-  handleRemoveReaction: (messageId: number, chatChannelId: number) => void;
+  handleReaction: (data: AddReactionData) => Promise<void>;
   handleMarkAsRead: (chatChannelId: number) => void;
   handleSetTyping: (chatChannelId: number, isTyping: boolean) => void;
   handleClearError: () => void;
@@ -66,8 +66,7 @@ const defaultContext: ChatContextType = {
   handleSendMessage: () => {},
   handleEditMessage: () => {},
   handleDeleteMessage: () => {},
-  handleAddReaction: () => {},
-  handleRemoveReaction: () => {},
+  handleReaction: async () => {},
   handleMarkAsRead: () => {},
   handleSetTyping: () => {},
   handleClearError: () => {},
@@ -534,81 +533,79 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
     });
   };
 
-  // Add reaction
-  const handleAddReaction = (data: AddReactionData) => {
-    const now = new Date().toISOString();
-    setChannelStateMap(prev => {
-      const existingChannelData = prev.get(data.chatChannelId);
-      if (!existingChannelData) return prev;
-      const tempMessages = existingChannelData.messages.map(msg => {
-        if (msg.id === data.messageId) {
-          const existingReaction = msg.reactions.find(
-            r =>
-              r.userId === (loggedInUser?.id || 0) &&
-              r.messageId === data.messageId
-          );
+  // Add/Update/Remove reaction - single endpoint handles all cases
+  const handleReaction = async (data: AddReactionData) => {
+    try {
+      // Call API - backend handles whether to add, update, or remove
+      const reactionResult = await dispatch(
+        handleMessageReactionAction(data)
+      ).unwrap();
 
-          if (existingReaction) {
-            // Update existingChannelData reaction
-            return {
-              ...msg,
-              reactions: msg.reactions.map(r =>
-                r.userId === (loggedInUser?.id || 0) &&
-                r.messageId === data.messageId
-                  ? { ...r, reaction: data.reaction, createdAt: now }
-                  : r
-              ),
-            };
-          } else {
-            // Add new reaction
-            return {
-              ...msg,
-              reactions: [
-                ...msg.reactions,
-                {
-                  id: Date.now(),
-                  messageId: data.messageId,
-                  userId: loggedInUser?.id || 0,
-                  reaction: data.reaction,
-                  createdAt: now,
-                },
-              ],
-            };
-          }
-        }
-        return msg;
-      });
-      const tempChannelStateMap = new Map(prev);
-      tempChannelStateMap.set(data.chatChannelId, {
-        ...existingChannelData,
-        messages: tempMessages,
-      });
-      return tempChannelStateMap;
-    });
-  };
+      // Update local state based on the response
+      setChannelStateMap(prev => {
+        const existingChannelData = prev.get(data.chatChannelId);
+        if (!existingChannelData) return prev;
 
-  // Remove reaction
-  const handleRemoveReaction = (messageId: number, chatChannelId: number) => {
-    setChannelStateMap(prev => {
-      const existingChannelData = prev.get(chatChannelId);
-      if (!existingChannelData) return prev;
-      const tempMessages = existingChannelData.messages.map(msg =>
-        msg.id === messageId
-          ? {
-              ...msg,
-              reactions: msg.reactions.filter(
-                r => !(r.userId === 1 && r.messageId === messageId)
-              ),
+        const tempMessages = existingChannelData.messages.map(msg => {
+          if (msg.id === data.messageId) {
+            if (reactionResult.isRemoved) {
+              // Remove the user's reaction
+              return {
+                ...msg,
+                reactions: msg.reactions.filter(
+                  r =>
+                    !(
+                      r.userId === (loggedInUser?.id || 0) &&
+                      r.reaction === data.reaction
+                    )
+                ),
+              };
+            } else if (reactionResult.isUpdated) {
+              // Update existing reaction
+              return {
+                ...msg,
+                reactions: msg.reactions.map(r =>
+                  r.userId === (loggedInUser?.id || 0)
+                    ? {
+                        id: reactionResult.id,
+                        messageId: reactionResult.messageId,
+                        userId: reactionResult.userId,
+                        reaction: reactionResult.reaction,
+                        createdAt: reactionResult.createdAt,
+                      }
+                    : r
+                ),
+              };
+            } else {
+              // Add new reaction
+              return {
+                ...msg,
+                reactions: [
+                  ...msg.reactions,
+                  {
+                    id: reactionResult.id,
+                    messageId: reactionResult.messageId,
+                    userId: reactionResult.userId,
+                    reaction: reactionResult.reaction,
+                    createdAt: reactionResult.createdAt,
+                  },
+                ],
+              };
             }
-          : msg
-      );
-      const tempChannelStateMap = new Map(prev);
-      tempChannelStateMap.set(chatChannelId, {
-        ...existingChannelData,
-        messages: tempMessages,
+          }
+          return msg;
+        });
+
+        const tempChannelStateMap = new Map(prev);
+        tempChannelStateMap.set(data.chatChannelId, {
+          ...existingChannelData,
+          messages: tempMessages,
+        });
+        return tempChannelStateMap;
       });
-      return tempChannelStateMap;
-    });
+    } catch (error) {
+      console.error("Failed to handle reaction:", error);
+    }
   };
 
   /**@description Load channel messages from API*/
@@ -779,8 +776,7 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
       handleSendMessage,
       handleEditMessage,
       handleDeleteMessage,
-      handleAddReaction,
-      handleRemoveReaction,
+      handleReaction,
       handleMarkAsRead,
       handleSetTyping,
       handleClearError,

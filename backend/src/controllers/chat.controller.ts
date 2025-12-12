@@ -1,7 +1,7 @@
 import { NextFunction, Request, Response } from "express";
 import Chat from "@src/services/chat.service";
 import { ChatSocketController } from "@src/socket/controller/chat.socket.controller";
-import { SocketManager } from "@src/socket/utils/socketManager";
+
 import {
   ChatChannelListQuerySchema,
   chatChannelListQuerySchema,
@@ -9,6 +9,8 @@ import {
   CreateChatChannelSchema,
   SendChatMessageSchema,
   sendChatMessageSchema,
+  AddMessageReactionSchema,
+  RemoveMessageReactionSchema,
 } from "@src/schemaAndTypes/chat.schema";
 import { AuthenticatedRequest } from "@src/middleware/authRoleMiddleware";
 
@@ -85,19 +87,15 @@ export const saveChannelMessage = async (
       replyToMessageId: payload.replyToMessageId,
     });
 
-    const userSockets = SocketManager.getUserSockets(userId);
-    const senderSocketId = userSockets?.has(payload.socketId ?? "")
-      ? (payload.socketId ?? "")
-      : undefined;
-
     // Include tempId and senderSocketId in the broadcast
     ChatSocketController.notifyChatMessage({
       tenantId,
       chatChannelId,
+      userId,
+      socketId: payload.socketId!,
       message: {
         ...message,
         tempId: payload.tempId,
-        senderSocketId: senderSocketId,
       },
     });
     res.status(201).json(message);
@@ -137,6 +135,101 @@ export const getChannelMessages = async (
     });
 
     res.status(200).json(messages);
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const handleMessageReaction = async (
+  req: AuthenticatedRequest,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  try {
+    const userId = req.user?.userId!;
+    const chatChannelId = Number(req.params.chatChannelId);
+    const messageId = Number(req.params.messageId);
+    const { reaction } = req.body as AddMessageReactionSchema;
+
+    // Check if user is a member of the channel
+    const isMember = await Chat.isUserChannelMember(
+      req.db,
+      chatChannelId,
+      userId
+    );
+    if (!isMember) {
+      throw {
+        statusCode: 403,
+        message: "You are not a member of this channel",
+      };
+    }
+
+    // Get message details including createdAt
+    const messageDetails = await Chat.getMessageWithCreatedAt(
+      req.db,
+      messageId,
+      chatChannelId
+    );
+
+    if (!messageDetails) {
+      throw {
+        statusCode: 404,
+        message: "Message not found in this channel",
+      };
+    }
+
+    // Get existing user reaction for this message
+    const existingReaction = await Chat.getExistingUserReaction(req.db, {
+      messageId,
+      messageCreatedAt: messageDetails.createdAt,
+      userId,
+    });
+
+    let responseData;
+
+    if (existingReaction) {
+      // If user is trying to add the same reaction, remove it instead
+      if (existingReaction.reaction === reaction) {
+        await Chat.deleteMessageReaction(req.db, {
+          reactionId: existingReaction.id,
+        });
+        responseData = {
+          message: "Reaction removed",
+          action: "removed",
+          isRemoved: true,
+          reactionId: existingReaction.id,
+          messageId,
+          userId,
+          reaction,
+        };
+      } else {
+        // Update existing reaction with new emoji
+        const updatedReaction = await Chat.updateMessageReaction(req.db, {
+          reactionId: existingReaction.id,
+          reaction,
+        });
+        responseData = {
+          ...updatedReaction,
+          action: "updated",
+          isUpdated: true,
+        };
+      }
+    } else {
+      // Create new reaction
+      const newReaction = await Chat.createMessageReaction(req.db, {
+        messageId,
+        messageCreatedAt: messageDetails.createdAt,
+        userId,
+        reaction,
+      });
+      responseData = {
+        ...newReaction,
+        action: "created",
+        isUpdated: false,
+      };
+    }
+
+    res.status(201).json(responseData);
   } catch (error) {
     next(error);
   }

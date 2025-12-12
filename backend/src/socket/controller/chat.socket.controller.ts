@@ -128,26 +128,35 @@ export class ChatSocketController {
    * Emit new message to channel room
    */
   static notifyChatMessage({
+    userId,
+    socketId,
     tenantId,
     chatChannelId,
     message,
   }: {
+    userId: number;
+    socketId: string;
     tenantId: number;
     chatChannelId: number;
     message: SendChatMessageSchema & {
       tempId?: number;
-      senderSocketId?: string;
     };
   }) {
+    const userSockets = SocketManager.getUserSockets(userId);
+    const senderSocketId = userSockets?.has(socketId ?? "")
+      ? (socketId ?? "")
+      : undefined;
+
     const io = SocketManager.getSocketIo();
     const roomName = getChatChannelRoomName({
       tenantId,
       chatChannelId,
     });
+    // Include tempId and senderSocketId in the broadcast
     io.to(roomName).emit(chatSocketEvents.CHAT_NEW_MESSAGE, {
       ...message,
       tempId: message.tempId,
-      senderSocketId: message.senderSocketId,
+      senderSocketId: senderSocketId,
       timestamp: new Date().toISOString(),
     });
   }

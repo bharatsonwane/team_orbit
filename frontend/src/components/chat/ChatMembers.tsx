@@ -1,48 +1,45 @@
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Button } from "@/components/ui/button";
 import { Users } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { useChat } from "@/contexts/ChatContextProvider";
 
 function ChatMembers({
   channelMembers,
-  onClose = () => {},
 }: {
   channelMembers: any[];
-  onClose: () => void;
+  onClose?: () => void;
 }) {
   const { chatUsers } = useChat();
 
   return (
-    <div className="absolute right-0 mt-2 z-50 bg-white dark:bg-card rounded-lg shadow-lg w-64 p-4 border border-border">
-      <div className="flex items-center justify-between mb-3">
-        <h3 className="text-base font-semibold flex items-center gap-2">
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button variant="ghost" size="icon" className="h-9 w-9">
           <Users className="w-4 h-4" />
-          Members
-        </h3>
-        <button
-          className="text-muted-foreground hover:text-foreground"
-          onClick={() => onClose()}
-          aria-label="Close"
-        >
-          <svg width="18" height="18" viewBox="0 0 20 20" fill="none">
-            <path
-              d="M6 6l8 8M6 14L14 6"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-            />
-          </svg>
-        </button>
-      </div>
-      <ul className="space-y-2 max-h-60 overflow-y-auto pr-1">
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent
+        align="end"
+        className="w-64 max-h-80 overflow-y-auto"
+      >
         {channelMembers && channelMembers.length > 0 ? (
           channelMembers.map(memberId => {
             const user = chatUsers.find(u => u.id === memberId);
             return (
-              <li key={memberId} className="flex items-center gap-2">
-                <Avatar className="w-7 h-7">
+              <DropdownMenuItem
+                key={memberId}
+                className="flex items-center gap-3 p-3 cursor-pointer"
+              >
+                <Avatar className="w-8 h-8">
                   <AvatarImage src={user?.profilePictureUrl} alt={user?.name} />
-                  <AvatarFallback>
+                  <AvatarFallback className="text-xs">
                     {user?.name
                       ? user.name
                           .split(" ")
@@ -54,7 +51,7 @@ function ChatMembers({
                   </AvatarFallback>
                 </Avatar>
                 <div className="flex-1 min-w-0">
-                  <div className="font-medium text-xs truncate">
+                  <div className="font-medium text-sm truncate">
                     {user?.name || "Unknown"}
                   </div>
                   <div className="text-xs text-muted-foreground truncate">
@@ -62,18 +59,23 @@ function ChatMembers({
                   </div>
                 </div>
                 {user?.status === "online" && (
-                  <Badge variant="outline" className="h-3 px-1 text-[10px]">
+                  <Badge
+                    variant="outline"
+                    className="h-4 px-2 text-[10px] bg-green-100 text-green-700 border-green-300"
+                  >
                     Online
                   </Badge>
                 )}
-              </li>
+              </DropdownMenuItem>
             );
           })
         ) : (
-          <li className="text-muted-foreground text-xs">No members found.</li>
+          <DropdownMenuItem disabled className="text-muted-foreground text-sm">
+            No members found.
+          </DropdownMenuItem>
         )}
-      </ul>
-    </div>
+      </DropdownMenuContent>
+    </DropdownMenu>
   );
 }
 

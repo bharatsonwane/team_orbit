@@ -12,8 +12,8 @@ import type { ChatMessage } from "@/schemas/chatSchema";
 import { useChat } from "@/contexts/ChatContextProvider";
 import { getSenderUser } from "@/utils/chatUtils";
 import { useAuthService } from "@/contexts/AuthContextProvider";
-import { MoreVertical, Reply, Edit, Trash2 } from "lucide-react";
-import { useState } from "react";
+import { MoreVertical, Edit, Trash2 } from "lucide-react";
+import { useState, useRef } from "react";
 import { MessageReactions } from "./MessageReactions";
 
 interface MessageBubbleProps {
@@ -28,15 +28,17 @@ export function MessageBubble({
   const {
     handleEditMessage,
     handleDeleteMessage,
-    handleAddReaction,
-    handleRemoveReaction,
+    handleReaction,
+
     chatUsers,
   } = useChat();
   const { loggedInUser } = useAuthService();
   const [isEditing, setIsEditing] = useState(false);
   const [editText, setEditText] = useState(message.text || "");
+  const [showReactions, setShowReactions] = useState(false);
+  const hideTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-  const sender = getSenderUser(message.senderUserId, loggedInUser, chatUsers);
+  const sender = getSenderUser(message.senderUserId, loggedInUser!, chatUsers);
   const isCurrentUser =
     loggedInUser && message.senderUserId === loggedInUser.id;
   const isArchived = message.isArchived;
@@ -56,20 +58,25 @@ export function MessageBubble({
     handleDeleteMessage(message.id, message.chatChannelId);
   };
 
-  const handleReaction = (reaction: string) => {
-    const existingReaction = message.reactions.find(
-      r => r.userId === 1 && r.reaction === reaction
-    );
+  const handleReactionClick = async (reaction: string) => {
+    await handleReaction({
+      messageId: message.id,
+      chatChannelId: message.chatChannelId,
+      reaction,
+    });
+  };
 
-    if (existingReaction) {
-      handleRemoveReaction(message.id, message.chatChannelId);
-    } else {
-      handleAddReaction({
-        messageId: message.id,
-        chatChannelId: message.chatChannelId,
-        reaction,
-      });
+  const handleMouseEnter = () => {
+    if (hideTimeoutRef.current) {
+      clearTimeout(hideTimeoutRef.current);
     }
+    setShowReactions(true);
+  };
+
+  const handleMouseLeave = () => {
+    hideTimeoutRef.current = setTimeout(() => {
+      setShowReactions(false);
+    }, 200); // 200ms delay
   };
 
   return (
@@ -96,10 +103,31 @@ export function MessageBubble({
 
       <div
         className={cn(
-          "flex flex-col gap-1 max-w-[70%]",
+          "flex flex-col gap-1 max-w-[70%] relative",
           !showAvatar && (isCurrentUser ? "ml-10" : "mr-10")
         )}
+        onMouseEnter={handleMouseEnter}
+        onMouseLeave={handleMouseLeave}
       >
+        {/* Hover Reactions Popup - Above entire message container */}
+        {!isArchived && showReactions && (
+          <div
+            className={cn(
+              "absolute -top-10 bg-background border border-border rounded-lg shadow-xl px-2 py-1 z-50 animate-in fade-in-0 zoom-in-95 duration-200",
+              isCurrentUser ? "right-0" : "left-0"
+            )}
+            onMouseEnter={handleMouseEnter}
+            onMouseLeave={handleMouseLeave}
+          >
+            <MessageReactions
+              reactions={[]}
+              onReactionClick={handleReactionClick}
+              showSmiley={false}
+              showCommonReactions={true}
+            />
+          </div>
+        )}
+
         {/* Sender Name */}
         {showAvatar && (
           <span className="text-xs font-medium px-2">
@@ -124,7 +152,7 @@ export function MessageBubble({
                 {
                   getSenderUser(
                     message.replyToMessage.senderUserId,
-                    loggedInUser,
+                    loggedInUser!,
                     chatUsers
                   ).name
                 }
@@ -172,14 +200,6 @@ export function MessageBubble({
             />
           )}
 
-          {/* Reactions */}
-          {message.reactions.length > 0 && (
-            <MessageReactions
-              reactions={message.reactions}
-              onReactionClick={handleReaction}
-            />
-          )}
-
           {/* Actions Menu */}
           {!isArchived && isCurrentUser && (
             <DropdownMenu>
@@ -212,6 +232,16 @@ export function MessageBubble({
             </DropdownMenu>
           )}
         </div>
+
+        {/* Reactions - Show existing reactions outside bubble */}
+        {message.reactions.length > 0 && (
+          <div className="px-2">
+            <MessageReactions
+              reactions={message.reactions}
+              onReactionClick={handleReactionClick}
+            />
+          </div>
+        )}
 
         {/* Timestamp */}
         <div className="flex items-center gap-2 px-2">

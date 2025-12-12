@@ -324,4 +324,156 @@ export default class Chat {
     const { rows } = await tenantPool.query(query);
     return rows as ChatMessageSchema[];
   }
+
+  static async getExistingUserReaction(
+    dbClient: dbClientPool,
+    {
+      messageId,
+      messageCreatedAt,
+      userId,
+    }: {
+      messageId: number;
+      messageCreatedAt: string;
+      userId: number;
+    }
+  ): Promise<{ id: number; reaction: string } | null> {
+    const tenantPool = dbClient.tenantPool!;
+
+    const result = await tenantPool.query(
+      `
+        SELECT id, reaction FROM chat_message_reaction 
+        WHERE "messageId" = $1 
+          AND "messageCreatedAt" = $2 
+          AND "userId" = $3
+      `,
+      [messageId, messageCreatedAt, userId]
+    );
+
+    return result.rowCount && result.rowCount > 0 ? result.rows[0] : null;
+  }
+
+  static async createMessageReaction(
+    dbClient: dbClientPool,
+    {
+      messageId,
+      messageCreatedAt,
+      userId,
+      reaction,
+    }: {
+      messageId: number;
+      messageCreatedAt: string;
+      userId: number;
+      reaction: string;
+    }
+  ): Promise<{
+    id: number;
+    messageId: number;
+    userId: number;
+    reaction: string;
+    createdAt: string;
+  }> {
+    const tenantPool = dbClient.tenantPool!;
+
+    const insertQuery = `
+      INSERT INTO chat_message_reaction (
+        "messageId",
+        "messageCreatedAt",
+        "userId",
+        reaction,
+        "createdAt"
+      )
+      VALUES ($1, $2, $3, $4, NOW())
+      RETURNING id, "messageId", "userId", reaction, "createdAt"::text;
+    `;
+
+    const result = await tenantPool.query(insertQuery, [
+      messageId,
+      messageCreatedAt,
+      userId,
+      reaction,
+    ]);
+
+    return result.rows[0];
+  }
+
+  static async updateMessageReaction(
+    dbClient: dbClientPool,
+    {
+      reactionId,
+      reaction,
+    }: {
+      reactionId: number;
+      reaction: string;
+    }
+  ): Promise<{
+    id: number;
+    messageId: number;
+    userId: number;
+    reaction: string;
+    createdAt: string;
+  }> {
+    const tenantPool = dbClient.tenantPool!;
+
+    const updateQuery = `
+      UPDATE chat_message_reaction 
+      SET reaction = $1, "createdAt" = NOW()
+      WHERE id = $2
+      RETURNING id, "messageId", "userId", reaction, "createdAt"::text;
+    `;
+
+    const result = await tenantPool.query(updateQuery, [reaction, reactionId]);
+
+    if (result.rowCount === 0) {
+      throw {
+        statusCode: 404,
+        message: "Reaction not found",
+      };
+    }
+
+    return result.rows[0];
+  }
+
+  static async deleteMessageReaction(
+    dbClient: dbClientPool,
+    {
+      reactionId,
+    }: {
+      reactionId: number;
+    }
+  ): Promise<void> {
+    const tenantPool = dbClient.tenantPool!;
+
+    const deleteQuery = `
+      DELETE FROM chat_message_reaction 
+      WHERE id = $1
+      RETURNING id;
+    `;
+
+    const result = await tenantPool.query(deleteQuery, [reactionId]);
+
+    if (result.rowCount === 0) {
+      throw {
+        statusCode: 404,
+        message: "Reaction not found",
+      };
+    }
+  }
+
+  static async getMessageWithCreatedAt(
+    dbClient: dbClientPool,
+    messageId: number,
+    chatChannelId: number
+  ): Promise<{ id: number; createdAt: string; chatChannelId: number } | null> {
+    const tenantPool = dbClient.tenantPool!;
+
+    const query = `
+      SELECT id, "createdAt"::text, "chatChannelId"
+      FROM chat_message 
+      WHERE id = $1 AND "chatChannelId" = $2;
+    `;
+
+    const result = await tenantPool.query(query, [messageId, chatChannelId]);
+
+    return result.rows.length > 0 ? result.rows[0] : null;
+  }
 }

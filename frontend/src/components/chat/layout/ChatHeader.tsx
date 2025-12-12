@@ -23,9 +23,6 @@ export function ChatHeader({ channel, channelType }: ChatHeaderProps) {
   const { chatUsers } = useChat();
   const { loggedInUser } = useAuthService();
 
-  // State for showing group members modal
-  const [showMembers, setShowMembers] = useState(false);
-
   if (channelType === "direct" && channel) {
     // For direct chats, find the other participant from channel.members
     // The other participant is the one who is not the logged-in user
@@ -151,25 +148,7 @@ export function ChatHeader({ channel, channelType }: ChatHeaderProps) {
         </div>
 
         <div className="flex items-center gap-1">
-          <div className="relative">
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-9 w-9"
-              onClick={() => setShowMembers(v => !v)}
-              aria-label="Show group members"
-            >
-              <Users className="w-4 h-4" />
-            </Button>
-            {showMembers && (
-              <ChatMembers
-                channelMembers={channel.members}
-                onClose={() => {
-                  setShowMembers(false);
-                }}
-              />
-            )}
-          </div>
+          <ChatMembers channelMembers={channel.members} />
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" size="icon" className="h-9 w-9">

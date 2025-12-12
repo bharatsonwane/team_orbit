@@ -7,6 +7,7 @@ import {
   type SendChannelMessagePayload,
   type FetchChannelMessagesParam,
   type ChatMessage,
+  type AddReactionData,
 } from "@/schemas/chatSchema";
 
 export const createChatChannelAction = createAsyncThunk(
@@ -69,6 +70,31 @@ export const sendChannelMessageAction = createAsyncThunk<
     const response = await getAxios().post(
       `api/chat/channel/${chatChannelId}/message`,
       body
+    );
+    return response.data;
+  } catch (error: unknown) {
+    return rejectWithValue(getAppErrorMessage(error));
+  }
+});
+
+export const handleMessageReactionAction = createAsyncThunk<
+  {
+    id: number;
+    messageId: number;
+    userId: number;
+    reaction: string;
+    createdAt: string;
+    isUpdated?: boolean;
+    isRemoved?: boolean;
+  },
+  AddReactionData,
+  { rejectValue: string }
+>("chat/handleMessageReactionAction", async (payload, { rejectWithValue }) => {
+  try {
+    const { chatChannelId, messageId, reaction } = payload;
+    const response = await getAxios().post(
+      `api/chat/channel/${chatChannelId}/message/${messageId}/reaction`,
+      { reaction }
     );
     return response.data;
   } catch (error: unknown) {

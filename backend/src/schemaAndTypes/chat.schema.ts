@@ -106,6 +106,17 @@ export const chatMessageListQuerySchema = z.object({
 
 export const chatMessageListResponseSchema = z.array(chatMessageSchema);
 
+export const addMessageReactionSchema = z.object({
+  reaction: z
+    .string()
+    .min(1, "Reaction is required")
+    .max(10, "Reaction should be under 10 characters"),
+});
+
+export const removeMessageReactionSchema = z.object({
+  reactionId: z.number().int().positive("Valid reaction ID is required"),
+});
+
 /** @description SCHEMAS TYPES */
 export type CreateChatChannelSchema = z.infer<typeof createChatChannelSchema>;
 export type ChatChannelSchema = z.infer<typeof chatChannelSchema>;
@@ -121,6 +132,10 @@ export type ChatChannelListItemSchema = z.infer<
 export type SendChatMessageSchema = z.infer<typeof sendChatMessageSchema>;
 export type ChatMessageListQuerySchema = z.infer<
   typeof chatMessageListQuerySchema
+>;
+export type AddMessageReactionSchema = z.infer<typeof addMessageReactionSchema>;
+export type RemoveMessageReactionSchema = z.infer<
+  typeof removeMessageReactionSchema
 >;
 
 /** @description OPENAPI SCHEMAS REGISTRATION */
@@ -148,5 +163,17 @@ oasRegisterSchemas([
   {
     schemaName: "ChatMessageListResponseSchema",
     schema: chatMessageListResponseSchema,
+  },
+  {
+    schemaName: "MessageReactionSchema",
+    schema: messageReactionSchema,
+  },
+  {
+    schemaName: "AddMessageReactionSchema",
+    schema: addMessageReactionSchema,
+  },
+  {
+    schemaName: "RemoveMessageReactionSchema",
+    schema: removeMessageReactionSchema,
   },
 ]);

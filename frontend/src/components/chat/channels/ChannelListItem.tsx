@@ -37,7 +37,7 @@ export function ChannelListItem({
           <AvatarImage src={channel.avatar} alt={name} />
         ) : (
           <AvatarFallback className="bg-muted">
-            {type === "private" ? (
+            {type === "direct" ? (
               <Lock className="w-5 h-5 text-muted-foreground" />
             ) : (
               <Hash className="w-5 h-5 text-muted-foreground" />
@@ -51,7 +51,7 @@ export function ChannelListItem({
         <div className="flex items-center justify-between gap-2 mb-1">
           <div className="flex items-center gap-2">
             <h3 className="font-medium text-sm truncate">#{name}</h3>
-            {type === "private" && (
+            {type === "direct" && (
               <Lock className="w-3 h-3 text-muted-foreground" />
             )}
           </div>
@@ -68,11 +68,13 @@ export function ChannelListItem({
                 <span className="font-medium">
                   {loggedInUser && lastMessage.senderUserId === loggedInUser.id
                     ? "You"
-                    : getSenderUser(
-                        lastMessage.senderUserId,
-                        loggedInUser,
-                        chatUsers
-                      ).name}
+                    : loggedInUser
+                      ? getSenderUser(
+                          lastMessage.senderUserId,
+                          loggedInUser,
+                          chatUsers
+                        ).name
+                      : "Unknown"}
                   :
                 </span>{" "}
                 {lastMessage.isArchived ? (
