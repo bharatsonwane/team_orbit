@@ -1,5 +1,6 @@
 import { Socket } from "socket.io";
-import { SocketManager } from "../utils/socketManager";
+import { NotificationSocketController } from "../controller/notification.socket.controller";
+import { notificationSocketEvents } from "../utils/socketEvents";
 
 export default class NotificationSocket {
   constructor(private socket: Socket) {
@@ -8,16 +9,11 @@ export default class NotificationSocket {
 
   private registerEvents() {
     // When a client acknowledges notifications
-    this.socket.on("notification:read", data => {
-      console.log("Notification read:", data);
-      const io = SocketManager.getSocketIo();
-      io.emit("notification:read:update", data);
+    this.socket.on(notificationSocketEvents.NOTIFICATION_READ, data => {
+      NotificationSocketController.handleRead({
+        socket: this.socket,
+        data,
+      });
     });
-  }
-
-  // ⭐ Static method for controllers
-  static sendNotification(notification: any) {
-    const socketIo = SocketManager.getSocketIo();
-    socketIo.emit("notification:new", notification);
   }
 }

@@ -1,5 +1,6 @@
 import { Socket } from "socket.io";
-import { SocketManager } from "../utils/socketManager";
+import { DataRefreshSocketController } from "../controller/dataRefresh.socket.controller";
+import { dataRefreshSocketEvents } from "../utils/socketEvents";
 
 export default class RefreshHandler {
   constructor(private socket: Socket) {
@@ -7,15 +8,10 @@ export default class RefreshHandler {
   }
 
   private registerEvents() {
-    this.socket.on("refresh:request", () => {
-      const io = SocketManager.getSocketIo();
-      io.emit("refresh:update", { ts: Date.now() });
+    this.socket.on(dataRefreshSocketEvents.REFRESH_REQUEST, () => {
+      DataRefreshSocketController.handleRefreshRequest({
+        socket: this.socket,
+      });
     });
-  }
-
-  // ⭐ For controllers
-  static notifyUserCreated(user: any) {
-    const socketIo = SocketManager.getSocketIo();
-    socketIo.emit("user:created", user);
   }
 }

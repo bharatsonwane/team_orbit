@@ -17,3 +17,21 @@ export const chatSocketEvents = {
   CHAT_CHANNEL_UPDATED: "chat:channel_updated",
   CHAT_ERROR: "error",
 } as const;
+
+export const notificationSocketEvents = {
+  // Client -> Server events (listened by server)
+  NOTIFICATION_READ: "notification:read",
+
+  // Server -> Client events (emitted by server)
+  NOTIFICATION_READ_UPDATE: "notification:read:update",
+  NOTIFICATION_NEW: "notification:new",
+} as const;
+
+export const dataRefreshSocketEvents = {
+  // Client -> Server events (listened by server)
+  REFRESH_REQUEST: "refresh:request",
+
+  // Server -> Client events (emitted by server)
+  REFRESH_UPDATE: "refresh:update",
+  USER_CREATED: "user:created",
+} as const;
