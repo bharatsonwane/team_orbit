@@ -127,14 +127,25 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
   useEffect(() => {
     SocketManager.socketIo.on("chat:new_message", handleNotifyChatMessage);
     SocketManager.socketIo.on("chat:reaction_update", handleNotifyChatReaction);
-    SocketManager.socketIo.on("chat:channel_updated", handleChannelUpdated);
+    SocketManager.socketIo.on(
+      "chat:channel_updated",
+      handleNotifyChannelUpdated
+    );
+    SocketManager.socketIo.on("chat:typing:update", handleNotifyTypingUpdate);
     return () => {
       SocketManager.socketIo.off("chat:new_message", handleNotifyChatMessage);
       SocketManager.socketIo.off(
         "chat:reaction_update",
         handleNotifyChatReaction
       );
-      SocketManager.socketIo.off("chat:channel_updated", handleChannelUpdated);
+      SocketManager.socketIo.off(
+        "chat:channel_updated",
+        handleNotifyChannelUpdated
+      );
+      SocketManager.socketIo.off(
+        "chat:typing:update",
+        handleNotifyTypingUpdate
+      );
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -272,7 +283,7 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
   };
 
   // Listen for channel updates (when user is added to a new channel)
-  const handleChannelUpdated = (data: {
+  const handleNotifyChannelUpdated = (data: {
     chatChannelId: number;
     name?: string;
     description?: string;
@@ -302,7 +313,7 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
           messages: [],
           loading: false,
           error: null,
-          typingUserIds: [],
+          typingUsers: [],
           name: data.name ?? "",
           type: data.type ?? "group",
           description: data.description,
@@ -320,6 +331,55 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
 
     // Reload channels to get full channel data
     void handleLoadChannels();
+  };
+
+  // Handle incoming typing events from socket
+  const handleNotifyTypingUpdate = (data: {
+    userId: number;
+    chatChannelId: number;
+    isTyping: boolean;
+    senderSocketId?: string;
+  }) => {
+    const currentSocketId = SocketManager.socketIo?.id;
+    const isSentByThisDevice = data.senderSocketId === currentSocketId;
+
+    // Don't update state for typing events sent by this device
+    if (isSentByThisDevice) return;
+
+    setChannelStateMap(prev => {
+      const existingChannelData = prev.get(data.chatChannelId)!;
+      const typingUsers = existingChannelData.typingUsers ?? [];
+      let newTypingUserIds = [...typingUsers];
+
+      const userTypingIndex = newTypingUserIds.findIndex(
+        item => item.userId == data.userId
+      );
+
+      if (data.isTyping) {
+        // Add user to typing list if not already there
+
+        const userTypingData = {
+          userId: data.userId,
+          typedAt: new Date().toISOString(),
+        };
+
+        if (userTypingIndex === -1) {
+          newTypingUserIds.push(userTypingData);
+        } else {
+          newTypingUserIds[userTypingIndex] = userTypingData;
+        }
+      } else if (userTypingIndex != -1) {
+        // Remove user from typing list
+        newTypingUserIds.splice(userTypingIndex, 1);
+      }
+
+      const tempChannelStateMap = new Map(prev);
+      tempChannelStateMap.set(data.chatChannelId, {
+        ...existingChannelData,
+        typingUsers: newTypingUserIds,
+      });
+      return tempChannelStateMap;
+    });
   };
 
   const handleLoadUsers = async () => {
@@ -400,7 +460,7 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
               messages: [...(channelMessages ? channelMessages : [])],
               loading: false,
               error: null,
-              typingUserIds: [],
+              typingUsers: [],
               name: channel.name,
               description: channel.description ?? undefined,
               type: channel.type as "direct" | "group",
@@ -488,7 +548,7 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
         messages: [...messages, tempNewMessage],
         loading: false,
         error: null,
-        typingUserIds: existingChannelData?.typingUserIds ?? [],
+        typingUsers: existingChannelData?.typingUsers ?? [],
         lastReadAt: existingChannelData?.lastReadAt,
       };
       const tempChannelStateMap = new Map(prev);
@@ -719,7 +779,7 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
             messages: [],
             loading: false,
             error: null,
-            typingUserIds: [],
+            typingUsers: [],
           };
           const tempMessages = [...messages, ...current.messages];
           tempChannelStateMap.set(chatChannelId, {
@@ -751,31 +811,14 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
 
   // Set typing indicator
   const handleSetTyping = (chatChannelId: number, isTyping: boolean) => {
-    const userId = 1; // Current user ID (replace with real)
-    setChannelStateMap(prev => {
-      const existingChannelData =
-        prev.get(chatChannelId) ||
-        ({
-          chatChannelId,
-          messages: [],
-          loading: false,
-          error: null,
-          typingUserIds: [],
-        } as ChannelState);
-      let typingUserIds = existingChannelData.typingUserIds ?? [];
-      if (isTyping) {
-        if (!typingUserIds.includes(userId)) {
-          typingUserIds = [...typingUserIds, userId];
-        }
-      } else {
-        typingUserIds = typingUserIds.filter(id => id !== userId);
-      }
-      const tempChannelStateMap = new Map(prev);
-      tempChannelStateMap.set(chatChannelId, {
-        ...existingChannelData,
-        typingUserIds,
-      });
-      return tempChannelStateMap;
+    const userId = loggedInUser?.id;
+    if (!userId || !SocketManager.socketIo) return;
+
+    // Emit socket event to notify other users
+    SocketManager.socketIo.emit("chat:typing", {
+      chatChannelId,
+      isTyping,
+      socketId: SocketManager.socketIo.id,
     });
   };
 
@@ -834,7 +877,7 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
         messages: [welcomeMessage],
         loading: false,
         error: null,
-        typingUserIds: [],
+        typingUsers: [],
       });
       return tempChannelStateMap;
     });

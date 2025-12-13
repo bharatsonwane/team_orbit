@@ -94,34 +94,6 @@ export class ChatSocketController {
     console.log(`Socket ${socket.id} left channel ${data.chatChannelId}`);
   }
 
-  static handleTyping({
-    socket,
-    payload,
-  }: {
-    socket: AuthenticatedSocket;
-    payload: {
-      tenantId: number;
-      chatChannelId: number;
-      isTyping: boolean;
-    };
-  }) {
-    if (!payload.tenantId || !payload.chatChannelId) {
-      return;
-    }
-
-    const roomName = getChatChannelRoomName({
-      tenantId: payload.tenantId,
-      chatChannelId: payload.chatChannelId,
-    });
-
-    // Emit typing indicator to channel room
-    const io = SocketManager.getSocketIo();
-    io.to(roomName).emit(chatSocketEvents.CHAT_TYPING_UPDATE, {
-      ...payload,
-      timestamp: new Date().toISOString(),
-    });
-  }
-
   // ⭐ Static methods for controllers (after DB operations)
 
   /**
@@ -197,6 +169,46 @@ export class ChatSocketController {
       reaction,
       action,
       senderSocketId,
+      timestamp: new Date().toISOString(),
+    });
+  }
+
+  /**
+   * Handle typing indicator events
+   */
+  static handleTyping({
+    socket,
+    payload,
+  }: {
+    socket: AuthenticatedSocket;
+    payload: {
+      chatChannelId: number;
+      isTyping: boolean;
+      socketId?: string;
+    };
+  }) {
+    const user = socket.user;
+    const tenantId = socket.tenantId;
+
+    if (!user?.userId || !tenantId) {
+      socket.emit(chatSocketEvents.CHAT_ERROR, {
+        message: "Authentication required",
+        category: "chat",
+      });
+      return;
+    }
+
+    const roomName = getChatChannelRoomName({
+      tenantId,
+      chatChannelId: payload.chatChannelId,
+    });
+
+    // Emit to all other users in the channel (exclude sender)
+    socket.to(roomName).emit(chatSocketEvents.CHAT_TYPING_UPDATE, {
+      userId: user.userId,
+      chatChannelId: payload.chatChannelId,
+      isTyping: payload.isTyping,
+      senderSocketId: payload.socketId || socket.id,
       timestamp: new Date().toISOString(),
     });
   }

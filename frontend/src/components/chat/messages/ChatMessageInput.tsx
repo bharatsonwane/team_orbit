@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Send, Paperclip, Smile } from "lucide-react";
@@ -25,8 +25,40 @@ export function ChatMessageInput({ channel }: ChatMessageInputProps) {
     }
   }, [message]);
 
+  // Cleanup typing timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (typingTimeoutRef.current) {
+        clearTimeout(typingTimeoutRef.current);
+        // Clear typing indicator when component unmounts
+        if (chatChannelId) {
+          handleSetTyping(chatChannelId, false);
+        }
+      }
+    };
+  }, [chatChannelId, handleSetTyping]);
+
+  // Function to stop typing indicator
+  const stopTyping = useCallback(() => {
+    if (typingTimeoutRef.current && chatChannelId) {
+      clearTimeout(typingTimeoutRef.current);
+      typingTimeoutRef.current = null;
+      handleSetTyping(chatChannelId, false);
+    }
+  }, [chatChannelId, handleSetTyping]);
+
+  // Function to start typing indicator
+  const startTyping = useCallback(() => {
+    if (!typingTimeoutRef.current && chatChannelId) {
+      handleSetTyping(chatChannelId, true);
+    }
+  }, [chatChannelId, handleSetTyping]);
+
   const handleSend = () => {
     if (!message.trim()) return;
+
+    // Stop typing indicator before sending
+    stopTyping();
 
     handleSendMessage({
       chatChannelId: chatChannelId,
@@ -34,7 +66,6 @@ export function ChatMessageInput({ channel }: ChatMessageInputProps) {
     });
 
     setMessage("");
-    handleSetTyping(chatChannelId, false);
 
     // Reset textarea height
     if (textareaRef.current) {
@@ -43,15 +74,28 @@ export function ChatMessageInput({ channel }: ChatMessageInputProps) {
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    // Clear existing timeout
-    if (typingTimeoutRef.current) {
-      clearTimeout(typingTimeoutRef.current);
+    const newValue = e.target.value;
+    setMessage(newValue);
+
+    // Only handle typing indicator if there's actual text
+    if (newValue.trim().length > 0) {
+      // Start typing if not already typing
+      startTyping();
+
+      // Clear existing timeout
+      if (typingTimeoutRef.current) {
+        clearTimeout(typingTimeoutRef.current);
+      }
+
+      // Set timeout to stop typing indicator after 3 seconds of inactivity
+      typingTimeoutRef.current = setTimeout(() => {
+        typingTimeoutRef.current = null;
+        handleSetTyping(chatChannelId, false);
+      }, 3000);
+    } else {
+      // Stop typing if message becomes empty
+      stopTyping();
     }
-    // Set timeout to stop typing indicator
-    typingTimeoutRef.current = setTimeout(() => {
-      handleSetTyping(chatChannelId, false);
-    }, 1000);
-    setMessage(e.target.value);
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
@@ -59,6 +103,18 @@ export function ChatMessageInput({ channel }: ChatMessageInputProps) {
       e.preventDefault();
       handleSend();
     }
+  };
+
+  // Handle focus - start typing indicator
+  const handleFocus = () => {
+    if (message.trim().length > 0) {
+      startTyping();
+    }
+  };
+
+  // Handle blur - stop typing indicator
+  const handleBlur = () => {
+    stopTyping();
   };
 
   if (!chatChannelId) return null;
@@ -77,6 +133,8 @@ export function ChatMessageInput({ channel }: ChatMessageInputProps) {
             value={message}
             onChange={handleInputChange}
             onKeyDown={handleKeyDown}
+            onFocus={handleFocus}
+            onBlur={handleBlur}
             placeholder="Type a message..."
             className="min-h-[44px] max-h-32 resize-none pr-10"
             rows={1}

@@ -2,6 +2,7 @@ import { useEffect, useRef, useMemo } from "react";
 import { useChat } from "@/contexts/ChatContextProvider";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { MessageBubble } from "./MessageBubble";
+import { TypingIndicator } from "./TypingIndicator";
 import { Separator } from "@/components/ui/separator";
 import { groupMessagesByDate } from "@/utils/chatUtils";
 
@@ -10,7 +11,7 @@ interface ChatMessageListProps {
 }
 
 export function ChatMessageList({ chatChannelId }: ChatMessageListProps) {
-  const { channelStateMap } = useChat();
+  const { channelStateMap, chatUsers } = useChat();
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -27,25 +28,7 @@ export function ChatMessageList({ chatChannelId }: ChatMessageListProps) {
     return groupMessagesByDate(conversationMessages);
   }, [conversationMessages]);
 
-  const typingUserIds = channelState?.typingUserIds || [];
-
-  // Debug logging
-  useEffect(() => {
-    console.log("ChatMessageList - chatChannelId:", chatChannelId);
-    console.log("ChatMessageList - channelState:", channelState);
-    console.log(
-      "ChatMessageList - conversationMessages:",
-      conversationMessages
-    );
-    console.log(
-      "ChatMessageList - channelStateMap size:",
-      channelStateMap.size
-    );
-    console.log(
-      "ChatMessageList - channelStateMap keys:",
-      Array.from(channelStateMap.keys())
-    );
-  }, [chatChannelId, channelState, conversationMessages, channelStateMap]);
+  const typingUsersData = channelState?.typingUsers || [];
 
   // Auto-scroll to bottom when new messages arrive
   useEffect(() => {
@@ -85,23 +68,10 @@ export function ChatMessageList({ chatChannelId }: ChatMessageListProps) {
           </div>
         ))}
 
-        {/* Typing Indicator */}
-        {typingUserIds.length > 0 && (
-          <div className="flex items-center gap-2 px-2 py-1">
-            <div className="flex gap-1 px-3 py-2 bg-muted rounded-lg">
-              <div className="w-2 h-2 bg-muted-foreground rounded-full animate-bounce" />
-              <div
-                className="w-2 h-2 bg-muted-foreground rounded-full animate-bounce"
-                style={{ animationDelay: "0.1s" }}
-              />
-              <div
-                className="w-2 h-2 bg-muted-foreground rounded-full animate-bounce"
-                style={{ animationDelay: "0.2s" }}
-              />
-            </div>
-            <span className="text-xs text-muted-foreground">typing...</span>
-          </div>
-        )}
+        <TypingIndicator
+          typingUsersData={typingUsersData}
+          chatUsers={chatUsers}
+        />
 
         <div ref={messagesEndRef} />
       </div>

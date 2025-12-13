@@ -106,7 +106,7 @@ export type ChannelState = {
   messages: ChatMessage[];
   loading: boolean;
   error: string | null;
-  typingUserIds: number[];
+  typingUsers: { userId: number; typedAt: string }[];
   lastReadAt?: string;
   // channel metadata for sidebar/UX
   name?: string;
