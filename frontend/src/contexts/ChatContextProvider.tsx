@@ -43,7 +43,7 @@ export interface ChatContextType {
   error: string | null;
 
   // Actions - Group Chat
-  handleSelectChannel: (channel: ChatChannel | null) => void;
+  handleSelectChannel: ({ channelId }: { channelId: number }) => void;
   handleCreateChannel: (data: CreateChatChannelSchema) => ChatChannel;
 
   // Shared Actions
@@ -418,6 +418,10 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
         userId: loggedInUser?.id || 0,
         tenantId: tenantId || 0,
       });
+
+      if (apiChannels?.[0]) {
+        handleSelectChannel({ channelId: apiChannels?.[0].id });
+      }
     } catch (e) {
       setError(
         typeof e === "string" ? e : "Unable to load channels. Please try again."
@@ -479,6 +483,7 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
       const existingChannelData = prev.get(chatChannelId);
       const messages = existingChannelData?.messages || [];
       const nextState: ChannelState = {
+        ...existingChannelData,
         chatChannelId,
         messages: [...messages, tempNewMessage],
         loading: false,
@@ -733,15 +738,15 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
   };
 
   /**@description Select a channel and load its messages*/
-  const handleSelectChannel = (channel: ChatChannel | null) => {
-    if (!channel) {
+  const handleSelectChannel = ({ channelId }: { channelId: number }) => {
+    if (!channelId) {
       return;
     }
 
-    setSelectedChannelId(channel.id);
+    setSelectedChannelId(channelId);
 
-    // handleMarkAsRead(channel.id);
-    void handleLoadChannelMessages({ chatChannelId: channel.id });
+    // handleMarkAsRead(channelId);
+    void handleLoadChannelMessages({ chatChannelId: channelId });
   };
 
   // Set typing indicator

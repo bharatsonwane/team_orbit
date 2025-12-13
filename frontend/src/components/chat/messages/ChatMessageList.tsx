@@ -76,7 +76,7 @@ export function ChatMessageList({ chatChannelId }: ChatMessageListProps) {
 
               return (
                 <MessageBubble
-                  key={`${message.id}-${message.messageCreatedAt}`}
+                  key={`${message.id}-${message.createdAt}-${index}`}
                   message={message}
                   showAvatar={showAvatar}
                 />

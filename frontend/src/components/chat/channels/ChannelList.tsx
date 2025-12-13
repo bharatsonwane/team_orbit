@@ -129,7 +129,7 @@ export function ChannelList({ channelType }: ChannelListProps) {
                   key={channel.id}
                   channel={channel}
                   isSelected={selectedChannelId === channel.id}
-                  onClick={() => handleSelectChannel(channel)}
+                  onClick={() => handleSelectChannel({ channelId: channel.id })}
                 />
               ))}
             </div>
