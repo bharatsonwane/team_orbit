@@ -445,7 +445,7 @@ Use the `RouteRegistrar` class for consistent route definition with automatic Op
 // src/routes/user.routes.ts
 import RouteRegistrar from "../middleware/RouteRegistrar";
 import { authRoleMiddleware } from "../middleware/authRoleMiddleware";
-import { userSignupSchema, baseUserSchema } from "../schemas/user.schema";
+import { userSignupSchema, baseUserSchema } from "../schemaAndTypes/user.schema";
 import {getUserProfile } from "../controllers/user.controller";
 
 const registrar = new RouteRegistrar({
@@ -465,17 +465,17 @@ export default registrar;
 **Route Guidelines:**
 
 - Use descriptive base paths (`/api/user`, `/api/tenant`)
-- Define request/response schemas for validation
+- Define request/response schemaAndTypes for validation
 - Apply appropriate middleware for authentication
 - Use consistent naming conventions
 - Group related endpoints with tags
 
 ### 4. Schema Validation Pattern
 
-Define Zod schemas for runtime type validation and OpenAPI generation.
+Define Zod schemaAndTypes for runtime type validation and OpenAPI generation.
 
 ```typescript
-// src/schemas/user.schema.ts
+// src/schemaAndTypes/user.schema.ts
 import { z } from "zod";
 
 // Base user schema
@@ -502,7 +502,7 @@ export const userSignupSchema = baseUserSchema
 **Schema Guidelines:**
 
 - Use Zod for both validation and type inference
-- Create reusable base schemas and extend them
+- Create reusable base schemaAndTypes and extend them
 - Define clear error messages for validation failures
 - Use appropriate Zod types (email, datetime, enums)
 
@@ -529,7 +529,7 @@ npm run lint
 #### Step 1: Define Schemas
 
 ```typescript
-// src/schemas/example.schema.ts
+// src/schemaAndTypes/example.schema.ts
 export const exampleSchema = z.object({
   name: z.string().min(1),
   description: z.string().optional(),

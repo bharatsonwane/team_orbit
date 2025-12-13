@@ -8,7 +8,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
 import { formatMessageTime } from "@/utils/chatUtils";
-import type { ChatMessage } from "@/schemas/chatSchema";
+import type { ChatMessage } from "@/schemaAndTypes/chatSchema";
 import { useChat } from "@/contexts/ChatContextProvider";
 import { getSenderUser } from "@/utils/chatUtils";
 import { useAuthService } from "@/contexts/AuthContextProvider";

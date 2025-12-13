@@ -8,7 +8,7 @@ import {
   type FetchChannelMessagesParam,
   type ChatMessage,
   type AddReactionData,
-} from "@/schemas/chatSchema";
+} from "@/schemaAndTypes/chatSchema";
 
 export const createChatChannelAction = createAsyncThunk(
   "chat/createChatChannelAction",

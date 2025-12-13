@@ -14,7 +14,10 @@ import {
 } from "@/components/ui/card";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { useAuthService } from "@/contexts/AuthContextProvider";
-import { signupSchema, type SignupFormData } from "@/schemas/validationSchema";
+import {
+  signupSchema,
+  type SignupFormData,
+} from "@/schemaAndTypes/validationSchema";
 import { LoadingSpinner } from "@/components/ui/loading-indicator";
 
 export default function Signup() {

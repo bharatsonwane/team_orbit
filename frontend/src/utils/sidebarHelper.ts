@@ -1,6 +1,6 @@
 import type { SidebarRouteWithChildren } from "@/components/routing/AppRoutes";
 import { hasRoleAccess } from "./authHelper";
-import type { User } from "@/schemas/userSchema";
+import type { User } from "@/schemaAndTypes/userSchema";
 
 // Recursive function to filter navigation items based on user role
 export const filterNavigationItems = ({

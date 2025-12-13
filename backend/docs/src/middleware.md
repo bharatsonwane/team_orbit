@@ -107,7 +107,7 @@ export const getUser = async (req: AuthenticatedRequest, res, next) => {
 
 ### `validationMiddleware.ts`
 
-Validates requests using Zod schemas.
+Validates requests using Zod schemaAndTypes.
 
 #### Usage
 
@@ -630,4 +630,4 @@ export const authMiddleware = (req, res, next) => {
 
 ---
 
-**Next**: [Schemas Documentation](../schemas/README.md)
+**Next**: [Schemas Documentation](../schemaAndTypes/README.md)

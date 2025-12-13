@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Send, Paperclip, Smile } from "lucide-react";
 import { useChat } from "@/contexts/ChatContextProvider";
-import type { ChatChannel } from "@/schemas/chatSchema";
+import type { ChatChannel } from "@/schemaAndTypes/chatSchema";
 
 interface ChatMessageInputProps {
   channel: ChatChannel;

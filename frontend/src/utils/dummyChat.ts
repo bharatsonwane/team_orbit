@@ -1,4 +1,4 @@
-import type { ChannelState, ChatUser } from "@/schemas/chatSchema";
+import type { ChannelState, ChatUser } from "@/schemaAndTypes/chatSchema";
 
 export const dummyChatUsers: ChatUser[] = [
   {

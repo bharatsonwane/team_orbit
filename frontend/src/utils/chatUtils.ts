@@ -3,8 +3,8 @@ import type {
   ChatChannel,
   ChatChannelListItem,
   ChatUser,
-} from "../schemas/chatSchema";
-import type { User } from "../schemas/userSchema";
+} from "../schemaAndTypes/chatSchema";
+import type { User } from "../schemaAndTypes/userSchema";
 
 /**
  * Format message time

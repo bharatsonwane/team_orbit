@@ -1,26 +1,26 @@
 # Schemas & Type Definitions
 
-Complete documentation for TypeScript types and Zod validation schemas.
+Complete documentation for TypeScript types and Zod validation schemaAndTypes.
 
 ## 📚 Overview
 
-TeamOrbit uses TypeScript interfaces for type safety and Zod schemas for runtime validation.
+TeamOrbit uses TypeScript interfaces for type safety and Zod schemaAndTypes for runtime validation.
 
 ## 📋 File Structure
 
 ```
-src/schemas/
+src/schemaAndTypes/
 ├── user.ts          # User types and interfaces
 ├── lookup.ts        # Lookup data types
 ├── tenantLookup.ts  # Tenant-specific lookup data types
 ├── notification.ts  # Notification types
-└── validation.ts    # Zod validation schemas
+└── validation.ts    # Zod validation schemaAndTypes
 ```
 
 ## 👤 User Schema
 
 ```typescript
-// src/schemas/user.ts
+// src/schemaAndTypes/user.ts
 export interface User {
   id: number;
   email: string;
@@ -72,7 +72,7 @@ export interface AuthResponse {
 ## 📊 Lookup Schema
 
 ```typescript
-// src/schemas/lookup.ts
+// src/schemaAndTypes/lookup.ts
 export interface LookupType {
   id: number;
   key: string;
@@ -94,7 +94,7 @@ export interface Lookup {
 ## 🏢 Tenant Lookup Schema
 
 ```typescript
-// src/schemas/tenantLookup.ts
+// src/schemaAndTypes/tenantLookup.ts
 import { z } from "zod";
 
 // Base tenant lookup item schema
@@ -132,7 +132,7 @@ export const tenantLookupTypeWithLookupsSchema = tenantLookupTypeSchema.extend({
   lookups: z.array(tenantLookupItemSchema),
 });
 
-// API response schemas
+// API response schemaAndTypes
 export const tenantLookupsWithTypeListSchema = z.array(
   tenantLookupTypeWithLookupsSchema
 );
@@ -141,7 +141,7 @@ export const tenantLookupTypesListSchema = z.array(
   tenantLookupTypeWithLookupsSchema
 );
 
-// Form schemas for create/update operations
+// Form schemaAndTypes for create/update operations
 export const createTenantLookupSchema = z.object({
   name: z.string().min(1, "Name is required"),
   label: z.string().min(1, "Label is required"),
@@ -172,7 +172,7 @@ export type UpdateTenantLookupData = z.infer<typeof updateTenantLookupSchema>;
 ## 🔔 Notification Schema
 
 ```typescript
-// src/schemas/notification.ts
+// src/schemaAndTypes/notification.ts
 export interface Notification {
   id: string;
   type: "success" | "error" | "info" | "warning";
@@ -188,7 +188,7 @@ export interface Notification {
 ### Login Schema
 
 ```typescript
-// src/schemas/validation.ts
+// src/schemaAndTypes/validation.ts
 import { z } from "zod";
 
 export const loginSchema = z.object({
@@ -247,7 +247,7 @@ export type SignupFormData = z.infer<typeof signupSchema>;
 ### User Job Details Schema
 
 ```typescript
-// src/schemas/user.ts
+// src/schemaAndTypes/user.ts
 export const userJobDetailsSchema = z.object({
   hiringDate: z.string().optional().or(z.literal("")),
   joiningDate: z.string().optional().or(z.literal("")),
@@ -265,7 +265,7 @@ export type UserJobDetailsFormData = z.infer<typeof userJobDetailsSchema>;
 ### User Contact Information Schema
 
 ```typescript
-// src/schemas/user.ts
+// src/schemaAndTypes/user.ts
 export const userContactInformationSchema = z.object({
   personalEmail: z.string().email("Invalid email").optional().or(z.literal("")),
   personalPhone: z.string().optional().or(z.literal("")),
@@ -282,7 +282,7 @@ export type UserContactInformationFormData = z.infer<typeof userContactInformati
 ### Type-Safe API Calls
 
 ```typescript
-import type { User, AuthResponse } from "@/schemas/user";
+import type { User, AuthResponse } from "@/schemaAndTypes/user";
 import getAxios from "@/utils/axiosApi";
 
 const getUser = async (id: number): Promise<User> => {
@@ -316,7 +316,7 @@ const saveUserJobDetails = async (userId: number, jobData: UserJobDetailsFormDat
 ```typescript
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { loginSchema, type LoginFormData } from '@/schemas/validation';
+import { loginSchema, type LoginFormData } from '@/schemaAndTypes/validation';
 
 function LoginForm() {
   const {

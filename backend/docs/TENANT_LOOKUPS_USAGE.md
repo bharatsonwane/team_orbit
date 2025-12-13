@@ -396,7 +396,7 @@ export const UserJobDetails = ({ register, errors, control, tenantId }) => {
 ### **Step 3: Update Frontend Schemas**
 
 ```typescript
-// schemas/user.ts
+// schemaAndTypes/user.ts
 export const userJobDetailsSchema = z.object({
   hiringDate: z.string().optional().or(z.literal("")),
   joiningDate: z.string().optional().or(z.literal("")),
@@ -477,7 +477,7 @@ npm run migrate
 ```bash
 ⏭️ Create useTenantLookups hook
 ⏭️ Update UserJobDetails component
-⏭️ Update schemas
+⏭️ Update schemaAndTypes
 ⏭️ Update Redux actions
 ⏭️ Add Tenant Admin UI for managing lookups
 ```

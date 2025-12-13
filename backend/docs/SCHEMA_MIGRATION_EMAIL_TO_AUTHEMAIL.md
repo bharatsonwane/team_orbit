@@ -2,11 +2,11 @@
 
 ## 🎯 Overview
 
-Successfully migrated all schemas and code from using generic `email` field to the more specific `authEmail` field for authentication purposes.
+Successfully migrated all schemaAndTypes and code from using generic `email` field to the more specific `authEmail` field for authentication purposes.
 
 ## 📊 Changes Made
 
-### **1. Backend Schema** (`backend/src/schemas/user.schema.ts`)
+### **1. Backend Schema** (`backend/src/schemaAndTypes/user.schema.ts`)
 
 #### Before:
 ```typescript
@@ -36,7 +36,7 @@ export const baseUserSchema = z.object({
 import {
   SaveUserContactsSchema,     // ← Uses authEmail in validation
   SaveUserJobDetailsSchema,   // ← Job details schema
-} from "../schemas/user.schema";
+} from "../schemaAndTypes/user.schema";
 
 // Method signatures now reference schema types
 static async saveUserContacts(
@@ -95,7 +95,7 @@ await pool.query(insertQuery, [
 
 ---
 
-### **5. Frontend Schemas** (`frontend/src/schemas/user.ts`)
+### **5. Frontend Schemas** (`frontend/src/schemaAndTypes/user.ts`)
 
 #### createUserFormSchema:
 ```typescript
@@ -168,7 +168,7 @@ All completed:
 - ✅ Service layer updated (uses schema types)
 - ✅ Controllers updated (uses `authEmail`)
 - ✅ Database seed updated (uses `authEmail`)
-- ✅ Frontend schemas updated
+- ✅ Frontend schemaAndTypes updated
 - ✅ Frontend wizard updated
 - ✅ All queries use LEFT JOIN for `user_auths`
 - ✅ No linter errors

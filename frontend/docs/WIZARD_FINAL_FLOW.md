@@ -452,7 +452,7 @@ Or user receives:
 
 ### 1. **authEmail is Optional in Step 1**
 ```typescript
-// backend/src/schemas/user.schema.ts
+// backend/src/schemaAndTypes/user.schema.ts
 authEmail: z.string().email("Invalid email").optional()  // ← Optional
 ```
 

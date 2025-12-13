@@ -4,7 +4,7 @@
 
 **Question:** *"There may be tenant-specific lookups like designation etc. How we can manage it?"*
 
-**Solution:** Implemented a **hybrid lookups architecture** that separates platform-wide lookups (main schema) from tenant-specific lookups (tenant schemas).
+**Solution:** Implemented a **hybrid lookups architecture** that separates platform-wide lookups (main schema) from tenant-specific lookups (tenant schemaAndTypes).
 
 ---
 
@@ -203,7 +203,7 @@ const jobData = {
 1. ✅ Run database migrations
 2. ⏭️ Create `useTenantLookups` hook in frontend
 3. ⏭️ Update `UserJobDetails` component to use dropdowns
-4. ⏭️ Update frontend schemas to include `designationId`, `departmentId`
+4. ⏭️ Update frontend schemaAndTypes to include `designationId`, `departmentId`
 5. ⏭️ Test creating users with lookup references
 
 ### **Short-term (Recommended):**
@@ -241,7 +241,7 @@ const jobData = {
 ### **Frontend (To Do):**
 - ⏭️ `frontend/src/hooks/useTenantLookups.ts` - To create
 - ⏭️ `frontend/src/components/forms/UserJobDetails.tsx` - To update
-- ⏭️ `frontend/src/schemas/user.ts` - To update
+- ⏭️ `frontend/src/schemaAndTypes/user.ts` - To update
 - ⏭️ `frontend/src/pages/admin/ManageLookups.tsx` - To create
 
 ---

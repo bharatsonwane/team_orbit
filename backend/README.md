@@ -29,14 +29,14 @@ A robust, enterprise-grade Node.js backend API built with Express, TypeScript, a
 - **JWT Authentication** - Secure token-based user authentication with comprehensive payload structure
 - **Role-based Access Control** - Granular permission management with user role arrays
 - **TypeScript Integration** - Full type safety with `AuthenticatedRequest` interface and `JwtTokenPayload`
-- **Input Validation** - Comprehensive request validation with Zod schemas
+- **Input Validation** - Comprehensive request validation with Zod schemaAndTypes
 - **Security Headers** - Helmet.js for security best practices
 - **CORS Configuration** - Configurable cross-origin resource sharing
 
 ### 💾 Database Management
 
 - **Advanced Connection Pooling** - Efficient PostgreSQL connection management with schema-specific pools
-- **Multi-Schema Architecture** - Separate main and tenant schemas for true multi-tenancy
+- **Multi-Schema Architecture** - Separate main and tenant schemaAndTypes for true multi-tenancy
 - **Advanced Migration System** - `dbMigrationManager.ts` with support for SQL and TypeScript migrations
 - **Migration Integrity** - Comprehensive validation and error handling for schema changes
 - **Transaction Support** - Safe database operations with rollback capabilities
@@ -95,7 +95,7 @@ The TeamOrbit backend provides a comprehensive RESTful API with interactive docu
 ### Interactive Documentation
 
 - **Swagger UI:** `http://localhost:5100/docs` - Interactive API testing interface
-- **OpenAPI Spec:** Auto-generated from Zod schemas
+- **OpenAPI Spec:** Auto-generated from Zod schemaAndTypes
 
 ### Complete API Reference
 
@@ -137,7 +137,7 @@ For detailed architecture patterns and code examples:
 TeamOrbit uses **PostgreSQL** with a multi-schema architecture:
 
 - **Main schema**: User accounts, tenants, lookup data
-- **Tenant schemas**: Isolated tenant-specific data
+- **Tenant schemaAndTypes**: Isolated tenant-specific data
 
 For complete database documentation: **[Database Documentation](./docs/src/database.md)**
 

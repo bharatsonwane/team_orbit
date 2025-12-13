@@ -230,6 +230,6 @@ const steps = [
 
 For issues or questions about the wizard implementation, refer to:
 - Individual component files for prop documentation
-- Type definitions in schemas
+- Type definitions in schemaAndTypes
 - Validation rules in `userWizardSchema`
 

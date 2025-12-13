@@ -75,7 +75,7 @@ TeamOrbit follows a modern, layered architecture pattern designed for scalabilit
 
 ### 3. Multi-Tenant Architecture
 
-- **Schema Isolation**: Separate database schemas for tenant data
+- **Schema Isolation**: Separate database schemaAndTypes for tenant data
 - **Connection Management**: Automatic database connection routing
 - **Tenant-Aware Services**: Business logic that respects tenant boundaries
 
@@ -114,12 +114,12 @@ backend/src/
 │   ├── routes.ts              # Main route aggregator
 │   ├── tenant.routes.ts       # Tenant endpoints
 │   └── user.routes.ts         # User endpoints
-├── schemas/                   # Zod validation schemas
-│   ├── chat.schema.ts         # Chat validation schemas
-│   ├── common.schema.ts       # Shared validation schemas
-│   ├── lookup.schema.ts       # Lookup validation schemas
-│   ├── tenant.schema.ts       # Tenant validation schemas
-│   └── user.schema.ts         # User validation schemas
+├── schemaAndTypes/                   # Zod validation schemaAndTypes
+│   ├── chat.schema.ts         # Chat validation schemaAndTypes
+│   ├── common.schema.ts       # Shared validation schemaAndTypes
+│   ├── lookup.schema.ts       # Lookup validation schemaAndTypes
+│   ├── tenant.schema.ts       # Tenant validation schemaAndTypes
+│   └── user.schema.ts         # User validation schemaAndTypes
 ├── database/                  # Database layer
 │   ├── db.ts                  # Database connection management
 │   ├── dbMigrate.ts           # Migration entry point

@@ -26,7 +26,7 @@ A comprehensive **3-step wizard system** with **progressive save**, **configurat
 - ✅ Step-based endpoints for progressive save
 - ✅ Dedicated routes for each data section
 - ✅ Transaction-safe operations
-- ✅ Centralized schemas in `user.schema.ts`
+- ✅ Centralized schemaAndTypes in `user.schema.ts`
 
 ### **4. Database Schema**
 - ✅ Proper table naming (plural: `users`, `user_auths`)
@@ -139,8 +139,8 @@ backend/src/
 │       └── tenant/
 │           └── 001-tenant-create-tables.do.sql (user_contacts, user_job_details)
 │
-├── schemas/
-│   └── user.schema.ts ← ALL user schemas centralized
+├── schemaAndTypes/
+│   └── user.schema.ts ← ALL user schemaAndTypes centralized
 │       ├── baseUserSchema
 │       ├── createUserSchema
 │       ├── updateUserStatusAndRolesSchema
@@ -265,7 +265,7 @@ const totalSteps = wizardSteps.length;
 
 ### **5. Type Safety**
 - Full TypeScript support
-- Centralized Zod schemas
+- Centralized Zod schemaAndTypes
 - Type inference throughout
 - No `any` types (minimal exceptions with eslint-disable)
 
@@ -409,7 +409,7 @@ New Table: 1 (user_job_details)
 
 ### **Clean Codebase**
 - ✅ No code duplication
-- ✅ Centralized schemas
+- ✅ Centralized schemaAndTypes
 - ✅ Type-safe throughout
 - ✅ No linter errors
 - ✅ Proper separation of concerns
@@ -551,7 +551,7 @@ A **production-ready, enterprise-grade user management system** with:
 - 🎯 **Multi-Tenant**: Supports both platform and tenant users
 - 🎯 **Progressive Save**: No data loss, resumable workflow
 - 🎯 **Error Resilience**: LEFT JOIN queries, transaction rollback
-- 🎯 **Code Quality**: Centralized schemas, no duplication
+- 🎯 **Code Quality**: Centralized schemaAndTypes, no duplication
 
 ---
 

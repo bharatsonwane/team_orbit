@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import type { ChatUser } from "@/schemas/chatSchema";
+import type { ChatUser } from "@/schemaAndTypes/chatSchema";
 
 interface TypingIndicatorProps {
   typingUsersData: { userId: number; typedAt: string }[];

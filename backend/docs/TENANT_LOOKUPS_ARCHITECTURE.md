@@ -264,7 +264,7 @@ WHERE ujd."userId" = $1;
 ### **Updated Job Details Schema**
 
 ```typescript
-// frontend/src/schemas/user.ts
+// frontend/src/schemaAndTypes/user.ts
 export const userJobDetailsSchema = z.object({
   hiringDate: z.string().optional().or(z.literal("")),
   joiningDate: z.string().optional().or(z.literal("")),
@@ -404,7 +404,7 @@ ALTER TABLE main.lookups ADD COLUMN "tenantId" INT;
 - Fetch tenant lookups for dropdowns
 - Update UserJobDetails component
 - Use lookup IDs instead of free text
-- Update schemas
+- Update schemaAndTypes
 
 ### **Phase 5: Data Migration** ⏭️ **Later**
 - Script to convert existing VARCHAR data to lookup IDs

@@ -131,7 +131,7 @@ const wizardSteps = [
 const isCreateMode = mode === "create";
 const isEditMode = mode === "edit";
 
-// Different schemas based on mode
+// Different schemaAndTypes based on mode
 resolver: zodResolver(isCreateMode ? createUserWizardSchema : userWizardSchema);
 ```
 

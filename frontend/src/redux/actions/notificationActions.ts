@@ -1,4 +1,4 @@
-import type { Notification } from "@/schemas/notificationSchema";
+import type { Notification } from "@/schemaAndTypes/notificationSchema";
 import { getAppErrorMessage } from "@/utils/axiosApi";
 import { createAsyncThunk } from "@reduxjs/toolkit";
 

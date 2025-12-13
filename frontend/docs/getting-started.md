@@ -204,7 +204,7 @@ The TeamOrbit frontend follows these core principles:
 ```typescript
 // src/components/UserCard.tsx
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
-import type { User } from '@/schemas/user';
+import type { User } from '@/schemaAndTypes/user';
 
 interface UserCardProps {
   user: User;
@@ -245,7 +245,7 @@ export function UserCard({ user, onEdit }: UserCardProps) {
 import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { UserCard } from '@/components/UserCard';
-import type { User } from '@/schemas/user';
+import type { User } from '@/schemaAndTypes/user';
 
 export default function UserProfile() {
   const { id } = useParams<{ id: string }>();
@@ -281,7 +281,7 @@ export default function UserProfile() {
 // src/hooks/useUser.ts
 import { useState, useEffect } from "react";
 import { getAxios } from "@/utils/axiosApi";
-import type { User } from "@/schemas/user";
+import type { User } from "@/schemaAndTypes/user";
 
 export function useUser(id: string) {
   const [user, setUser] = useState<User | null>(null);
@@ -323,7 +323,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { profileSchema, type ProfileFormData } from '@/schemas/validation';
+import { profileSchema, type ProfileFormData } from '@/schemaAndTypes/validation';
 
 export default function EditProfile() {
   const {
@@ -364,7 +364,7 @@ export default function EditProfile() {
 **Form Guidelines:**
 
 - Use React Hook Form for all forms
-- Integrate Zod schemas for validation
+- Integrate Zod schemaAndTypes for validation
 - Handle loading states
 - Display validation errors
 - Disable submit during submission
@@ -399,12 +399,12 @@ import { useState, useEffect } from "react"; // React imports
 import { useNavigate } from "react-router-dom"; // Third-party imports
 import { Button } from "@/components/ui/button"; // UI components
 import { useAuth } from "@/contexts/AuthContextProvider"; // Contexts/hooks
-import type { User } from "@/schemas/user"; // Types
+import type { User } from "@/schemaAndTypes/user"; // Types
 
 // ❌ Bad: Disorganized imports
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
-import type { User } from "@/schemas/user";
+import type { User } from "@/schemaAndTypes/user";
 import { useNavigate } from "react-router-dom";
 ```
 
@@ -488,7 +488,7 @@ describe('UserCard', () => {
 #### 1. Define Schema (if needed)
 
 ```typescript
-// src/schemas/feature.ts
+// src/schemaAndTypes/feature.ts
 import { z } from "zod";
 
 export const featureSchema = z.object({

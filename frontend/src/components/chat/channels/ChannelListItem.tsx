@@ -1,7 +1,7 @@
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
-import type { ChatChannel } from "@/schemas/chatSchema";
+import type { ChatChannel } from "@/schemaAndTypes/chatSchema";
 import { formatConversationTime, getSenderUser } from "@/utils/chatUtils";
 import { Hash, Lock } from "lucide-react";
 import { useChat } from "@/contexts/ChatContextProvider";

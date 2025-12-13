@@ -13,7 +13,7 @@ import type {
   LoginCredentials,
   RegisterData,
   AuthResponse,
-} from "../schemas/userSchema";
+} from "../schemaAndTypes/userSchema";
 import { envVariable } from "../config/envVariable";
 import { publicRouteList } from "../components/routing/AppRoutes";
 import getAxios from "../utils/axiosApi";

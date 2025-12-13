@@ -8,7 +8,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import type { ChatChannel } from "@/schemas/chatSchema";
+import type { ChatChannel } from "@/schemaAndTypes/chatSchema";
 import { Badge } from "@/components/ui/badge";
 import { useChat } from "@/contexts/ChatContextProvider";
 import { useAuthService } from "@/contexts/AuthContextProvider";

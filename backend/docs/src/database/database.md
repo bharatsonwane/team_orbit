@@ -34,7 +34,7 @@ npm run migrate
 
 # Migrations are automatically applied to:
 # 1. Main schema (global data)
-# 2. Tenant schemas (tenant-specific data)
+# 2. Tenant schemaAndTypes (tenant-specific data)
 ```
 
 ### Seeding Database
@@ -163,7 +163,7 @@ ORDER BY lt.key;
 
 The TeamOrbit backend uses a custom migration system that supports:
 
-- **Multi-schema migrations** (main and tenant schemas)
+- **Multi-schema migrations** (main and tenant schemaAndTypes)
 - **Mixed migration types** (SQL and TypeScript)
 - **Version control** with comprehensive tracking
 - **Rollback support** for safe deployments
@@ -528,7 +528,7 @@ COMMIT;
 ### Data Isolation
 
 - **Schema Separation**: Each tenant has isolated schema
-- **Cross-Schema References**: Users in main, data in tenant schemas
+- **Cross-Schema References**: Users in main, data in tenant schemaAndTypes
 - **No Direct Access**: All queries through connection pools
 
 ## 🔧 Configuration

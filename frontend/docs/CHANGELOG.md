@@ -65,16 +65,16 @@ This document tracks all significant changes made to the TeamOrbit frontend.
 ### 📋 Schema Updates
 
 #### 8. Tenant Lookup Schema
-- **File**: `src/schemas/tenantLookup.ts` (New)
+- **File**: `src/schemaAndTypes/tenantLookup.ts` (New)
 - **Features**:
-  - Complete Zod schemas for tenant lookup data
+  - Complete Zod schemaAndTypes for tenant lookup data
   - TypeScript type definitions
-  - API response schemas
-  - Form validation schemas
+  - API response schemaAndTypes
+  - Form validation schemaAndTypes
   - Support for create/update operations
 
 #### 9. User Schema Enhancements
-- **File**: `src/schemas/user.ts`
+- **File**: `src/schemaAndTypes/user.ts`
 - **Updates**:
   - Enhanced user job details types
   - Updated form data interfaces

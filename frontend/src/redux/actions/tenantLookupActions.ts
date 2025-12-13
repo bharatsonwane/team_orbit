@@ -4,12 +4,12 @@ import type {
   LookupItem,
   LookupListResponse,
   LookupType,
-} from "@/schemas/lookupSchema";
+} from "@/schemaAndTypes/lookupSchema";
 import type {
   CreateTenantLookupFormData,
   TenantLookupItem,
   UpdateTenantLookupFormData,
-} from "@/schemas/tenantLookupSchema";
+} from "@/schemaAndTypes/tenantLookupSchema";
 
 /** Get tenant lookup list action - API call only */
 export const getTenantLookupListAction = createAsyncThunk(

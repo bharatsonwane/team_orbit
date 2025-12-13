@@ -323,7 +323,7 @@ middlewares: [
 
 ## 📋 Data Schemas
 
-For detailed and up-to-date schemas, refer to the OpenAPI specification at `/docs` or check the source code schemas in `src/schemas/`.
+For detailed and up-to-date schemaAndTypes, refer to the OpenAPI specification at `/docs` or check the source code schemaAndTypes in `src/schemaAndTypes/`.
 
 ## 🚨 Error Codes
 

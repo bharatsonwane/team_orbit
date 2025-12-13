@@ -43,7 +43,7 @@ export type AppDispatch = typeof store.dispatch;
 ```typescript
 // src/redux/slices/userSlice.ts
 import { createSlice } from "@reduxjs/toolkit";
-import type { User } from "@/schemas/user";
+import type { User } from "@/schemaAndTypes/user";
 
 interface UserState {
   user: User | null;
@@ -78,7 +78,7 @@ export default userSlice;
 ```typescript
 // src/redux/slices/notificationSlice.ts
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
-import type { Notification } from "@/schemas/notification";
+import type { Notification } from "@/schemaAndTypes/notification";
 
 interface NotificationState {
   notifications: Notification[];
@@ -123,7 +123,7 @@ export default notificationSlice;
 ```typescript
 // src/redux/slices/lookupSlice.ts
 import { createSlice } from "@reduxjs/toolkit";
-import type { LookupType } from "../../schemas/lookup";
+import type { LookupType } from "../../schemaAndTypes/lookup";
 import { getLookupListAction } from "../actions/lookupAction";
 
 interface LookupState {
@@ -179,7 +179,7 @@ export default lookupSlice;
 // src/redux/actions/lookupAction.ts
 import { createAsyncThunk } from "@reduxjs/toolkit";
 import getAxios, { getAppErrorMessage } from "../../utils/axiosApi";
-import type { LookupListResponse } from "@/schemas/lookup";
+import type { LookupListResponse } from "@/schemaAndTypes/lookup";
 
 /** Get lookup list action - API call only */
 export const getLookupListAction = createAsyncThunk(
@@ -202,7 +202,7 @@ export const getLookupListAction = createAsyncThunk(
 // src/redux/actions/userActions.ts
 import { createAsyncThunk } from "@reduxjs/toolkit";
 import getAxios from "@/utils/axiosApi";
-import type { LoginCredentials, AuthResponse } from "@/schemas/user";
+import type { LoginCredentials, AuthResponse } from "@/schemaAndTypes/user";
 
 export const loginAction = createAsyncThunk<
   AuthResponse,

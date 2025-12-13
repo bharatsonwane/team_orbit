@@ -87,7 +87,7 @@ For backend API documentation: **[Backend API Docs](../backend/docs/src/api.md)*
 
 - **Component-Based**: Modular, reusable React components
 - **Type-Safe**: Full TypeScript coverage with strict mode
-- **Form Validation**: Zod schemas with React Hook Form
+- **Form Validation**: Zod schemaAndTypes with React Hook Form
 - **State Management**: Redux Toolkit + Context API
 - **Routing**: React Router with protected routes
 
@@ -103,7 +103,7 @@ frontend/
 │   ├── contexts/        # React context providers
 │   ├── redux/           # Redux store, slices, actions
 │   ├── utils/           # Utility functions
-│   ├── schemas/         # Zod validation schemas
+│   ├── schemaAndTypes/         # Zod validation schemaAndTypes
 │   └── config/          # Configuration files
 └── docs/                # Documentation
 ```

@@ -134,11 +134,11 @@ frontend/
 │   │   ├── date.ts            # Date utilities
 │   │   └── logger.ts          # Logging utilities
 │   │
-│   ├── schemas/                # TypeScript types & Zod schemas
+│   ├── schemaAndTypes/                # TypeScript types & Zod schemaAndTypes
 │   │   ├── user.ts            # User types
 │   │   ├── lookup.ts          # Lookup data types
 │   │   ├── notification.ts    # Notification types
-│   │   └── validation.ts      # Zod validation schemas
+│   │   └── validation.ts      # Zod validation schemaAndTypes
 │   │
 │   ├── config/                 # Configuration
 │   │   └── envVariable.ts     # Environment variables

@@ -42,11 +42,11 @@ export const signupSchema = z
     path: ["confirmPassword"],
   });
 
-// Type inference from schemas
+// Type inference from schemaAndTypes
 export type LoginFormData = z.infer<typeof loginSchema>;
 export type SignupFormData = z.infer<typeof signupSchema>;
 
-// Common validation schemas that can be reused
+// Common validation schemaAndTypes that can be reused
 export const emailSchema = z
   .string()
   .min(1, "Email is required")

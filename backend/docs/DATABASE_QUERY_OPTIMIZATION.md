@@ -138,7 +138,7 @@ WHERE u.id = ${userId};
 ### Type Safety
 
 ```typescript
-// schemas/user.ts
+// schemaAndTypes/user.ts
 authEmail: z.string().nullable().optional(),  // Can be null/undefined
 email: z.string().email().optional(),         // Fallback
 ```

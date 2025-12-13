@@ -56,7 +56,10 @@ import { UpdateUserStatusAndRolesModal } from "./components/UpdateUserStatusAndR
 import { UpdateUserAuthEmailModal } from "./components/UpdateUserAuthEmailModal";
 import { LoadingIndicator } from "@/components/ui/loading-indicator";
 import { useAuthService } from "@/contexts/AuthContextProvider";
-import type { TenantUser, TenantUsersResponse } from "@/schemas/userSchema";
+import type {
+  TenantUser,
+  TenantUsersResponse,
+} from "@/schemaAndTypes/userSchema";
 
 // Modal keys for this page
 const modalKeys = {

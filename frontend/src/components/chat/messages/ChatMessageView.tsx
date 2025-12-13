@@ -1,7 +1,7 @@
 import { ChatHeader } from "../layout/ChatHeader";
 import { ChatMessageList } from "./ChatMessageList";
 import { ChatMessageInput } from "./ChatMessageInput";
-import type { ChatChannel } from "@/schemas/chatSchema";
+import type { ChatChannel } from "@/schemaAndTypes/chatSchema";
 
 interface ChatMessageViewProps {
   channel: ChatChannel;
