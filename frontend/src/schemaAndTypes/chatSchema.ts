@@ -203,7 +203,7 @@ export type AddReactionData = z.infer<typeof addReactionSchema>;
 export const archiveMessageSchema = z.object({
   messageId: z.number(),
   chatChannelId: z.number(),
-  socketConnectionId: z.string().optional(),
+  socketId: z.string().optional(),
 });
 
 export type ArchiveMessageData = z.infer<typeof archiveMessageSchema>;

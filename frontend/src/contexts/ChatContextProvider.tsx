@@ -729,7 +729,7 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
         const result = await dispatch(
           archiveChatMessageAction({
             chatChannelId,
-            socketConnectionId: currentSocketId,
+            socketId: currentSocketId,
             messageId,
           })
         ).unwrap();

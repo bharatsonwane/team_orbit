@@ -280,7 +280,7 @@ export const archiveChatMessage = async (
     const userId = user.userId;
     const chatChannelId = Number(req.params.chatChannelId);
     const messageId = Number(req.params.messageId);
-    const { socketConnectionId } = req.query as ArchiveChatMessageSchema;
+    const { socketId } = req.query as ArchiveChatMessageSchema;
 
     // Validate user membership and message existence
     await validateChannelMembershipAndMessage(
@@ -310,7 +310,7 @@ export const archiveChatMessage = async (
       chatChannelId,
       messageId,
       userId,
-      senderSocketId: socketConnectionId,
+      senderSocketId: socketId,
       archivedAt: archivedMessage.archivedAt,
     });
 

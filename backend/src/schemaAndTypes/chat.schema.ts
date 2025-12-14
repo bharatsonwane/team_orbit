@@ -119,10 +119,7 @@ export const removeMessageReactionSchema = z.object({
 });
 
 export const archiveChatMessageSchema = z.object({
-  socketConnectionId: z
-    .string()
-    .min(1, "Socket connection ID is required")
-    .optional(),
+  socketId: z.string().min(1, "Socket connection ID is required").optional(),
 });
 
 /** @description SCHEMAS TYPES */

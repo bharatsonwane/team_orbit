@@ -107,10 +107,10 @@ export const archiveChatMessageAction = createAsyncThunk(
   "chat/createChatChannelAction",
   async (payload: ArchiveMessageData, { rejectWithValue }) => {
     try {
-      const { chatChannelId, messageId, socketConnectionId } = payload;
+      const { chatChannelId, messageId, socketId } = payload;
 
       // Construct URL with query parameters
-      const url = `api/chat/channel/${chatChannelId}/message/${messageId}${socketConnectionId ? `?socketConnectionId=${encodeURIComponent(socketConnectionId)}` : ""}`;
+      const url = `api/chat/channel/${chatChannelId}/message/${messageId}${socketId ? `?socketId=${encodeURIComponent(socketId)}` : ""}`;
       const response = await getAxios().delete(url);
       return response.data;
     } catch (error: unknown) {
