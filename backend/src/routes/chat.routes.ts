@@ -5,6 +5,7 @@ import {
   saveChannelMessage,
   getChannelMessages,
   handleMessageReaction,
+  archiveChatMessage,
 } from "@src/controllers/chat.controller";
 import {
   chatChannelListQuerySchema,
@@ -16,6 +17,7 @@ import {
   sendChatMessageSchema,
   addMessageReactionSchema,
   messageReactionSchema,
+  archiveChatMessageSchema,
 } from "@src/schemaAndTypes/chat.schema";
 import { ensureTenantMiddleware } from "@src/middleware/ensureTenantMiddleware";
 import { authRoleMiddleware } from "@src/middleware/authRoleMiddleware";
@@ -78,6 +80,19 @@ registrar.post("/chat/channel/:chatChannelId/message/:messageId/reaction", {
     { statusCode: 201, schema: messageReactionSchema },
   ],
   controller: handleMessageReaction,
+});
+
+registrar.delete("/chat/channel/:chatChannelId/message/:messageId", {
+  middlewares: [ensureTenantMiddleware(), authRoleMiddleware()],
+  requestSchema: {
+    paramsSchema: {
+      chatChannelId: idValidation,
+      messageId: idValidation,
+    },
+    querySchema: archiveChatMessageSchema,
+  },
+  responseSchemas: [{ statusCode: 200, schema: chatMessageSchema }],
+  controller: archiveChatMessage,
 });
 
 export default registrar;

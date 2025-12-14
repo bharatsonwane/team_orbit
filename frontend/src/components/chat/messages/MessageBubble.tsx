@@ -27,7 +27,7 @@ export function MessageBubble({
 }: MessageBubbleProps) {
   const {
     handleEditMessage,
-    handleDeleteMessage,
+    handleArchiveMessage,
     handleReaction,
 
     chatUsers,
@@ -52,10 +52,6 @@ export function MessageBubble({
       });
     }
     setIsEditing(false);
-  };
-
-  const handleDelete = () => {
-    handleDeleteMessage(message.id, message.chatChannelId);
   };
 
   const handleReactionClick = async (reaction: string) => {
@@ -222,7 +218,12 @@ export function MessageBubble({
                   Edit
                 </DropdownMenuItem>
                 <DropdownMenuItem
-                  onClick={handleDelete}
+                  onClick={() => {
+                    handleArchiveMessage({
+                      messageId: message.id,
+                      chatChannelId: message.chatChannelId,
+                    });
+                  }}
                   className="text-destructive"
                 >
                   <Trash2 className="w-4 h-4 mr-2" />

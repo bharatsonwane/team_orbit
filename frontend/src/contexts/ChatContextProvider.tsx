@@ -27,6 +27,7 @@ import {
   sendChannelMessageAction,
   fetchChannelMessagesAction,
   handleMessageReactionAction,
+  archiveChatMessageAction,
 } from "@/redux/actions/chatActions";
 import { useAuthService } from "./AuthContextProvider";
 import { SocketManager } from "@/lib/socketManager";
@@ -49,7 +50,13 @@ export interface ChatContextType {
   // Shared Actions
   handleSendMessage: (data: SendMessageData) => void;
   handleEditMessage: (data: EditMessageData) => void;
-  handleDeleteMessage: (messageId: number, chatChannelId: number) => void;
+  handleArchiveMessage: ({
+    messageId,
+    chatChannelId,
+  }: {
+    messageId: number;
+    chatChannelId: number;
+  }) => void;
   handleReaction: (data: AddReactionData) => Promise<void>;
   handleMarkAsRead: (chatChannelId: number) => void;
   handleSetTyping: (chatChannelId: number, isTyping: boolean) => void;
@@ -65,7 +72,7 @@ const defaultContext: ChatContextType = {
   handleSelectChannel: () => {},
   handleSendMessage: () => {},
   handleEditMessage: () => {},
-  handleDeleteMessage: () => {},
+  handleArchiveMessage: () => {},
   handleReaction: async () => {},
   handleMarkAsRead: () => {},
   handleSetTyping: () => {},
@@ -126,6 +133,10 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
 
   useEffect(() => {
     SocketManager.socketIo.on("chat:new_message", handleNotifyChatMessage);
+    SocketManager.socketIo.on(
+      "chat:message_archived",
+      handleNotifyChatMessageArchived
+    );
     SocketManager.socketIo.on("chat:reaction_update", handleNotifyChatReaction);
     SocketManager.socketIo.on(
       "chat:channel_updated",
@@ -216,6 +227,40 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
     });
   };
 
+  const handleNotifyChatMessageArchived = ({
+    messageId,
+    chatChannelId,
+    senderSocketId,
+    archivedAt,
+  }: {
+    messageId: number;
+    chatChannelId: number;
+    archivedAt: string;
+    senderSocketId?: string;
+  }) => {
+    const currentSocketId = SocketManager.socketIo?.id;
+    const isSentByThisDevice = senderSocketId === currentSocketId;
+
+    // Don't update state for reactions sent by this device (already optimistically updated)
+    if (isSentByThisDevice) return;
+
+    setChannelStateMap(prev => {
+      const existingChannelData = prev.get(chatChannelId)!;
+      const tempMessages = existingChannelData.messages.map(msg =>
+        msg.id == messageId
+          ? { ...msg, isArchived: true, archivedAt: archivedAt }
+          : msg
+      );
+      const tempChannelStateMap = new Map(prev);
+      tempChannelStateMap.set(chatChannelId, {
+        ...existingChannelData,
+        messages: tempMessages,
+        updatedAt: new Date().toISOString(),
+      });
+      return tempChannelStateMap;
+    });
+  };
+
   // Handle incoming reaction updates from socket
   const handleNotifyChatReaction = (data: {
     messageId: number;
@@ -226,7 +271,6 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
     action: "add" | "remove" | "update";
     senderSocketId?: string;
   }) => {
-    debugger;
     const currentSocketId = SocketManager.socketIo?.id;
     const isSentByThisDevice = data.senderSocketId === currentSocketId;
 
@@ -274,6 +318,7 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
       const tempChannelData = {
         ...existingChannelData,
         messages,
+        updatedAt: new Date().toISOString(),
       };
 
       const tempChannelStateMap = new Map(prev);
@@ -377,6 +422,7 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
       tempChannelStateMap.set(data.chatChannelId, {
         ...existingChannelData,
         typingUsers: newTypingUserIds,
+        updatedAt: new Date().toISOString(),
       });
       return tempChannelStateMap;
     });
@@ -504,6 +550,7 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
       tempChannelStateMap.set(chatChannelId, {
         ...existingChannelData,
         unreadCount: 0,
+        updatedAt: new Date().toISOString(),
       });
       return tempChannelStateMap;
     });
@@ -522,7 +569,6 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
 
     const tempId = Date.now();
     const now = new Date().toISOString();
-    const currentSocketId = SocketManager.socketIo?.id;
 
     const tempNewMessage: ChatMessage = {
       id: tempId,
@@ -550,6 +596,7 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
         error: null,
         typingUsers: existingChannelData?.typingUsers ?? [],
         lastReadAt: existingChannelData?.lastReadAt,
+        updatedAt: new Date().toISOString(),
       };
       const tempChannelStateMap = new Map(prev);
       tempChannelStateMap.set(chatChannelId, nextState);
@@ -558,6 +605,7 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
 
     const send = async () => {
       try {
+        const currentSocketId = SocketManager.socketIo?.id;
         const result = await dispatch(
           sendChannelMessageAction({
             chatChannelId,
@@ -650,7 +698,13 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
   };
 
   // Delete message
-  const handleDeleteMessage = (messageId: number, chatChannelId: number) => {
+  const handleArchiveMessage = ({
+    messageId,
+    chatChannelId,
+  }: {
+    messageId: number;
+    chatChannelId: number;
+  }) => {
     const now = new Date().toISOString();
     setChannelStateMap(prev => {
       const existingChannelData = prev.get(chatChannelId);
@@ -667,6 +721,42 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
       });
       return tempChannelStateMap;
     });
+
+    const archive = async () => {
+      try {
+        const currentSocketId = SocketManager.socketIo?.id;
+
+        const result = await dispatch(
+          archiveChatMessageAction({
+            chatChannelId,
+            socketConnectionId: currentSocketId,
+            messageId,
+          })
+        ).unwrap();
+      } catch (err) {
+        setChannelStateMap(prev => {
+          const existingChannelData = prev.get(chatChannelId)!;
+          const tempMessages = existingChannelData.messages.map(msg =>
+            msg.id === messageId
+              ? { ...msg, isArchived: false, archivedAt: "" }
+              : msg
+          );
+          const tempChannelStateMap = new Map(prev);
+          tempChannelStateMap.set(chatChannelId, {
+            ...existingChannelData,
+            messages: tempMessages,
+          });
+          return tempChannelStateMap;
+        });
+
+        setError(
+          typeof err === "string"
+            ? err
+            : "Failed to Delete message. Please try again."
+        );
+      }
+    };
+    archive();
   };
 
   // Add/Update/Remove reaction - single endpoint handles all cases
@@ -897,7 +987,7 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
       handleSelectChannel,
       handleSendMessage,
       handleEditMessage,
-      handleDeleteMessage,
+      handleArchiveMessage,
       handleReaction,
       handleMarkAsRead,
       handleSetTyping,

@@ -11,8 +11,55 @@ import {
   sendChatMessageSchema,
   AddMessageReactionSchema,
   RemoveMessageReactionSchema,
+  ArchiveChatMessageSchema,
 } from "@src/schemaAndTypes/chat.schema";
 import { AuthenticatedRequest } from "@src/middleware/authRoleMiddleware";
+
+// Helper function for channel membership validation
+const validateChannelMembership = async (
+  req: AuthenticatedRequest,
+  chatChannelId: number,
+  userId: number
+) => {
+  const isMember = await Chat.isUserChannelMember(
+    req.db,
+    chatChannelId,
+    userId
+  );
+  if (!isMember) {
+    throw {
+      statusCode: 403,
+      message: "You are not a member of this channel",
+    };
+  }
+};
+
+// Helper function for common validations (membership + message existence)
+const validateChannelMembershipAndMessage = async (
+  req: AuthenticatedRequest,
+  chatChannelId: number,
+  messageId: number,
+  userId: number
+) => {
+  // Check if user is a member of the channel
+  await validateChannelMembership(req, chatChannelId, userId);
+
+  // Check if message exists in the channel
+  const messageDetails = await Chat.getMessageWithCreatedAt(
+    req.db,
+    messageId,
+    chatChannelId
+  );
+
+  if (!messageDetails) {
+    throw {
+      statusCode: 404,
+      message: "Message not found in this channel",
+    };
+  }
+
+  return messageDetails;
+};
 
 export const createChannel = async (
   req: AuthenticatedRequest,
@@ -67,17 +114,8 @@ export const saveChannelMessage = async (
     const chatChannelId = Number(req.params.chatChannelId);
     const payload = req.body as SendChatMessageSchema;
 
-    const isMember = await Chat.isUserChannelMember(
-      req.db,
-      chatChannelId,
-      userId
-    );
-    if (!isMember) {
-      throw {
-        statusCode: 403,
-        message: "You are not a member of this channel",
-      };
-    }
+    // Validate user membership
+    await validateChannelMembership(req, chatChannelId, userId);
 
     const message = await Chat.saveChannelMessage(req.db, {
       chatChannelId,
@@ -115,17 +153,8 @@ export const getChannelMessages = async (
     const userId = req.user?.userId!;
     const chatChannelId = Number(req.params.chatChannelId);
 
-    const isMember = await Chat.isUserChannelMember(
-      req.db,
-      chatChannelId,
-      userId
-    );
-    if (!isMember) {
-      throw {
-        statusCode: 403,
-        message: "You are not a member of this channel",
-      };
-    }
+    // Validate user membership
+    await validateChannelMembership(req, chatChannelId, userId);
 
     const messages = await Chat.getChannelMessages(req.db, {
       chatChannelId,
@@ -152,32 +181,13 @@ export const handleMessageReaction = async (
     const messageId = Number(req.params.messageId);
     const { reaction, socketId } = req.body as AddMessageReactionSchema;
 
-    // Check if user is a member of the channel
-    const isMember = await Chat.isUserChannelMember(
-      req.db,
+    // Validate user membership and message existence
+    const messageDetails = await validateChannelMembershipAndMessage(
+      req,
       chatChannelId,
+      messageId,
       userId
     );
-    if (!isMember) {
-      throw {
-        statusCode: 403,
-        message: "You are not a member of this channel",
-      };
-    }
-
-    // Get message details including createdAt
-    const messageDetails = await Chat.getMessageWithCreatedAt(
-      req.db,
-      messageId,
-      chatChannelId
-    );
-
-    if (!messageDetails) {
-      throw {
-        statusCode: 404,
-        message: "Message not found in this channel",
-      };
-    }
 
     // Get existing user reaction for this message
     const existingReaction = await Chat.getExistingUserReaction(req.db, {
@@ -250,6 +260,61 @@ export const handleMessageReaction = async (
     });
 
     res.status(201).json(responseData);
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const archiveChatMessage = async (
+  req: AuthenticatedRequest,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  try {
+    const { user } = req;
+    if (!user?.userId) {
+      throw { statusCode: 401, message: "User not authenticated" };
+    }
+
+    const tenantId = user.tenantId;
+    const userId = user.userId;
+    const chatChannelId = Number(req.params.chatChannelId);
+    const messageId = Number(req.params.messageId);
+    const { socketConnectionId } = req.query as ArchiveChatMessageSchema;
+
+    // Validate user membership and message existence
+    await validateChannelMembershipAndMessage(
+      req,
+      chatChannelId,
+      messageId,
+      userId
+    );
+
+    // Archive the message
+    const archivedMessage = await Chat.archiveMessage(req.db, {
+      messageId,
+      userId,
+      chatChannelId,
+    });
+
+    if (!archivedMessage) {
+      throw {
+        statusCode: 500,
+        message: "Failed to archive message",
+      };
+    }
+
+    // Notify channel members via socket
+    ChatSocketController.notifyMessageArchive({
+      tenantId,
+      chatChannelId,
+      messageId,
+      userId,
+      senderSocketId: socketConnectionId,
+      archivedAt: archivedMessage.archivedAt,
+    });
+
+    res.status(200).json(archivedMessage);
   } catch (error) {
     next(error);
   }

@@ -8,6 +8,7 @@ import {
   type FetchChannelMessagesParam,
   type ChatMessage,
   type AddReactionData,
+  type ArchiveMessageData,
 } from "@/schemaAndTypes/chatSchema";
 
 export const createChatChannelAction = createAsyncThunk(
@@ -101,3 +102,19 @@ export const handleMessageReactionAction = createAsyncThunk<
     return rejectWithValue(getAppErrorMessage(error));
   }
 });
+
+export const archiveChatMessageAction = createAsyncThunk(
+  "chat/createChatChannelAction",
+  async (payload: ArchiveMessageData, { rejectWithValue }) => {
+    try {
+      const { chatChannelId, messageId, socketConnectionId } = payload;
+
+      // Construct URL with query parameters
+      const url = `api/chat/channel/${chatChannelId}/message/${messageId}${socketConnectionId ? `?socketConnectionId=${encodeURIComponent(socketConnectionId)}` : ""}`;
+      const response = await getAxios().delete(url);
+      return response.data;
+    } catch (error: unknown) {
+      return rejectWithValue(getAppErrorMessage(error));
+    }
+  }
+);

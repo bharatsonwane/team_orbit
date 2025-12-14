@@ -279,6 +279,9 @@ export default class Chat {
         m."senderUserId",
         m."createdAt",
         m."updatedAt",
+        m."isArchived",
+        m."archivedAt",
+        m."archivedBy",
         m."chatChannelId" AS "chatChannelId",
         COALESCE(
           JSON_AGG(
@@ -473,6 +476,41 @@ export default class Chat {
     `;
 
     const result = await tenantPool.query(query, [messageId, chatChannelId]);
+
+    return result.rows.length > 0 ? result.rows[0] : null;
+  }
+
+  static async archiveMessage(
+    dbClient: dbClientPool,
+    {
+      messageId,
+      userId,
+      chatChannelId,
+    }: {
+      messageId: number;
+      userId: number;
+      chatChannelId: number;
+    }
+  ): Promise<{
+    id: number;
+    isArchived: boolean;
+    archivedAt: string;
+    archivedBy: number;
+  } | null> {
+    const tenantPool = dbClient.tenantPool!;
+
+    const query = `
+      UPDATE chat_message 
+      SET "isArchived" = TRUE, "archivedAt" = NOW(), "archivedBy" = $1
+      WHERE id = $2 AND "chatChannelId" = $3
+      RETURNING id, "isArchived", "archivedAt"::text, "archivedBy";
+    `;
+
+    const result = await tenantPool.query(query, [
+      userId,
+      messageId,
+      chatChannelId,
+    ]);
 
     return result.rows.length > 0 ? result.rows[0] : null;
   }

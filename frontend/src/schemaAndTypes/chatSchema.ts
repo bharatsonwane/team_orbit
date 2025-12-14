@@ -199,6 +199,15 @@ export const addReactionSchema = z.object({
 
 export type AddReactionData = z.infer<typeof addReactionSchema>;
 
+// Archive Message schema
+export const archiveMessageSchema = z.object({
+  messageId: z.number(),
+  chatChannelId: z.number(),
+  socketConnectionId: z.string().optional(),
+});
+
+export type ArchiveMessageData = z.infer<typeof archiveMessageSchema>;
+
 export const chatChannelMemberSchema = z.object({
   userId: z.number(),
   isAdmin: z.boolean(),

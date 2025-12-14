@@ -118,6 +118,13 @@ export const removeMessageReactionSchema = z.object({
   reactionId: z.number().int().positive("Valid reaction ID is required"),
 });
 
+export const archiveChatMessageSchema = z.object({
+  socketConnectionId: z
+    .string()
+    .min(1, "Socket connection ID is required")
+    .optional(),
+});
+
 /** @description SCHEMAS TYPES */
 export type CreateChatChannelSchema = z.infer<typeof createChatChannelSchema>;
 export type ChatChannelSchema = z.infer<typeof chatChannelSchema>;
@@ -138,6 +145,7 @@ export type AddMessageReactionSchema = z.infer<typeof addMessageReactionSchema>;
 export type RemoveMessageReactionSchema = z.infer<
   typeof removeMessageReactionSchema
 >;
+export type ArchiveChatMessageSchema = z.infer<typeof archiveChatMessageSchema>;
 
 /** @description OPENAPI SCHEMAS REGISTRATION */
 oasRegisterSchemas([
@@ -176,5 +184,9 @@ oasRegisterSchemas([
   {
     schemaName: "RemoveMessageReactionSchema",
     schema: removeMessageReactionSchema,
+  },
+  {
+    schemaName: "ArchiveChatMessageSchema",
+    schema: archiveChatMessageSchema,
   },
 ]);

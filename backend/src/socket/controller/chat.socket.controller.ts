@@ -174,6 +174,40 @@ export class ChatSocketController {
   }
 
   /**
+   * Emit message archive notification to channel room
+   */
+  static notifyMessageArchive({
+    tenantId,
+    chatChannelId,
+    messageId,
+    userId,
+    senderSocketId,
+    archivedAt,
+  }: {
+    tenantId: number;
+    chatChannelId: number;
+    messageId: number;
+    userId: number;
+    senderSocketId?: string;
+    archivedAt: string;
+  }) {
+    const io = SocketManager.getSocketIo();
+    const roomName = getChatChannelRoomName({
+      tenantId,
+      chatChannelId,
+    });
+
+    io.to(roomName).emit(chatSocketEvents.CHAT_MESSAGE_ARCHIVE, {
+      messageId,
+      chatChannelId,
+      userId,
+      senderSocketId,
+      archivedAt,
+      timestamp: new Date().toISOString(),
+    });
+  }
+
+  /**
    * Handle typing indicator events
    */
   static handleTyping({
