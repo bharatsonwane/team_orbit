@@ -13,6 +13,7 @@ export const chatSocketEvents = {
 
   // Server -> Client events (emitted by server)
   CHAT_NEW_MESSAGE: "chat:new_message",
+  CHAT_MESSAGE_UPDATE: "chat:message_update",
   CHAT_REACTION_UPDATE: "chat:reaction_update",
   CHAT_MESSAGE_ARCHIVE: "chat:message_archived",
   CHAT_TYPING_UPDATE: "chat:typing:update",

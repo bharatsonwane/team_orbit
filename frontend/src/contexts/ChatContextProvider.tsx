@@ -26,8 +26,9 @@ import {
   fetchChatChannelsAction,
   sendChannelMessageAction,
   fetchChannelMessagesAction,
-  handleMessageReactionAction,
+  MessageReactionAction,
   archiveChatMessageAction,
+  updateChannelMessageAction,
 } from "@/redux/actions/chatActions";
 import { useAuthService } from "./AuthContextProvider";
 import { SocketManager } from "@/lib/socketManager";
@@ -137,6 +138,10 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
       "chat:message_archived",
       handleNotifyChatMessageArchived
     );
+    SocketManager.socketIo.on(
+      "chat:message_update",
+      handleNotifyChatMessageUpdate
+    );
     SocketManager.socketIo.on("chat:reaction_update", handleNotifyChatReaction);
     SocketManager.socketIo.on(
       "chat:channel_updated",
@@ -145,6 +150,14 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
     SocketManager.socketIo.on("chat:typing:update", handleNotifyTypingUpdate);
     return () => {
       SocketManager.socketIo.off("chat:new_message", handleNotifyChatMessage);
+      SocketManager.socketIo.off(
+        "chat:message_archived",
+        handleNotifyChatMessageArchived
+      );
+      SocketManager.socketIo.off(
+        "chat:message_update",
+        handleNotifyChatMessageUpdate
+      );
       SocketManager.socketIo.off(
         "chat:reaction_update",
         handleNotifyChatReaction
@@ -251,6 +264,50 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
           ? { ...msg, isArchived: true, archivedAt: archivedAt }
           : msg
       );
+      const tempChannelStateMap = new Map(prev);
+      tempChannelStateMap.set(chatChannelId, {
+        ...existingChannelData,
+        messages: tempMessages,
+        updatedAt: new Date().toISOString(),
+      });
+      return tempChannelStateMap;
+    });
+  };
+
+  // Handle incoming message updates from socket
+  const handleNotifyChatMessageUpdate = ({
+    messageId,
+    chatChannelId,
+    senderSocketId,
+    updatedMessage,
+  }: {
+    messageId: number;
+    chatChannelId: number;
+    senderSocketId?: string;
+    updatedMessage: ChatMessage;
+  }) => {
+    const currentSocketId = SocketManager.socketIo?.id;
+    const isSentByThisDevice = senderSocketId === currentSocketId;
+
+    // Don't update state for updates sent by this device (already optimistically updated)
+    if (isSentByThisDevice) return;
+
+    setChannelStateMap(prev => {
+      const existingChannelData = prev.get(chatChannelId);
+      if (!existingChannelData) return prev;
+
+      const tempMessages = existingChannelData.messages.map(msg =>
+        msg.id === messageId
+          ? {
+              ...msg,
+              text: updatedMessage.text,
+              mediaUrl: updatedMessage.mediaUrl,
+              isEdited: true,
+              updatedAt: updatedMessage.updatedAt || new Date().toISOString(),
+            }
+          : msg
+      );
+
       const tempChannelStateMap = new Map(prev);
       tempChannelStateMap.set(chatChannelId, {
         ...existingChannelData,
@@ -675,26 +732,104 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
 
   // Edit message
   const handleEditMessage = (data: EditMessageData) => {
+    if (!data.text?.trim()) {
+      setError("Message content is required");
+      return;
+    }
+
+    if (!loggedInUser) {
+      setError("You must be logged in to edit messages.");
+      return;
+    }
+
+    const { messageId, chatChannelId, text } = data;
+
+    // Optimistic update
     setChannelStateMap(prev => {
-      const existingChannelData = prev.get(data.chatChannelId);
+      const existingChannelData = prev.get(chatChannelId);
       if (!existingChannelData) return prev;
+
       const tempMessages = existingChannelData.messages.map(msg =>
-        msg.id === data.messageId
+        msg.id === messageId
           ? {
               ...msg,
-              text: data.text,
+              text: text,
               isEdited: true,
               updatedAt: new Date().toISOString(),
             }
           : msg
       );
+
       const tempChannelStateMap = new Map(prev);
-      tempChannelStateMap.set(data.chatChannelId, {
+      tempChannelStateMap.set(chatChannelId, {
         ...existingChannelData,
         messages: tempMessages,
+        updatedAt: new Date().toISOString(),
       });
       return tempChannelStateMap;
     });
+
+    const edit = async () => {
+      try {
+        const currentSocketId = SocketManager.socketIo?.id;
+        const result = await dispatch(
+          updateChannelMessageAction({
+            messageId,
+            chatChannelId,
+            text,
+            socketId: currentSocketId,
+          })
+        ).unwrap();
+
+        const updatedMessage: ChatMessage = {
+          ...result,
+          text: result.text ?? undefined,
+          isEdited: true, // Ensure isEdited is always set for edited messages
+        };
+
+        setChannelStateMap(prev => {
+          const existingChannelData = prev.get(chatChannelId);
+          if (!existingChannelData) return prev;
+          const tempMessages = existingChannelData.messages.map(message =>
+            message.id === messageId
+              ? { ...message, ...updatedMessage }
+              : message
+          );
+          const tempChannelStateMap = new Map(prev);
+          tempChannelStateMap.set(chatChannelId, {
+            ...existingChannelData,
+            messages: tempMessages,
+            updatedAt: updatedMessage.updatedAt,
+          });
+          return tempChannelStateMap;
+        });
+      } catch (err) {
+        setChannelStateMap(prev => {
+          const existingChannelData = prev.get(chatChannelId);
+          if (!existingChannelData) return prev;
+          const tempMessages = existingChannelData.messages.map(msg =>
+            msg.id === messageId
+              ? { ...msg, isEdited: false, updatedAt: msg.updatedAt }
+              : msg
+          );
+          const tempChannelStateMap = new Map(prev);
+          tempChannelStateMap.set(chatChannelId, {
+            ...existingChannelData,
+            messages: tempMessages,
+            updatedAt: existingChannelData.updatedAt,
+          });
+          return tempChannelStateMap;
+        });
+
+        setError(
+          typeof err === "string"
+            ? err
+            : "Failed to update message. Please try again."
+        );
+      }
+    };
+
+    void edit();
   };
 
   // Delete message
@@ -764,7 +899,7 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
     try {
       // Call API - backend handles whether to add, update, or remove
       const reactionResult = await dispatch(
-        handleMessageReactionAction({
+        MessageReactionAction({
           ...data,
           socketId: SocketManager.socketIo?.id,
         })

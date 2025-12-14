@@ -23,9 +23,11 @@ interface TransactionHandlers {
 class DbManager {
   private client: InstanceType<ClientType> | null = null;
   private pool: InstanceType<PoolType> | null = null;
+  private clientEnded: boolean = false;
+  private poolEnded: boolean = false;
 
   async getDbClient(): Promise<InstanceType<ClientType>> {
-    if (!this.client) {
+    if (!this.client || this.clientEnded) {
       this.client = new Client({
         host: envVariable.DB_HOST,
         port: envVariable.DB_PORT,
@@ -34,12 +36,13 @@ class DbManager {
         password: envVariable.DB_PASSWORD,
       });
       await this.client.connect();
+      this.clientEnded = false;
     }
     return this.client;
   }
 
   getDbPool(): InstanceType<PoolType> {
-    if (!this.pool) {
+    if (!this.pool || this.poolEnded) {
       this.pool = new Pool({
         host: envVariable.DB_HOST,
         port: envVariable.DB_PORT,
@@ -56,6 +59,8 @@ class DbManager {
       this.pool.on("error", (err: Error, client: PoolClient) => {
         logger.error("Unexpected error on idle client", err);
       });
+      
+      this.poolEnded = false;
     }
     return this.pool;
   }
@@ -99,14 +104,18 @@ class DbManager {
 
   async shutdown(): Promise<void> {
     try {
-      if (this.client) {
+      if (this.client && !this.clientEnded) {
         await this.client.end();
-        this.client = null;
+        this.clientEnded = true;
       }
-      if (this.pool) {
+      this.client = null;
+      
+      if (this.pool && !this.poolEnded) {
         await this.pool.end();
-        this.pool = null;
+        this.poolEnded = true;
       }
+      this.pool = null;
+      
       logger.info("Database connections closed successfully");
     } catch (error) {
       logger.error("Error during database shutdown:", error);

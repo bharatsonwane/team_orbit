@@ -174,6 +174,40 @@ export class ChatSocketController {
   }
 
   /**
+   * Emit message update to channel room
+   */
+  static notifyMessageUpdate({
+    tenantId,
+    chatChannelId,
+    messageId,
+    userId,
+    senderSocketId,
+    updatedMessage,
+  }: {
+    tenantId: number;
+    chatChannelId: number;
+    messageId: number;
+    userId: number;
+    senderSocketId?: string;
+    updatedMessage: any;
+  }) {
+    const io = SocketManager.getSocketIo();
+    const roomName = getChatChannelRoomName({
+      tenantId,
+      chatChannelId,
+    });
+
+    io.to(roomName).emit(chatSocketEvents.CHAT_MESSAGE_UPDATE, {
+      messageId,
+      chatChannelId,
+      userId,
+      senderSocketId,
+      updatedMessage,
+      timestamp: new Date().toISOString(),
+    });
+  }
+
+  /**
    * Emit message archive notification to channel room
    */
   static notifyMessageArchive({

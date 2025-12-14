@@ -12,6 +12,7 @@ import {
   AddMessageReactionSchema,
   RemoveMessageReactionSchema,
   ArchiveChatMessageSchema,
+  UpdateChatMessageSchema,
 } from "@src/schemaAndTypes/chat.schema";
 import { AuthenticatedRequest } from "@src/middleware/authRoleMiddleware";
 
@@ -260,6 +261,70 @@ export const handleMessageReaction = async (
     });
 
     res.status(201).json(responseData);
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const updateChannelMessage = async (
+  req: AuthenticatedRequest,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  try {
+    const { user } = req;
+    if (!user?.userId) {
+      throw { statusCode: 401, message: "User not authenticated" };
+    }
+
+    const tenantId = user.tenantId;
+    const userId = user.userId;
+    const chatChannelId = Number(req.params.chatChannelId);
+    const messageId = Number(req.params.messageId);
+    const payload = req.body as UpdateChatMessageSchema;
+
+    // Validate user membership and message existence
+    const messageDetails = await validateChannelMembershipAndMessage(
+      req,
+      chatChannelId,
+      messageId,
+      userId
+    );
+
+    // Check if the user is the sender of the message
+    if (messageDetails.senderUserId !== userId) {
+      throw {
+        statusCode: 403,
+        message: "You can only edit your own messages",
+      };
+    }
+
+    // Update the message
+    const updatedMessage = await Chat.updateChannelMessage(req.db, {
+      messageId,
+      chatChannelId,
+      text: payload.text,
+      mediaUrl: payload.mediaUrl,
+    });
+
+    if (!updatedMessage) {
+      throw {
+        statusCode: 500,
+        message: "Failed to update message",
+      };
+    }
+
+    // Notify channel members via socket
+    ChatSocketController.notifyMessageUpdate({
+      tenantId,
+      chatChannelId,
+      messageId,
+      userId,
+      senderSocketId: payload.socketId,
+      updatedMessage,
+    });
+
+    res.status(200).json(updatedMessage);
   } catch (error) {
     next(error);
   }

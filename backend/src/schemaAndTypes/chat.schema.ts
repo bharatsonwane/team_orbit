@@ -97,6 +97,10 @@ export const chatMessageSchema = z.object({
   receipt: z.array(messageReceiptSchema).optional(),
   createdAt: z.string().datetime().optional(),
   updatedAt: z.string().datetime().optional(),
+  isEdited: z.boolean().optional(),
+  isArchived: z.boolean().optional(),
+  archivedAt: z.string().datetime().optional(),
+  archivedBy: z.number().int().optional(),
 });
 
 export const chatMessageListQuerySchema = z.object({
@@ -122,6 +126,22 @@ export const archiveChatMessageSchema = z.object({
   socketId: z.string().min(1, "Socket connection ID is required").optional(),
 });
 
+export const updateChatMessageSchema = z
+  .object({
+    text: z
+      .string()
+      .trim()
+      .min(1, "Message must contain at least 1 character")
+      .max(5000, "Message is too long")
+      .optional(),
+    mediaUrl: z.string().url().max(1000).optional(),
+    socketId: z.string().optional(), // Socket ID from frontend
+  })
+  .refine(data => data.text || data.mediaUrl, {
+    message: "Either text or mediaUrl is required",
+    path: ["text"],
+  });
+
 /** @description SCHEMAS TYPES */
 export type CreateChatChannelSchema = z.infer<typeof createChatChannelSchema>;
 export type ChatChannelSchema = z.infer<typeof chatChannelSchema>;
@@ -143,6 +163,7 @@ export type RemoveMessageReactionSchema = z.infer<
   typeof removeMessageReactionSchema
 >;
 export type ArchiveChatMessageSchema = z.infer<typeof archiveChatMessageSchema>;
+export type UpdateChatMessageSchema = z.infer<typeof updateChatMessageSchema>;
 
 /** @description OPENAPI SCHEMAS REGISTRATION */
 oasRegisterSchemas([
@@ -185,5 +206,9 @@ oasRegisterSchemas([
   {
     schemaName: "ArchiveChatMessageSchema",
     schema: archiveChatMessageSchema,
+  },
+  {
+    schemaName: "UpdateChatMessageSchema",
+    schema: updateChatMessageSchema,
   },
 ]);

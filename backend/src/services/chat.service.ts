@@ -279,6 +279,7 @@ export default class Chat {
         m."senderUserId",
         m."createdAt",
         m."updatedAt",
+        m."isEdited",
         m."isArchived",
         m."archivedAt",
         m."archivedBy",
@@ -466,16 +467,66 @@ export default class Chat {
     dbClient: dbClientPool,
     messageId: number,
     chatChannelId: number
-  ): Promise<{ id: number; createdAt: string; chatChannelId: number } | null> {
+  ): Promise<{
+    id: number;
+    createdAt: string;
+    chatChannelId: number;
+    senderUserId: number;
+  } | null> {
     const tenantPool = dbClient.tenantPool!;
 
     const query = `
-      SELECT id, "createdAt"::text, "chatChannelId"
+      SELECT id, "createdAt"::text, "chatChannelId", "senderUserId"
       FROM chat_message 
       WHERE id = $1 AND "chatChannelId" = $2;
     `;
 
     const result = await tenantPool.query(query, [messageId, chatChannelId]);
+
+    return result.rows.length > 0 ? result.rows[0] : null;
+  }
+
+  static async updateChannelMessage(
+    dbClient: dbClientPool,
+    {
+      messageId,
+      chatChannelId,
+      text,
+      mediaUrl,
+    }: {
+      messageId: number;
+      chatChannelId: number;
+      text?: string;
+      mediaUrl?: string;
+    }
+  ): Promise<ChatMessageSchema | null> {
+    const tenantPool = dbClient.tenantPool!;
+
+    const query = `
+      UPDATE chat_message 
+      SET text = $1, "mediaUrl" = $2, "updatedAt" = NOW(), "isEdited" = TRUE
+      WHERE id = $3 AND "chatChannelId" = $4
+      RETURNING 
+        id::integer,
+        text,
+        "mediaUrl",
+        "replyToMessageId",
+        "senderUserId",
+        "createdAt",
+        "updatedAt",
+        "isEdited",
+        "isArchived",
+        "archivedAt",
+        "archivedBy",
+        "chatChannelId" AS "chatChannelId";
+    `;
+
+    const result = await tenantPool.query(query, [
+      text ?? "",
+      mediaUrl ?? "",
+      messageId,
+      chatChannelId,
+    ]);
 
     return result.rows.length > 0 ? result.rows[0] : null;
   }

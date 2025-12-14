@@ -9,6 +9,7 @@ import {
   type ChatMessage,
   type AddReactionData,
   type ArchiveMessageData,
+  type EditMessageData,
 } from "@/schemaAndTypes/chatSchema";
 
 export const createChatChannelAction = createAsyncThunk(
@@ -78,30 +79,21 @@ export const sendChannelMessageAction = createAsyncThunk<
   }
 });
 
-export const handleMessageReactionAction = createAsyncThunk<
-  {
-    id: number;
-    messageId: number;
-    userId: number;
-    reaction: string;
-    createdAt: string;
-    isUpdated?: boolean;
-    isRemoved?: boolean;
-  },
-  AddReactionData,
-  { rejectValue: string }
->("chat/handleMessageReactionAction", async (payload, { rejectWithValue }) => {
-  try {
-    const { chatChannelId, messageId, reaction, socketId } = payload;
-    const response = await getAxios().post(
-      `api/chat/channel/${chatChannelId}/message/${messageId}/reaction`,
-      { reaction, socketId }
-    );
-    return response.data;
-  } catch (error: unknown) {
-    return rejectWithValue(getAppErrorMessage(error));
+export const MessageReactionAction = createAsyncThunk(
+  "chat/MessageReactionAction",
+  async (payload: AddReactionData, { rejectWithValue }) => {
+    try {
+      const { chatChannelId, messageId, reaction, socketId } = payload;
+      const response = await getAxios().post(
+        `api/chat/channel/${chatChannelId}/message/${messageId}/reaction`,
+        { reaction, socketId }
+      );
+      return response.data;
+    } catch (error: unknown) {
+      return rejectWithValue(getAppErrorMessage(error));
+    }
   }
-});
+);
 
 export const archiveChatMessageAction = createAsyncThunk(
   "chat/createChatChannelAction",
@@ -118,3 +110,20 @@ export const archiveChatMessageAction = createAsyncThunk(
     }
   }
 );
+
+export const updateChannelMessageAction = createAsyncThunk<
+  ChatMessage,
+  EditMessageData & { socketId?: string },
+  { rejectValue: string }
+>("chat/updateChannelMessageAction", async (payload, { rejectWithValue }) => {
+  try {
+    const { chatChannelId, messageId, text, socketId } = payload;
+    const response = await getAxios().put(
+      `api/chat/channel/${chatChannelId}/message/${messageId}`,
+      { text, socketId }
+    );
+    return response.data;
+  } catch (error: unknown) {
+    return rejectWithValue(getAppErrorMessage(error));
+  }
+});
