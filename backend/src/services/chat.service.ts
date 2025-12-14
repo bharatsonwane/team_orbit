@@ -272,7 +272,7 @@ export default class Chat {
         LIMIT ${limit}
       )
       SELECT
-        m.id,
+        m.id::integer,
         m.text,
         m."mediaUrl",
         m."replyToMessageId",
