@@ -19,7 +19,7 @@ PostgreSQL Database: teamorbit
 ├── tenant_1               # Tenant 1's data
 │   ├── chat_channel
 │   ├── chat_message
-│   └── chat_channel_user_mapping
+│   └── chat_channel_user_xref
 └── tenant_2               # Tenant 2's data
     └── ...
 ```

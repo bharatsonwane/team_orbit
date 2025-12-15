@@ -405,7 +405,7 @@ PostgreSQL Database: teamorbit
 ├── tenant_1               # Tenant-specific data
 │   ├── chat_channel       # Chat channels
 │   ├── chat_message       # Chat messages
-│   └── chat_channel_user_mapping
+│   └── chat_channel_user_xref
 ├── tenant_2               # Another tenant's data
 │   └── ...
 └── tenant_n               # Additional tenants

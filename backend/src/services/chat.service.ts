@@ -27,7 +27,7 @@ export default class Chat {
     const membership = await dbClient.tenantPool!.query(
       `
         SELECT 1
-        FROM chat_channel_user_mapping
+        FROM chat_channel_user_xref
         WHERE "chatChannelId" = $1
           AND "userId" = $2
           AND "isActive" = TRUE;
@@ -79,7 +79,7 @@ export default class Chat {
       });
 
       await dbClient.tenantPool!.query(`
-        INSERT INTO chat_channel_user_mapping (
+        INSERT INTO chat_channel_user_xref (
           "chatChannelId",
           "userId",
           "isAdmin"
@@ -144,7 +144,7 @@ export default class Chat {
         c."updatedAt",
         cm."isAdmin" AS "isCurrentUserAdmin"
       FROM chat_channel c
-      INNER JOIN chat_channel_user_mapping cm
+      INNER JOIN chat_channel_user_xref cm
         ON cm."chatChannelId" = c.id
       ${whereClause}
       )
@@ -163,7 +163,7 @@ export default class Chat {
           '[]'::json
         ) AS members
       FROM user_channels uc
-      LEFT JOIN chat_channel_user_mapping cm_all
+      LEFT JOIN chat_channel_user_xref cm_all
         ON cm_all."chatChannelId" = uc.id AND cm_all."isActive" = TRUE
       LEFT JOIN main.users u
         ON u.id = cm_all."userId"

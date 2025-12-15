@@ -230,7 +230,7 @@ CREATE TABLE IF NOT EXISTS post_bookmark (
 -- ===========================================================
 -- POST CATEGORY MAPPING (Using tenant_lookups)
 -- ===========================================================
-CREATE TABLE IF NOT EXISTS post_category_mapping (
+CREATE TABLE IF NOT EXISTS post_category_xref (
     id SERIAL PRIMARY KEY,
     "postId" BIGINT NOT NULL,
     "postCreatedAt" TIMESTAMP NOT NULL,
@@ -308,7 +308,7 @@ CREATE INDEX IF NOT EXISTS idx_comment_reaction_comment ON post_comment_reaction
 CREATE INDEX IF NOT EXISTS idx_post_bookmark_user ON post_bookmark ("userId", "createdAt" DESC);
 
 -- Category indexes
-CREATE INDEX IF NOT EXISTS idx_post_category_category ON post_category_mapping ("categoryId", "createdAt" DESC);
+CREATE INDEX IF NOT EXISTS idx_post_category_category ON post_category_xref ("categoryId", "createdAt" DESC);
 
 -- Hashtag indexes
 CREATE INDEX IF NOT EXISTS idx_post_hashtag_tag ON post_hashtag (hashtag, "createdAt" DESC);

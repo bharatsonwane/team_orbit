@@ -74,7 +74,7 @@ This roadmap outlines the step-by-step implementation plan for integrating Socke
 ### 2.2 Read Receipt Events
 - **`mark_as_read`** - Handle read receipt
   - Batch insert into `chat_message_receipt` table
-  - Update `lastReadMessageId` in `chat_channel_user_mapping`
+  - Update `lastReadMessageId` in `chat_channel_user_xref`
   - Emit `messages_read` to channel room (optional)
 
 - **`mark_as_delivered`** - Handle delivery receipt
@@ -99,7 +99,7 @@ This roadmap outlines the step-by-step implementation plan for integrating Socke
 
 - **`leave_channel`** - Handle channel leave
   - Leave Socket.IO room
-  - Update `chat_channel_user_mapping` (set `leftAt`)
+  - Update `chat_channel_user_xref` (set `leftAt`)
   - Emit user left to channel (optional)
 
 - **`typing_start`** - Handle typing indicator start
@@ -221,7 +221,7 @@ This roadmap outlines the step-by-step implementation plan for integrating Socke
 ### 6.1 Message Creation Flow
 ```
 1. Receive send_message event
-2. Validate channel access (check chat_channel_user_mapping)
+2. Validate channel access (check chat_channel_user_xref)
 3. Insert into chat_message table
 4. Get message with createdAt for foreign keys
 5. Emit new_message to channel room
@@ -233,7 +233,7 @@ This roadmap outlines the step-by-step implementation plan for integrating Socke
 ```
 1. Receive mark_as_read event
 2. Batch insert/update chat_message_receipt
-3. Update chat_channel_user_mapping.lastReadMessageId
+3. Update chat_channel_user_xref.lastReadMessageId
 4. Emit messages_read to channel room (optional)
 ```
 
@@ -489,14 +489,14 @@ This roadmap outlines the step-by-step implementation plan for integrating Socke
 
 ### Primary Tables
 - `chat_channel` - Channel information
-- `chat_channel_user_mapping` - User-channel relationships and `lastReadMessageId`
+- `chat_channel_user_xref` - User-channel relationships and `lastReadMessageId`
 - `chat_message` - Messages (partitioned by `createdAt`)
 - `chat_message_receipt` - Delivery and read status
 - `chat_message_reaction` - Message reactions
 
 ### Important Fields for Socket.IO
 - `chat_message.id` and `chat_message.createdAt` - Composite key for foreign keys
-- `chat_channel_user_mapping.lastReadMessageId` - For fast unread count
+- `chat_channel_user_xref.lastReadMessageId` - For fast unread count
 - `chat_message_receipt.messageCreatedAt` - Required for foreign key
 - `chat_message_reaction.messageCreatedAt` - Required for foreign key
 

@@ -25,7 +25,7 @@ CREATE TABLE IF NOT EXISTS chat_channel (
 -- ===========================================================
 -- CHAT CHANNEL - USER MAPPING
 -- ===========================================================
-CREATE TABLE IF NOT EXISTS chat_channel_user_mapping (
+CREATE TABLE IF NOT EXISTS chat_channel_user_xref (
     id SERIAL PRIMARY KEY,
     "chatChannelId" INT NOT NULL REFERENCES chat_channel (id) ON DELETE CASCADE,
     "userId" INT NOT NULL REFERENCES main.users (id) ON DELETE CASCADE,

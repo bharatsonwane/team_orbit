@@ -124,8 +124,8 @@ This document provides comprehensive documentation for the chat system, includin
 - `chat_message.senderUserId`
 - `chat_message.createdAt`
 - `chat_message.replyToMessageId`
-- `chat_channel_user_mapping.chatChannelId`
-- `chat_channel_user_mapping.userId`
+- `chat_channel_user_xref.chatChannelId`
+- `chat_channel_user_xref.userId`
 - `chat_message_receipt.messageId`, `messageCreatedAt`, `userId`
 - `chat_message_reaction.messageId`, `messageCreatedAt`, `userId`
 
@@ -164,7 +164,7 @@ With millions of messages, counting unread messages by scanning the `chat_messag
 
 #### Solution: `lastReadMessageId` Tracking
 
-Add `lastReadMessageId` field to `chat_channel_user_mapping` table:
+Add `lastReadMessageId` field to `chat_channel_user_xref` table:
 
 ```sql
 -- Fast unread count (avoids scanning read table)
@@ -175,7 +175,7 @@ WHERE cm."chatChannelId" = $1
     AND cm."isArchived" = false
     AND cm.id > (
         SELECT "lastReadMessageId" 
-        FROM chat_channel_user_mapping 
+        FROM chat_channel_user_xref 
         WHERE "chatChannelId" = $1 AND "userId" = $2
     );
 ```
@@ -321,7 +321,7 @@ const unreadCount = await db.query(`
         AND cm."isArchived" = false
         AND cm.id > (
             SELECT "lastReadMessageId" 
-            FROM chat_channel_user_mapping 
+            FROM chat_channel_user_xref 
             WHERE "chatChannelId" = $1 AND "userId" = $2
         )
 `, [chatChannelId, userId]);
@@ -356,7 +356,7 @@ await db.query(`
 
 // Update lastReadMessageId
 await db.query(`
-    UPDATE chat_channel_user_mapping
+    UPDATE chat_channel_user_xref
     SET "lastReadMessageId" = $3
     WHERE "chatChannelId" = $2 AND "userId" = $1
 `, [userId, chatChannelId, lastMessageId]);
@@ -442,7 +442,7 @@ await db.query(`
 SELECT 
     ccu."chatChannelId",
     COUNT(*) as unread_count
-FROM chat_channel_user_mapping ccu
+FROM chat_channel_user_xref ccu
 LEFT JOIN chat_message cm ON ccu."chatChannelId" = cm."chatChannelId"
 LEFT JOIN chat_message_receipt cmr ON 
     cm.id = cmr."messageId" 
@@ -467,7 +467,7 @@ FROM chat_channel cc
 LEFT JOIN chat_message cm ON cc."lastMessageId" = cm.id
 LEFT JOIN main.users u ON cm."senderUserId" = u.id
 WHERE cc.id IN (
-    SELECT "chatChannelId" FROM chat_channel_user_mapping 
+    SELECT "chatChannelId" FROM chat_channel_user_xref 
     WHERE "userId" = $1 AND "isActive" = true
 )
 ORDER BY cc."lastMessageAt" DESC;
@@ -501,7 +501,7 @@ WHERE cmr."userId" = 123 AND cmr."readAt" IS NULL;
 1. **Backfill `lastReadMessageId`** (one-time):
 ```sql
 -- Update lastReadMessageId for all users
-UPDATE chat_channel_user_mapping ccu
+UPDATE chat_channel_user_xref ccu
 SET "lastReadMessageId" = (
     SELECT MAX(cm.id) 
     FROM chat_message cm
