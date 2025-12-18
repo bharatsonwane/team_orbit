@@ -13,14 +13,14 @@ interface ChannelListProps {
 }
 
 export function ChannelList({ channelType }: ChannelListProps) {
-  const { channelStateMap, selectedChannelId, handleSelectChannel, isLoading } =
+  const { channelsState, selectedChannelId, handleSelectChannel, isLoading } =
     useChat();
   const [searchQuery, setSearchQuery] = useState("");
   const [isCreateChannelOpen, setIsCreateChannelOpen] = useState(false);
 
-  // Derive channels list from channelStateMap
+  // Derive channels list from channelsState
   const channels: ChatChannel[] = useMemo(() => {
-    const list: ChatChannel[] = Array.from(channelStateMap.values()).map(s => {
+    const list: ChatChannel[] = Object.values(channelsState).map(s => {
       // Derive lastMessage from messages array (last item)
       const lastMessage =
         s.messages.length > 0 ? s.messages[s.messages.length - 1] : undefined;
@@ -47,7 +47,7 @@ export function ChannelList({ channelType }: ChannelListProps) {
       (a, b) =>
         new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
     );
-  }, [channelStateMap]);
+  }, [channelsState]);
 
   // Filter channels based on channelType and search query
   const filteredChannelList = useMemo(() => {

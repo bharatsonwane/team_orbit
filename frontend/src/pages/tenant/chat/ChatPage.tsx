@@ -11,12 +11,12 @@ interface ChatPageProps {
 }
 
 export default function ChatPage({ channelType = "group" }: ChatPageProps) {
-  const { channelStateMap, selectedChannelId } = useChat();
+  const { channelsState, selectedChannelId } = useChat();
 
-  // Derive selectedChannel from selectedChannelId and channelStateMap
+  // Derive selectedChannel from selectedChannelId and channelsState
   const selectedChannel: ChatChannel | null = useMemo(() => {
     if (selectedChannelId == null) return null;
-    const state = channelStateMap.get(selectedChannelId);
+    const state = channelsState[selectedChannelId];
     if (!state) return null;
 
     // Derive lastMessage from messages array (last item)
@@ -41,7 +41,7 @@ export default function ChatPage({ channelType = "group" }: ChatPageProps) {
       createdAt: state.createdAt ?? new Date().toISOString(),
       updatedAt: state.updatedAt ?? new Date().toISOString(),
     };
-  }, [channelStateMap, selectedChannelId]);
+  }, [channelsState, selectedChannelId]);
 
   const emptyStateTitle =
     channelType === "direct" ? "Select a conversation" : "Select a channel";

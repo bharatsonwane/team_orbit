@@ -11,14 +11,14 @@ interface ChatMessageListProps {
 }
 
 export function ChatMessageList({ chatChannelId }: ChatMessageListProps) {
-  const { channelStateMap, chatUsers } = useChat();
+  const { channelsState, chatUsers } = useChat();
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   // Use useMemo to ensure we get the latest state and React detects changes
   const channelState = useMemo(() => {
-    return channelStateMap.get(chatChannelId);
-  }, [channelStateMap, chatChannelId]);
+    return channelsState[chatChannelId];
+  }, [channelsState, chatChannelId]);
 
   const conversationMessages = useMemo(() => {
     return channelState?.messages || [];

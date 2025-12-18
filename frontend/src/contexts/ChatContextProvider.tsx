@@ -16,7 +16,7 @@ import type {
   CreateChatChannelSchema,
   ChatUser,
   ChannelState,
-  ChannelStateMap,
+  ChannelsState,
   ChatChannelListItem,
   FetchChannelMessagesParam,
 } from "../schemaAndTypes/chatSchema";
@@ -38,7 +38,7 @@ import type { TenantUser } from "@/schemaAndTypes/userSchema";
 // Chat Context Type
 export interface ChatContextType {
   // Shared State
-  channelStateMap: ChannelStateMap; // chatChannelId -> ChannelState
+  channelsState: ChannelsState; // chatChannelId -> ChannelState
   selectedChannelId: number | null;
   chatUsers: ChatUser[]; // Array of all chat users for lookups
   isLoading: boolean;
@@ -65,7 +65,7 @@ export interface ChatContextType {
 }
 
 const defaultContext: ChatContextType = {
-  channelStateMap: new Map(),
+  channelsState: {},
   selectedChannelId: null,
   chatUsers: [],
   isLoading: false,
@@ -106,9 +106,8 @@ interface ChatProviderProps {
 }
 
 export const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
-  const [channelStateMap, setChannelStateMap] = useState<ChannelStateMap>(
-    new Map()
-  );
+  const [channelsState, setChannelsState] = useState<ChannelsState>({});
+
   const [selectedChannelId, setSelectedChannelId] = useState<number | null>(
     null
   );
@@ -175,7 +174,7 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
   }, []);
 
   const handleResetChatData = () => {
-    setChannelStateMap(new Map());
+    setChannelsState({});
     setSelectedChannelId(null);
     setChatUsers([]);
     setIsLoading(false);
@@ -186,9 +185,6 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
   const handleNotifyChatMessage = (
     data: ChatMessage & { senderSocketId?: string; tempId?: number }
   ) => {
-    const currentSocketId = SocketManager.socketIo?.id;
-    const isSentByThisDevice = data.senderSocketId === currentSocketId;
-
     const message: ChatMessage = {
       id: data.id,
       chatChannelId: data.chatChannelId,
@@ -204,8 +200,8 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
       receipt: data.receipt ?? [],
     };
 
-    setChannelStateMap(prev => {
-      const existingChannelData = prev.get(message.chatChannelId);
+    setChannelsState(prev => {
+      const existingChannelData = prev[message.chatChannelId];
       if (!existingChannelData) return prev;
 
       // Check if message already exists (avoid duplicates)
@@ -229,14 +225,14 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
       }
 
       // Add new message to the end of messages array
-      const tempChannelData = {
-        ...existingChannelData,
-        messages,
-        updatedAt: message.updatedAt,
+      return {
+        ...prev,
+        [message.chatChannelId]: {
+          ...existingChannelData,
+          messages,
+          updatedAt: message.updatedAt,
+        },
       };
-      const tempChannelStateMap = new Map(prev);
-      tempChannelStateMap.set(message.chatChannelId, tempChannelData);
-      return tempChannelStateMap;
     });
   };
 
@@ -257,20 +253,22 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
     // Don't update state for reactions sent by this device (already optimistically updated)
     if (isSentByThisDevice) return;
 
-    setChannelStateMap(prev => {
-      const existingChannelData = prev.get(chatChannelId)!;
+    setChannelsState(prev => {
+      const existingChannelData = prev[chatChannelId];
+      if (!existingChannelData) return prev;
       const tempMessages = existingChannelData.messages.map(msg =>
         msg.id == messageId
           ? { ...msg, isArchived: true, archivedAt: archivedAt }
           : msg
       );
-      const tempChannelStateMap = new Map(prev);
-      tempChannelStateMap.set(chatChannelId, {
-        ...existingChannelData,
-        messages: tempMessages,
-        updatedAt: new Date().toISOString(),
-      });
-      return tempChannelStateMap;
+      return {
+        ...prev,
+        [chatChannelId]: {
+          ...existingChannelData,
+          messages: tempMessages,
+          updatedAt: new Date().toISOString(),
+        },
+      };
     });
   };
 
@@ -292,8 +290,8 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
     // Don't update state for updates sent by this device (already optimistically updated)
     if (isSentByThisDevice) return;
 
-    setChannelStateMap(prev => {
-      const existingChannelData = prev.get(chatChannelId);
+    setChannelsState(prev => {
+      const existingChannelData = prev[chatChannelId];
       if (!existingChannelData) return prev;
 
       const tempMessages = existingChannelData.messages.map(msg =>
@@ -308,13 +306,14 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
           : msg
       );
 
-      const tempChannelStateMap = new Map(prev);
-      tempChannelStateMap.set(chatChannelId, {
-        ...existingChannelData,
-        messages: tempMessages,
-        updatedAt: new Date().toISOString(),
-      });
-      return tempChannelStateMap;
+      return {
+        ...prev,
+        [chatChannelId]: {
+          ...existingChannelData,
+          messages: tempMessages,
+          updatedAt: new Date().toISOString(),
+        },
+      };
     });
   };
 
@@ -334,8 +333,8 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
     // Don't update state for reactions sent by this device (already optimistically updated)
     if (isSentByThisDevice) return;
 
-    setChannelStateMap(prev => {
-      const existingChannelData = prev.get(data.chatChannelId);
+    setChannelsState(prev => {
+      const existingChannelData = prev[data.chatChannelId];
       if (!existingChannelData) return prev;
 
       const messages = [...existingChannelData.messages];
@@ -372,15 +371,14 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
       message.reactions = reactions;
       messages[messageIndex] = message;
 
-      const tempChannelData = {
-        ...existingChannelData,
-        messages,
-        updatedAt: new Date().toISOString(),
+      return {
+        ...prev,
+        [data.chatChannelId]: {
+          ...existingChannelData,
+          messages,
+          updatedAt: new Date().toISOString(),
+        },
       };
-
-      const tempChannelStateMap = new Map(prev);
-      tempChannelStateMap.set(data.chatChannelId, tempChannelData);
-      return tempChannelStateMap;
     });
   };
 
@@ -393,21 +391,21 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
     image?: string;
     members?: number[];
   }) => {
-    setChannelStateMap(prev => {
-      const existingChannelData = prev.get(data.chatChannelId);
+    setChannelsState(prev => {
+      const existingChannelData = prev[data.chatChannelId];
       if (existingChannelData) {
         // Channel already exists, just update it
-        const tempChannelData = {
-          ...existingChannelData,
-          name: data.name ?? existingChannelData.name,
-          description: data.description ?? existingChannelData.description,
-          type: data.type ?? existingChannelData.type,
-          image: data.image ?? existingChannelData.image,
-          members: data.members ?? existingChannelData.members,
+        return {
+          ...prev,
+          [data.chatChannelId]: {
+            ...existingChannelData,
+            name: data.name ?? existingChannelData.name,
+            description: data.description ?? existingChannelData.description,
+            type: data.type ?? existingChannelData.type,
+            image: data.image ?? existingChannelData.image,
+            members: data.members ?? existingChannelData.members,
+          },
         };
-        const tempChannelStateMap = new Map(prev);
-        tempChannelStateMap.set(data.chatChannelId, tempChannelData);
-        return tempChannelStateMap;
       } else {
         // New channel, add it to state
         const newChannelState: ChannelState = {
@@ -425,9 +423,10 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
           createdAt: new Date().toISOString(),
           updatedAt: new Date().toISOString(),
         };
-        const tempChannelStateMap = new Map(prev);
-        tempChannelStateMap.set(data.chatChannelId, newChannelState);
-        return tempChannelStateMap;
+        return {
+          ...prev,
+          [data.chatChannelId]: newChannelState,
+        };
       }
     });
 
@@ -448,10 +447,11 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
     // Don't update state for typing events sent by this device
     if (isSentByThisDevice) return;
 
-    setChannelStateMap(prev => {
-      const existingChannelData = prev.get(data.chatChannelId)!;
+    setChannelsState(prev => {
+      const existingChannelData = prev[data.chatChannelId];
+      if (!existingChannelData) return prev;
       const typingUsers = existingChannelData.typingUsers ?? [];
-      let newTypingUserIds = [...typingUsers];
+      const newTypingUserIds = [...typingUsers];
 
       const userTypingIndex = newTypingUserIds.findIndex(
         item => item.userId == data.userId
@@ -475,13 +475,14 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
         newTypingUserIds.splice(userTypingIndex, 1);
       }
 
-      const tempChannelStateMap = new Map(prev);
-      tempChannelStateMap.set(data.chatChannelId, {
-        ...existingChannelData,
-        typingUsers: newTypingUserIds,
-        updatedAt: new Date().toISOString(),
-      });
-      return tempChannelStateMap;
+      return {
+        ...prev,
+        [data.chatChannelId]: {
+          ...existingChannelData,
+          typingUsers: newTypingUserIds,
+          updatedAt: new Date().toISOString(),
+        },
+      };
     });
   };
 
@@ -528,11 +529,11 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
   };
 
   const handleLoadChannels = async () => {
-    const tempChannelStateMap = new Map<number, ChannelState>();
+    const tempChannelsState: ChannelsState = {};
     try {
       setIsLoading(true);
       setDummyChatData({
-        channelStateMap: tempChannelStateMap,
+        channelsState: tempChannelsState,
         loggedInUserId: loggedInUser?.id || 0,
       });
 
@@ -540,7 +541,7 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
 
       await Promise.all(
         apiChannels.map(async (channel: ChatChannelListItem) => {
-          const existingChannel = tempChannelStateMap.get(channel.id);
+          const existingChannel = tempChannelsState[channel.id];
 
           const channelMessages = await handleLoadChannelMessages({
             chatChannelId: channel.id,
@@ -548,7 +549,7 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
           });
 
           if (existingChannel) {
-            tempChannelStateMap.set(channel.id, {
+            tempChannelsState[channel.id] = {
               ...existingChannel,
               messages: [
                 ...(channelMessages ? channelMessages : []),
@@ -556,9 +557,9 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
               ],
               unreadCount: existingChannel.unreadCount ?? 0,
               updatedAt: channel.updatedAt,
-            });
+            };
           } else {
-            tempChannelStateMap.set(channel.id, {
+            tempChannelsState[channel.id] = {
               chatChannelId: channel.id,
               messages: [...(channelMessages ? channelMessages : [])],
               loading: false,
@@ -572,7 +573,7 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
               unreadCount: 0,
               createdAt: channel.createdAt,
               updatedAt: channel.updatedAt,
-            });
+            };
           }
         })
       );
@@ -594,22 +595,23 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
     }
 
     // Set state once with all data
-    setChannelStateMap(tempChannelStateMap);
+    setChannelsState(tempChannelsState);
   };
 
   // Mark as read
   const handleMarkAsRead = (chatChannelId: number) => {
     // Update channel unread count
-    setChannelStateMap(prev => {
-      const existingChannelData = prev.get(chatChannelId);
+    setChannelsState(prev => {
+      const existingChannelData = prev[chatChannelId];
       if (!existingChannelData) return prev;
-      const tempChannelStateMap = new Map(prev);
-      tempChannelStateMap.set(chatChannelId, {
-        ...existingChannelData,
-        unreadCount: 0,
-        updatedAt: new Date().toISOString(),
-      });
-      return tempChannelStateMap;
+      return {
+        ...prev,
+        [chatChannelId]: {
+          ...existingChannelData,
+          unreadCount: 0,
+          updatedAt: new Date().toISOString(),
+        },
+      };
     });
   };
 
@@ -642,8 +644,8 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
       receipt: [],
     };
 
-    setChannelStateMap(prev => {
-      const existingChannelData = prev.get(chatChannelId);
+    setChannelsState(prev => {
+      const existingChannelData = prev[chatChannelId];
       const messages = existingChannelData?.messages || [];
       const nextState: ChannelState = {
         ...existingChannelData,
@@ -655,9 +657,10 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
         lastReadAt: existingChannelData?.lastReadAt,
         updatedAt: new Date().toISOString(),
       };
-      const tempChannelStateMap = new Map(prev);
-      tempChannelStateMap.set(chatChannelId, nextState);
-      return tempChannelStateMap;
+      return {
+        ...prev,
+        [chatChannelId]: nextState,
+      };
     });
 
     const send = async () => {
@@ -689,34 +692,36 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
           isArchived: false,
         };
 
-        setChannelStateMap(prev => {
-          const existingChannelData = prev.get(chatChannelId);
+        setChannelsState(prev => {
+          const existingChannelData = prev[chatChannelId];
           if (!existingChannelData) return prev;
           const tempMessages = existingChannelData.messages.map(message =>
             message.id === tempId ? persistedMessage : message
           );
-          const tempChannelStateMap = new Map(prev);
-          tempChannelStateMap.set(chatChannelId, {
-            ...existingChannelData,
-            messages: tempMessages,
-            updatedAt: persistedMessage.updatedAt,
-          });
-          return tempChannelStateMap;
+          return {
+            ...prev,
+            [chatChannelId]: {
+              ...existingChannelData,
+              messages: tempMessages,
+              updatedAt: persistedMessage.updatedAt,
+            },
+          };
         });
       } catch (err) {
-        setChannelStateMap(prev => {
-          const existingChannelData = prev.get(chatChannelId);
+        setChannelsState(prev => {
+          const existingChannelData = prev[chatChannelId];
           if (!existingChannelData) return prev;
           const tempMessages = existingChannelData.messages.filter(
             message => message.id !== tempId
           );
-          const tempChannelStateMap = new Map(prev);
-          tempChannelStateMap.set(chatChannelId, {
-            ...existingChannelData,
-            messages: tempMessages,
-            updatedAt: existingChannelData.updatedAt,
-          });
-          return tempChannelStateMap;
+          return {
+            ...prev,
+            [chatChannelId]: {
+              ...existingChannelData,
+              messages: tempMessages,
+              updatedAt: existingChannelData.updatedAt,
+            },
+          };
         });
 
         setError(
@@ -745,8 +750,8 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
     const { messageId, chatChannelId, text } = data;
 
     // Optimistic update
-    setChannelStateMap(prev => {
-      const existingChannelData = prev.get(chatChannelId);
+    setChannelsState(prev => {
+      const existingChannelData = prev[chatChannelId];
       if (!existingChannelData) return prev;
 
       const tempMessages = existingChannelData.messages.map(msg =>
@@ -760,13 +765,14 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
           : msg
       );
 
-      const tempChannelStateMap = new Map(prev);
-      tempChannelStateMap.set(chatChannelId, {
-        ...existingChannelData,
-        messages: tempMessages,
-        updatedAt: new Date().toISOString(),
-      });
-      return tempChannelStateMap;
+      return {
+        ...prev,
+        [chatChannelId]: {
+          ...existingChannelData,
+          messages: tempMessages,
+          updatedAt: new Date().toISOString(),
+        },
+      };
     });
 
     const edit = async () => {
@@ -787,38 +793,40 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
           isEdited: true, // Ensure isEdited is always set for edited messages
         };
 
-        setChannelStateMap(prev => {
-          const existingChannelData = prev.get(chatChannelId);
+        setChannelsState(prev => {
+          const existingChannelData = prev[chatChannelId];
           if (!existingChannelData) return prev;
           const tempMessages = existingChannelData.messages.map(message =>
             message.id === messageId
               ? { ...message, ...updatedMessage }
               : message
           );
-          const tempChannelStateMap = new Map(prev);
-          tempChannelStateMap.set(chatChannelId, {
-            ...existingChannelData,
-            messages: tempMessages,
-            updatedAt: updatedMessage.updatedAt,
-          });
-          return tempChannelStateMap;
+          return {
+            ...prev,
+            [chatChannelId]: {
+              ...existingChannelData,
+              messages: tempMessages,
+              updatedAt: updatedMessage.updatedAt,
+            },
+          };
         });
       } catch (err) {
-        setChannelStateMap(prev => {
-          const existingChannelData = prev.get(chatChannelId);
+        setChannelsState(prev => {
+          const existingChannelData = prev[chatChannelId];
           if (!existingChannelData) return prev;
           const tempMessages = existingChannelData.messages.map(msg =>
             msg.id === messageId
               ? { ...msg, isEdited: false, updatedAt: msg.updatedAt }
               : msg
           );
-          const tempChannelStateMap = new Map(prev);
-          tempChannelStateMap.set(chatChannelId, {
-            ...existingChannelData,
-            messages: tempMessages,
-            updatedAt: existingChannelData.updatedAt,
-          });
-          return tempChannelStateMap;
+          return {
+            ...prev,
+            [chatChannelId]: {
+              ...existingChannelData,
+              messages: tempMessages,
+              updatedAt: existingChannelData.updatedAt,
+            },
+          };
         });
 
         setError(
@@ -841,27 +849,28 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
     chatChannelId: number;
   }) => {
     const now = new Date().toISOString();
-    setChannelStateMap(prev => {
-      const existingChannelData = prev.get(chatChannelId);
+    setChannelsState(prev => {
+      const existingChannelData = prev[chatChannelId];
       if (!existingChannelData) return prev;
       const tempMessages = existingChannelData.messages.map(msg =>
         msg.id === messageId
           ? { ...msg, isArchived: true, archivedAt: now }
           : msg
       );
-      const tempChannelStateMap = new Map(prev);
-      tempChannelStateMap.set(chatChannelId, {
-        ...existingChannelData,
-        messages: tempMessages,
-      });
-      return tempChannelStateMap;
+      return {
+        ...prev,
+        [chatChannelId]: {
+          ...existingChannelData,
+          messages: tempMessages,
+        },
+      };
     });
 
     const archive = async () => {
       try {
         const currentSocketId = SocketManager.socketIo?.id;
 
-        const result = await dispatch(
+        await dispatch(
           archiveChatMessageAction({
             chatChannelId,
             socketId: currentSocketId,
@@ -869,19 +878,21 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
           })
         ).unwrap();
       } catch (err) {
-        setChannelStateMap(prev => {
-          const existingChannelData = prev.get(chatChannelId)!;
+        setChannelsState(prev => {
+          const existingChannelData = prev[chatChannelId];
+          if (!existingChannelData) return prev;
           const tempMessages = existingChannelData.messages.map(msg =>
             msg.id === messageId
               ? { ...msg, isArchived: false, archivedAt: "" }
               : msg
           );
-          const tempChannelStateMap = new Map(prev);
-          tempChannelStateMap.set(chatChannelId, {
-            ...existingChannelData,
-            messages: tempMessages,
-          });
-          return tempChannelStateMap;
+          return {
+            ...prev,
+            [chatChannelId]: {
+              ...existingChannelData,
+              messages: tempMessages,
+            },
+          };
         });
 
         setError(
@@ -906,8 +917,8 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
       ).unwrap();
 
       // Update local state based on the response
-      setChannelStateMap(prev => {
-        const existingChannelData = prev.get(data.chatChannelId);
+      setChannelsState(prev => {
+        const existingChannelData = prev[data.chatChannelId];
         if (!existingChannelData) return prev;
 
         const tempMessages = existingChannelData.messages.map(msg => {
@@ -960,12 +971,13 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
           return msg;
         });
 
-        const tempChannelStateMap = new Map(prev);
-        tempChannelStateMap.set(data.chatChannelId, {
-          ...existingChannelData,
-          messages: tempMessages,
-        });
-        return tempChannelStateMap;
+        return {
+          ...prev,
+          [data.chatChannelId]: {
+            ...existingChannelData,
+            messages: tempMessages,
+          },
+        };
       });
     } catch (error) {
       console.error("Failed to handle reaction:", error);
@@ -982,7 +994,7 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
     limit?: number;
   }) => {
     try {
-      const existingChannelData = channelStateMap.get(chatChannelId);
+      const existingChannelData = channelsState[chatChannelId];
 
       const loadMessageBefore = existingChannelData?.messages[0]?.createdAt;
 
@@ -996,10 +1008,9 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
       ).unwrap();
 
       if (messages.length > 0 && !isInitialLoading) {
-        // Update channelStateMap with messages
-        setChannelStateMap(prev => {
-          const tempChannelStateMap = new Map(prev);
-          const current = tempChannelStateMap.get(chatChannelId) || {
+        // Update channelsState with messages
+        setChannelsState(prev => {
+          const current = prev[chatChannelId] || {
             chatChannelId,
             messages: [],
             loading: false,
@@ -1007,12 +1018,14 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
             typingUsers: [],
           };
           const tempMessages = [...messages, ...current.messages];
-          tempChannelStateMap.set(chatChannelId, {
-            ...current,
-            messages: tempMessages,
-            loading: false,
-          });
-          return tempChannelStateMap;
+          return {
+            ...prev,
+            [chatChannelId]: {
+              ...current,
+              messages: tempMessages,
+              loading: false,
+            },
+          };
         });
       }
 
@@ -1054,8 +1067,8 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
 
   // Create new channel
   const handleCreateChannel = (data: CreateChatChannelSchema): ChatChannel => {
-    // Get max channel ID from channelStateMap
-    const existingIds = Array.from(channelStateMap.keys());
+    // Get max channel ID from channelsState
+    const existingIds = Object.keys(channelsState).map(Number);
     const newChannelId =
       existingIds.length > 0 ? Math.max(...existingIds) + 1 : 200;
     const now = new Date().toISOString();
@@ -1095,17 +1108,16 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
       updatedAt: now,
     };
 
-    setChannelStateMap(prev => {
-      const tempChannelStateMap = new Map(prev);
-      tempChannelStateMap.set(newChannelId, {
+    setChannelsState(prev => ({
+      ...prev,
+      [newChannelId]: {
         chatChannelId: newChannelId,
         messages: [welcomeMessage],
         loading: false,
         error: null,
         typingUsers: [],
-      });
-      return tempChannelStateMap;
-    });
+      },
+    }));
     setSelectedChannelId(newChannel.id);
     handleMarkAsRead(newChannel.id);
 
@@ -1114,7 +1126,7 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
 
   const value = useMemo<ChatContextType>(
     () => ({
-      channelStateMap,
+      channelsState,
       selectedChannelId,
       chatUsers,
       isLoading,
@@ -1130,7 +1142,7 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
       handleCreateChannel,
     }),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [channelStateMap, selectedChannelId, chatUsers, isLoading, error]
+    [channelsState, selectedChannelId, chatUsers, isLoading, error]
   );
 
   return <ChatContext.Provider value={value}>{children}</ChatContext.Provider>;

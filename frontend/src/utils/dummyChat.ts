@@ -4633,10 +4633,10 @@ const getDummyChatData = (loggedInUserId: number = 3001) => {
 };
 
 export const setDummyChatData = ({
-  channelStateMap,
+  channelsState,
   loggedInUserId,
 }: {
-  channelStateMap: Map<number, ChannelState>;
+  channelsState: Record<number, ChannelState>;
   loggedInUserId: number;
 }) => {
   const dummyChatList = getDummyChatData(loggedInUserId);
@@ -4645,7 +4645,7 @@ export const setDummyChatData = ({
   dummyChatList.forEach((channelData: any) => {
     const chatChannelId = channelData.chatChannelId;
 
-    channelStateMap.set(chatChannelId, {
+    channelsState[chatChannelId] = {
       chatChannelId,
       messages: channelData.messages ?? [],
       loading: false,
@@ -4659,6 +4659,6 @@ export const setDummyChatData = ({
       unreadCount: channelData.unreadCount ?? 0,
       createdAt: channelData.createdAt ?? new Date().toISOString(),
       updatedAt: channelData.updatedAt ?? new Date().toISOString(),
-    });
+    };
   });
 };

@@ -119,7 +119,7 @@ export type ChannelState = {
   updatedAt?: string;
 };
 
-export type ChannelStateMap = Map<number, ChannelState>;
+export type ChannelsState = Record<number, ChannelState>;
 
 // Conversation schema (for direct chats)
 export const conversationSchema = z.object({
