@@ -108,6 +108,7 @@ export type ChannelState = {
   error: string | null;
   typingUsers: { userId: number; typedAt: string }[];
   lastReadAt?: string;
+  lastActivityAt?: string; // Tracks last message activity (new message, edit, reaction, etc.)
   // channel metadata for sidebar/UX
   name?: string;
   description?: string;
@@ -116,7 +117,7 @@ export type ChannelState = {
   members?: number[]; // Array of user IDs
   unreadCount?: number;
   createdAt?: string;
-  updatedAt?: string;
+  updatedAt?: string; // Tracks channel metadata changes (name, description, etc.)
 };
 
 export type ChannelsState = Record<number, ChannelState>;

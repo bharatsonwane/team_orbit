@@ -14,6 +14,7 @@ CREATE TABLE IF NOT EXISTS chat_channel (
     description TEXT,
     image VARCHAR(255),
     "isActive" BOOLEAN DEFAULT TRUE NOT NULL,
+    "lastActivityAt" TIMESTAMP DEFAULT NULL, -- Tracks last message activity (new message, edit, reaction, etc.)
     "createdAt" TIMESTAMP DEFAULT NOW() NOT NULL,
     "createdBy" INT DEFAULT NULL REFERENCES main.users (id) ON DELETE SET NULL,
     "updatedAt" TIMESTAMP DEFAULT NOW() NOT NULL,
@@ -31,7 +32,7 @@ CREATE TABLE IF NOT EXISTS chat_channel_user_xref (
     "userId" INT NOT NULL REFERENCES main.users (id) ON DELETE CASCADE,
     "isAdmin" BOOLEAN DEFAULT FALSE NOT NULL,
     "isActive" BOOLEAN DEFAULT TRUE NOT NULL,
-    "isMuted" BOOLEAN DEFAULT FALSE NOT NULL,
+    "isNotificationsMuted" BOOLEAN DEFAULT FALSE NOT NULL,
     "lastReadAt" TIMESTAMP,
     "joinedAt" TIMESTAMP DEFAULT NOW() NOT NULL,
     "leftAt" TIMESTAMP,
@@ -55,6 +56,7 @@ CREATE TABLE IF NOT EXISTS chat_message (
     text TEXT,
     "mediaUrl" VARCHAR(500),
     "isEdited" BOOLEAN DEFAULT FALSE NOT NULL,
+    "lastActivityAt" TIMESTAMP DEFAULT NULL, -- Tracks last message activity (new message, edit, reaction, etc.)
     "createdAt" TIMESTAMP DEFAULT NOW() NOT NULL,
     "createdBy" INT DEFAULT NULL REFERENCES main.users (id) ON DELETE SET NULL,
     "updatedAt" TIMESTAMP DEFAULT NOW() NOT NULL,

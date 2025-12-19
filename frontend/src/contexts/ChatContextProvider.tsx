@@ -230,7 +230,7 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
         [message.chatChannelId]: {
           ...existingChannelData,
           messages,
-          updatedAt: message.updatedAt,
+          lastActivityAt: message.updatedAt,
         },
       };
     });
@@ -266,7 +266,7 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
         [chatChannelId]: {
           ...existingChannelData,
           messages: tempMessages,
-          updatedAt: new Date().toISOString(),
+          lastActivityAt: new Date().toISOString(),
         },
       };
     });
@@ -311,7 +311,7 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
         [chatChannelId]: {
           ...existingChannelData,
           messages: tempMessages,
-          updatedAt: new Date().toISOString(),
+          lastActivityAt: new Date().toISOString(),
         },
       };
     });
@@ -376,7 +376,7 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
         [data.chatChannelId]: {
           ...existingChannelData,
           messages,
-          updatedAt: new Date().toISOString(),
+          lastActivityAt: new Date().toISOString(),
         },
       };
     });
@@ -578,13 +578,15 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
         })
       );
 
+      setChannelsState(tempChannelsState);
+
       handleJoinUsersChatChannelsRooms({
         userId: loggedInUser?.id || 0,
         tenantId: tenantId || 0,
       });
 
       if (apiChannels?.[0]) {
-        handleSelectChannel({ channelId: apiChannels?.[0].id });
+        setSelectedChannelId(apiChannels?.[0].id);
       }
     } catch (e) {
       setError(
@@ -593,9 +595,6 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
     } finally {
       setIsLoading(false);
     }
-
-    // Set state once with all data
-    setChannelsState(tempChannelsState);
   };
 
   // Mark as read
@@ -609,7 +608,6 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
         [chatChannelId]: {
           ...existingChannelData,
           unreadCount: 0,
-          updatedAt: new Date().toISOString(),
         },
       };
     });
@@ -655,7 +653,7 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
         error: null,
         typingUsers: existingChannelData?.typingUsers ?? [],
         lastReadAt: existingChannelData?.lastReadAt,
-        updatedAt: new Date().toISOString(),
+        lastActivityAt: now,
       };
       return {
         ...prev,
@@ -703,7 +701,7 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
             [chatChannelId]: {
               ...existingChannelData,
               messages: tempMessages,
-              updatedAt: persistedMessage.updatedAt,
+              lastActivityAt: persistedMessage.updatedAt,
             },
           };
         });
@@ -770,7 +768,7 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
         [chatChannelId]: {
           ...existingChannelData,
           messages: tempMessages,
-          updatedAt: new Date().toISOString(),
+          lastActivityAt: new Date().toISOString(),
         },
       };
     });
@@ -806,7 +804,7 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
             [chatChannelId]: {
               ...existingChannelData,
               messages: tempMessages,
-              updatedAt: updatedMessage.updatedAt,
+              lastActivityAt: updatedMessage.updatedAt,
             },
           };
         });
@@ -824,7 +822,6 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
             [chatChannelId]: {
               ...existingChannelData,
               messages: tempMessages,
-              updatedAt: existingChannelData.updatedAt,
             },
           };
         });
@@ -976,6 +973,7 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
           [data.chatChannelId]: {
             ...existingChannelData,
             messages: tempMessages,
+            lastActivityAt: new Date().toISOString(),
           },
         };
       });
