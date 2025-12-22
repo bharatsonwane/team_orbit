@@ -5,8 +5,8 @@ import logger from "../../utils/logger";
 import {
   BaseLookupSchema,
   LookupWithTrackingSchema,
-} from "../../schemaAndTypes/lookup.schema";
-import { UserSignupSchema } from "../../schemaAndTypes/user.schema";
+} from "../../schemaTypes/lookup.schemaTypes";
+import { UserSignupSchema } from "../../schemaTypes/user.schemaTypes";
 import {
   lookupTypeKeys,
   userRoleKeys,

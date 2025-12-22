@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { oasRegisterSchemas } from "@src/openApiSpecification/openAPIDocumentGenerator";
-import { baseLookupSchema } from "./lookup.schema";
+import { baseLookupSchema } from "./lookup.schemaTypes";
 import {
   titleEnum,
   genderEnum,

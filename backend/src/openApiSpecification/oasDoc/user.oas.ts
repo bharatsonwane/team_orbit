@@ -6,8 +6,8 @@ import {
 import {
   baseUserSchema,
   userUpdatePasswordSchema,
-} from "../../schemaAndTypes/user.schema";
-import { idSchema } from "../../schemaAndTypes/common.schema";
+} from "../../schemaTypes/user.schemaTypes";
+import { idSchema } from "../../schemaTypes/common.schemaTypes";
 
 interface DocConfig {
   routePath: string;

@@ -2,8 +2,8 @@ import {
   createTenantSchema,
   updateTenantSchema,
   tenantWithTrackingSchema,
-} from "@src/schemaAndTypes/tenant.schema";
-import { idValidation } from "@src/schemaAndTypes/common.schema";
+} from "@src/schemaTypes/tenant.schemaTypes";
+import { idValidation } from "@src/schemaTypes/common.schemaTypes";
 import {
   createTenant,
   getTenants,

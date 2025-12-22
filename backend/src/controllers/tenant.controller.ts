@@ -4,7 +4,7 @@ import Tenant from "@src/services/tenant.service";
 import type {
   CreateTenantSchema,
   UpdateTenantSchema,
-} from "@src/schemaAndTypes/tenant.schema";
+} from "@src/schemaTypes/tenant.schemaTypes";
 
 export const createTenant = async (
   req: AuthenticatedRequest,

@@ -20,10 +20,10 @@ import {
   messageReactionSchema,
   archiveChatMessageSchema,
   updateChatMessageSchema,
-} from "@src/schemaAndTypes/chat.schema";
+} from "@src/schemaTypes/chat.schemaTypes";
 import { ensureTenantMiddleware } from "@src/middleware/ensureTenantMiddleware";
 import { authRoleMiddleware } from "@src/middleware/authRoleMiddleware";
-import { idValidation } from "@src/schemaAndTypes/common.schema";
+import { idValidation } from "@src/schemaTypes/common.schemaTypes";
 
 const registrar = new RouteRegistrar({
   basePath: "/api",

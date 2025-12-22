@@ -9,7 +9,7 @@ import Lookup from "@src/services/lookup.service";
 import {
   UserLoginSchema,
   CreateUserSchema,
-} from "@src/schemaAndTypes/user.schema";
+} from "@src/schemaTypes/user.schemaTypes";
 import { AuthenticatedRequest } from "@src/middleware/authRoleMiddleware";
 import {
   lookupTypeKeys,

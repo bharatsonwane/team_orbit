@@ -4,7 +4,7 @@ import {
   LookupListSchema,
   LookupTypeWithLookupsSchema,
   LookupWithTrackingSchema,
-} from "@src/schemaAndTypes/lookup.schema";
+} from "@src/schemaTypes/lookup.schemaTypes";
 
 export default class Lookup {
   constructor() {}

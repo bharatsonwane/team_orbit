@@ -3,7 +3,7 @@ import type {
   UpdateTenantSchema,
   BaseTenantSchema,
   TenantWithTrackingSchema,
-} from "@src/schemaAndTypes/tenant.schema";
+} from "@src/schemaTypes/tenant.schemaTypes";
 import type { dbClientPool } from "@src/middleware/dbClientMiddleware";
 import { buildUpdateFields } from "@src/utils/queryHelper";
 import User from "@src/services/user.service";

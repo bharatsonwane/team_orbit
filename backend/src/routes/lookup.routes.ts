@@ -6,11 +6,11 @@ import RouteRegistrar from "@src/middleware/RouteRegistrar";
 import {
   lookupListSchema,
   lookupTypeWithLookupsSchema,
-} from "@src/schemaAndTypes/lookup.schema";
+} from "@src/schemaTypes/lookup.schemaTypes";
 import {
   idValidation,
   nameValidation,
-} from "@src/schemaAndTypes/common.schema";
+} from "@src/schemaTypes/common.schemaTypes";
 
 const registrar = new RouteRegistrar({
   basePath: "/api",

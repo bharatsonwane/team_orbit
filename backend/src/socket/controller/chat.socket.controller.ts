@@ -1,5 +1,5 @@
 import { SocketManager, AuthenticatedSocket } from "../utils/socketManager";
-import { SendChatMessageSchema } from "@src/schemaAndTypes/chat.schema";
+import { SendChatMessageSchema } from "@src/schemaTypes/chat.schemaTypes";
 import Chat from "@src/services/chat.service";
 import { getChatChannelRoomName } from "@src/utils/chatHelper";
 import { chatSocketEvents } from "../utils/socketEvents";

@@ -13,7 +13,7 @@ import {
   RemoveMessageReactionSchema,
   ArchiveChatMessageSchema,
   UpdateChatMessageSchema,
-} from "@src/schemaAndTypes/chat.schema";
+} from "@src/schemaTypes/chat.schemaTypes";
 import { AuthenticatedRequest } from "@src/middleware/authRoleMiddleware";
 
 // Helper function for channel membership validation
