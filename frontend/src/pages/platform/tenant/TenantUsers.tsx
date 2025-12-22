@@ -59,7 +59,7 @@ import { useAuthService } from "@/contexts/AuthContextProvider";
 import type {
   TenantUser,
   TenantUsersResponse,
-} from "@/schemaAndTypes/userSchema";
+} from "@/schemaTypes/userSchemaTypes";
 
 // Modal keys for this page
 const modalKeys = {

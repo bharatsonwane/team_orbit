@@ -17,7 +17,7 @@ import { useAuthService } from "@/contexts/AuthContextProvider";
 import {
   signupSchema,
   type SignupFormData,
-} from "@/schemaAndTypes/validationSchema";
+} from "@/schemaTypes/validationSchemaTypes";
 import { LoadingSpinner } from "@/components/ui/loading-indicator";
 
 export default function Signup() {

@@ -9,7 +9,7 @@ import {
   type UpdateUserRequest,
   paginatedUserListSchema,
   type TenantUsersResponse,
-} from "@/schemaAndTypes/userSchema";
+} from "@/schemaTypes/userSchemaTypes";
 
 /** Login action - API call only */
 export const loginAction = createAsyncThunk(

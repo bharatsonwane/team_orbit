@@ -5,7 +5,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import type { MessageReaction as MessageReactionType } from "@/schemaAndTypes/chatSchema";
+import type { MessageReaction as MessageReactionType } from "@/schemaTypes/chatSchemaTypes";
 import { cn } from "@/lib/utils";
 
 interface MessageReactionsProps {

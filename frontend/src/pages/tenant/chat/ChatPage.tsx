@@ -4,7 +4,7 @@ import { ChannelList } from "@/components/chat/channels/ChannelList";
 import { ChatMessageView } from "@/components/chat/messages/ChatMessageView";
 import { ChatEmptyState } from "@/components/chat/layout/ChatEmptyState";
 import { useChat } from "@/contexts/ChatContextProvider";
-import type { ChatChannel } from "@/schemaAndTypes/chatSchema";
+import type { ChatChannel } from "@/schemaTypes/chatSchemaTypes";
 
 interface ChatPageProps {
   channelType: "group" | "direct";

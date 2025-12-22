@@ -22,7 +22,7 @@ import { selectLookupTypeByName } from "@/redux/slices/lookupSlice";
 import { lookupTypeKeys } from "@/utils/constants";
 import { updateTenantAction } from "@/redux/actions/tenantActions";
 import type { AppDispatch } from "@/redux/store";
-import type { Tenant } from "@/schemaAndTypes/tenantSchema";
+import type { Tenant } from "@/schemaTypes/tenantSchemaTypes";
 
 // Edit tenant form schema
 const editTenantFormSchema = z.object({

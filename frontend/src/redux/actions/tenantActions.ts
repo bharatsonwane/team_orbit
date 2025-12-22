@@ -4,7 +4,7 @@ import type {
   Tenant,
   TenantListResponse,
   CreateTenantRequest,
-} from "@/schemaAndTypes/tenantSchema";
+} from "@/schemaTypes/tenantSchemaTypes";
 
 /** Get tenant list action - API call only */
 export const getTenantsAction = createAsyncThunk(

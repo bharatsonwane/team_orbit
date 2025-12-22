@@ -1,6 +1,6 @@
 import { createAsyncThunk } from "@reduxjs/toolkit";
 import getAxios, { getAppErrorMessage } from "../../utils/axiosApi";
-import type { LookupListResponse } from "@/schemaAndTypes/lookupSchema";
+import type { LookupListResponse } from "@/schemaTypes/lookupSchemaTypes";
 
 /** Get lookup list action - API call only */
 export const getLookupListAction = createAsyncThunk(

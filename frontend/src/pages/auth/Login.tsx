@@ -15,7 +15,7 @@ import { ThemeToggle } from "@/components/theme-toggle";
 import {
   loginSchema,
   type LoginFormData,
-} from "@/schemaAndTypes/validationSchema";
+} from "@/schemaTypes/validationSchemaTypes";
 import { useAuthService } from "@/contexts/AuthContextProvider";
 import { LoadingSpinner } from "@/components/ui/loading-indicator";
 

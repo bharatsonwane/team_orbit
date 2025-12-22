@@ -19,7 +19,7 @@ import type {
   ChannelsState,
   ChatChannelListItem,
   FetchChannelMessagesParam,
-} from "../schemaAndTypes/chatSchema";
+} from "../schemaTypes/chatSchemaTypes";
 import { dummyChatUsers, setDummyChatData } from "../utils/dummyChat";
 import type { AppDispatch } from "@/redux/store";
 import {
@@ -33,7 +33,7 @@ import {
 import { useAuthService } from "./AuthContextProvider";
 import { SocketManager } from "@/lib/socketManager";
 import { getUsersAction } from "@/redux/actions/userActions";
-import type { TenantUser } from "@/schemaAndTypes/userSchema";
+import type { TenantUser } from "@/schemaTypes/userSchemaTypes";
 
 // Chat Context Type
 export interface ChatContextType {

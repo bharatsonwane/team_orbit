@@ -18,7 +18,7 @@ import { KeyRound, XIcon } from "lucide-react";
 import {
   updateUserPasswordSchema,
   type UpdateUserPasswordFormData,
-} from "@/schemaAndTypes/userSchema";
+} from "@/schemaTypes/userSchemaTypes";
 import { updateUserPasswordAction } from "@/redux/actions/userActions";
 import type { AppDispatch } from "@/redux/store";
 

@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Search, Hash } from "lucide-react";
 import { useState, useMemo } from "react";
 import { Button } from "@/components/ui/button";
-import type { ChatChannel } from "@/schemaAndTypes/chatSchema";
+import type { ChatChannel } from "@/schemaTypes/chatSchemaTypes";
 
 interface ChannelListProps {
   channelType?: "group" | "direct";

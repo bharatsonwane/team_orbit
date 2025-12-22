@@ -27,7 +27,7 @@ import {
   saveUserJobDetailsAction,
 } from "@/redux/actions/userActions";
 import type { AppDispatch } from "@/redux/store";
-import type { Tenant } from "@/schemaAndTypes/tenantSchema";
+import type { Tenant } from "@/schemaTypes/tenantSchemaTypes";
 import {
   userWizardSchema,
   createUserWizardSchema,
@@ -35,7 +35,7 @@ import {
   userContactInformationSchema,
   userJobDetailsSchema,
   type UserWizardFormData,
-} from "@/schemaAndTypes/userSchema";
+} from "@/schemaTypes/userSchemaTypes";
 import { toast } from "sonner";
 import { XIcon, ChevronRight, ChevronLeft, Check } from "lucide-react";
 import { LoadingIndicator } from "@/components/ui/loading-indicator";

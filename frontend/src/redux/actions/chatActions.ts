@@ -10,7 +10,7 @@ import {
   type AddReactionData,
   type ArchiveMessageData,
   type EditMessageData,
-} from "@/schemaAndTypes/chatSchema";
+} from "@/schemaTypes/chatSchemaTypes";
 
 export const createChatChannelAction = createAsyncThunk(
   "chat/createChatChannelAction",

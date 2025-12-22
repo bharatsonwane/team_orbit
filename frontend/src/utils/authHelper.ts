@@ -1,4 +1,4 @@
-import type { LookupItem } from "@/schemaAndTypes/lookupSchema";
+import type { LookupItem } from "@/schemaTypes/lookupSchemaTypes";
 import { userRoleKeys, type UserRoleName } from "@/utils/constants";
 /**
  * Checks if any of the allowed roles match the user's roles
