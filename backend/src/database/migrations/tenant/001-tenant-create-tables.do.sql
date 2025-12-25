@@ -8,13 +8,16 @@ CREATE TABLE IF NOT EXISTS tenant_lookup_types (
     -- Display label (e.g., 'Designation', 'Department')
     "isSystem" BOOLEAN NOT NULL,
     -- System values that cannot be deleted
+
     "createdAt" TIMESTAMP DEFAULT NOW() NOT NULL,
-    "createdBy" INT DEFAULT NULL REFERENCES main.users (id) ON DELETE SET NULL,
+    "createdBy" INT DEFAULT NULL REFERENCES main.users (id),
+
     "updatedAt" TIMESTAMP DEFAULT NOW() NOT NULL,
-    "updatedBy" INT DEFAULT NULL REFERENCES main.users (id) ON DELETE SET NULL,
+    "updatedBy" INT DEFAULT NULL REFERENCES main.users (id),
+
     "isArchived" BOOLEAN DEFAULT FALSE NOT NULL,
     "archivedAt" TIMESTAMP DEFAULT NULL,
-    "archivedBy" INT DEFAULT NULL REFERENCES main.users (id) ON DELETE SET NULL
+    "archivedBy" INT DEFAULT NULL REFERENCES main.users (id)
 );
 -- tenant_lookups Table (tenant-specific lookup values)
 CREATE TABLE IF NOT EXISTS tenant_lookups (
@@ -31,16 +34,66 @@ CREATE TABLE IF NOT EXISTS tenant_lookups (
     "isSystem" BOOLEAN DEFAULT FALSE NOT NULL,
     "sortOrder" INT DEFAULT 0 NOT NULL,
     "createdAt" TIMESTAMP DEFAULT NOW() NOT NULL,
-    "createdBy" INT DEFAULT NULL REFERENCES main.users (id) ON DELETE SET NULL,
+    "createdBy" INT DEFAULT NULL REFERENCES main.users (id),
+
     "updatedAt" TIMESTAMP DEFAULT NOW() NOT NULL,
-    "updatedBy" INT DEFAULT NULL REFERENCES main.users (id) ON DELETE SET NULL,
+    "updatedBy" INT DEFAULT NULL REFERENCES main.users (id),
+    
     "isArchived" BOOLEAN DEFAULT FALSE NOT NULL,
     "archivedAt" TIMESTAMP DEFAULT NULL,
-    "archivedBy" INT DEFAULT NULL REFERENCES main.users (id) ON DELETE SET NULL,
-    CONSTRAINT fk_tenant_lookups_tenant_lookup_types FOREIGN KEY ("lookupTypeId") REFERENCES tenant_lookup_types (id) ON DELETE CASCADE,
+    "archivedBy" INT DEFAULT NULL REFERENCES main.users (id),
+
+    CONSTRAINT fk_tenant_lookups_tenant_lookup_types FOREIGN KEY ("lookupTypeId") REFERENCES tenant_lookup_types (id),
     CONSTRAINT unique_tenant_lookup_type_id_name UNIQUE ("lookupTypeId", name),
     CONSTRAINT unique_tenant_lookup_type_id_label UNIQUE ("lookupTypeId", label)
 );
+
+/* ============================================================
+   TENANT SPECIFIC ROLES TABLE
+   ============================================================ */
+CREATE TABLE roles (
+    id SERIAL PRIMARY KEY,
+
+    name VARCHAR(100) UNIQUE NOT NULL,
+    label VARCHAR(255) UNIQUE NOT NULL,
+    description TEXT,
+
+    "sortOrder" INT NOT NULL DEFAULT 0,
+    "isSystem" BOOLEAN NOT NULL DEFAULT FALSE,
+
+    "createdAt" TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    "createdBy" INT REFERENCES users(id),
+    "updatedAt" TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    "updatedBy" INT REFERENCES users(id),
+
+    "isArchived" BOOLEAN NOT NULL DEFAULT FALSE,
+    "archivedAt" TIMESTAMPTZ,
+    "archivedBy" INT REFERENCES users(id)
+);
+
+/* ============================================================
+   TENANT SPECIFIC PERMISSIONS TABLE
+   ============================================================ */
+CREATE TABLE permissions (
+    id SERIAL PRIMARY KEY,
+
+    name VARCHAR(100) UNIQUE NOT NULL,
+    label VARCHAR(255) UNIQUE NOT NULL,
+    description TEXT,
+
+    "sortOrder" INT NOT NULL DEFAULT 0,
+    "isSystem" BOOLEAN NOT NULL DEFAULT FALSE,
+
+    "createdAt" TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    "createdBy" INT REFERENCES users(id),
+    "updatedAt" TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    "updatedBy" INT REFERENCES users(id),
+
+    "isArchived" BOOLEAN NOT NULL DEFAULT FALSE,
+    "archivedAt" TIMESTAMPTZ,
+    "archivedBy" INT REFERENCES users(id)
+);
+
 -- ==================== USER MANAGEMENT TABLES ====================
 -- user_contacts Table (stores different contact types per tenant)
 CREATE TABLE IF NOT EXISTS user_contacts (
@@ -55,14 +108,18 @@ CREATE TABLE IF NOT EXISTS user_contacts (
     -- Is this the primary contact of this type
     "isVerified" BOOLEAN DEFAULT FALSE NOT NULL,
     -- Is this contact verified
+    
     "createdAt" TIMESTAMP DEFAULT NOW() NOT NULL,
-    "createdBy" INT DEFAULT NULL REFERENCES main.users (id) ON DELETE SET NULL,
+    "createdBy" INT DEFAULT NULL REFERENCES main.users (id),
+
     "updatedAt" TIMESTAMP DEFAULT NOW() NOT NULL,
-    "updatedBy" INT DEFAULT NULL REFERENCES main.users (id) ON DELETE SET NULL,
+    "updatedBy" INT DEFAULT NULL REFERENCES main.users (id),
+    
     "isArchived" BOOLEAN DEFAULT FALSE NOT NULL,
     "archivedAt" TIMESTAMP DEFAULT NULL,
-    "archivedBy" INT DEFAULT NULL REFERENCES main.users (id) ON DELETE SET NULL,
-    CONSTRAINT fk_user_contacts_user FOREIGN KEY ("userId") REFERENCES main.users (id) ON DELETE CASCADE,
+    "archivedBy" INT DEFAULT NULL REFERENCES main.users (id),
+
+    CONSTRAINT fk_user_contacts_user FOREIGN KEY ("userId") REFERENCES main.users (id),
     CONSTRAINT fk_user_contacts_contact_type FOREIGN KEY ("contactTypeId") REFERENCES tenant_lookups (id),
     CONSTRAINT unique_user_contact_type_value UNIQUE ("userId", "contactTypeId", value) -- Same user can't have duplicate contacts
 );
@@ -83,20 +140,21 @@ CREATE TABLE IF NOT EXISTS user_job_details (
     "department" VARCHAR(255),
     -- Legacy field for backward compatibility (can be removed later)
     "ctc" DECIMAL(15, 2),
-    "reportingManagerId" INT DEFAULT NULL REFERENCES main.users (id) ON DELETE SET NULL,
+    "reportingManagerId" INT DEFAULT NULL REFERENCES main.users (id),
+
     "createdAt" TIMESTAMP DEFAULT NOW() NOT NULL,
-    "createdBy" INT DEFAULT NULL REFERENCES main.users (id) ON DELETE SET NULL,
+    "createdBy" INT DEFAULT NULL REFERENCES main.users (id),
+
     "updatedAt" TIMESTAMP DEFAULT NOW() NOT NULL,
-    "updatedBy" INT DEFAULT NULL REFERENCES main.users (id) ON DELETE SET NULL,
+    "updatedBy" INT DEFAULT NULL REFERENCES main.users (id),
+    
     "isArchived" BOOLEAN DEFAULT FALSE NOT NULL,
     "archivedAt" TIMESTAMP DEFAULT NULL,
-    "archivedBy" INT DEFAULT NULL REFERENCES main.users (id) ON DELETE SET NULL,
-    CONSTRAINT fk_user_job_details_user FOREIGN KEY ("userId") REFERENCES main.users (id) ON DELETE CASCADE,
-    CONSTRAINT fk_user_job_details_designation FOREIGN KEY ("designationId") REFERENCES tenant_lookups (id) ON DELETE
-    SET NULL,
-        CONSTRAINT fk_user_job_details_department FOREIGN KEY ("departmentId") REFERENCES tenant_lookups (id) ON DELETE
-    SET NULL,
-        CONSTRAINT fk_user_job_details_manager FOREIGN KEY ("reportingManagerId") REFERENCES main.users (id) ON DELETE
-    SET NULL,
-        CONSTRAINT unique_user_job_details UNIQUE ("userId") -- One job detail record per user
+    "archivedBy" INT DEFAULT NULL REFERENCES main.users (id),
+
+    CONSTRAINT fk_user_job_details_user FOREIGN KEY ("userId") REFERENCES main.users (id),
+    CONSTRAINT fk_user_job_details_designation FOREIGN KEY ("designationId") REFERENCES tenant_lookups (id),
+    CONSTRAINT fk_user_job_details_department FOREIGN KEY ("departmentId") REFERENCES tenant_lookups (id),
+    CONSTRAINT fk_user_job_details_manager FOREIGN KEY ("reportingManagerId") REFERENCES main.users (id),
+    CONSTRAINT unique_user_job_details UNIQUE ("userId") -- One job detail record per user
 );

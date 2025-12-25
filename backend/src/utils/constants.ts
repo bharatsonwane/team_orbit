@@ -85,3 +85,36 @@ export const chatTypeKeys = {
 };
 export const chatTypeName = z.enum(Object.values(chatTypeKeys));
 export type ChatTypeName = z.infer<typeof chatTypeName>;
+
+// Platform-level permissions (stored in main schema)
+export const platformPermissionKeys = {
+  // User permissions
+  USER_CREATE: "USER_CREATE",
+  USER_READ: "USER_READ",
+  USER_UPDATE: "USER_UPDATE",
+  USER_DELETE: "USER_DELETE",
+  // Tenant permissions
+  TENANT_CREATE: "TENANT_CREATE",
+  TENANT_READ: "TENANT_READ",
+  TENANT_UPDATE: "TENANT_UPDATE",
+  TENANT_DELETE: "TENANT_DELETE",
+} as const;
+
+// Tenant-level permissions (stored in tenant schema)
+export const tenantPermissionKeys = {
+  // Project permissions
+  PROJECT_CREATE: "PROJECT_CREATE",
+  PROJECT_READ: "PROJECT_READ",
+  PROJECT_UPDATE: "PROJECT_UPDATE",
+  PROJECT_DELETE: "PROJECT_DELETE",
+} as const;
+
+// Platform permission name enum and type
+export const platformPermissionName = z.enum(
+  Object.values(platformPermissionKeys)
+);
+export type PlatformPermissionName = z.infer<typeof platformPermissionName>;
+
+// Tenant permission name enum and type
+export const tenantPermissionName = z.enum(Object.values(tenantPermissionKeys));
+export type TenantPermissionName = z.infer<typeof tenantPermissionName>;

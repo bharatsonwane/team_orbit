@@ -10,7 +10,7 @@ import {
   tenantSchemaHeader,
 } from "@src/openApiSpecification/openAPIDocumentGenerator";
 import { commonDocCreator } from "@src/openApiSpecification/openAPIDocumentGenerator";
-import type { AuthenticatedRequest } from "@src/middleware/authRoleMiddleware";
+import type { AuthenticatedRequest } from "@src/middleware/authPermissionMiddleware";
 
 type AuthAwareHandler = (
   req: AuthenticatedRequest,

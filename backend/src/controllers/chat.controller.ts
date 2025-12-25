@@ -14,7 +14,7 @@ import {
   ArchiveChatMessageSchema,
   UpdateChatMessageSchema,
 } from "@src/schemaTypes/chat.schemaTypes";
-import { AuthenticatedRequest } from "@src/middleware/authRoleMiddleware";
+import { AuthenticatedRequest } from "@src/middleware/authPermissionMiddleware";
 
 // Helper function for channel membership validation
 const validateChannelMembership = async (
@@ -133,8 +133,8 @@ export const saveChannelMessage = async (
       userId,
       socketId: payload.socketId!,
       message: {
-        ...message,
-        tempId: payload.tempId,
+      ...message,
+      tempId: payload.tempId,
       },
     });
     res.status(201).json(message);

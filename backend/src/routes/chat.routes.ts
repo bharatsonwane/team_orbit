@@ -22,7 +22,7 @@ import {
   updateChatMessageSchema,
 } from "@src/schemaTypes/chat.schemaTypes";
 import { ensureTenantMiddleware } from "@src/middleware/ensureTenantMiddleware";
-import { authRoleMiddleware } from "@src/middleware/authRoleMiddleware";
+import { authPermissionMiddleware } from "@src/middleware/authPermissionMiddleware";
 import { idValidation } from "@src/schemaTypes/common.schemaTypes";
 
 const registrar = new RouteRegistrar({
@@ -31,7 +31,7 @@ const registrar = new RouteRegistrar({
 });
 
 registrar.post("/chat/channel/create", {
-  middlewares: [ensureTenantMiddleware(), authRoleMiddleware()],
+  middlewares: [ensureTenantMiddleware(), authPermissionMiddleware()],
   requestSchema: {
     bodySchema: createChatChannelSchema,
   },
@@ -40,7 +40,7 @@ registrar.post("/chat/channel/create", {
 });
 
 registrar.get("/chat/channel/list", {
-  middlewares: [ensureTenantMiddleware(), authRoleMiddleware()],
+  middlewares: [ensureTenantMiddleware(), authPermissionMiddleware()],
   requestSchema: {
     querySchema: chatChannelListQuerySchema,
   },
@@ -49,7 +49,7 @@ registrar.get("/chat/channel/list", {
 });
 
 registrar.post("/chat/channel/:chatChannelId/message", {
-  middlewares: [ensureTenantMiddleware(), authRoleMiddleware()],
+  middlewares: [ensureTenantMiddleware(), authPermissionMiddleware()],
   requestSchema: {
     paramsSchema: { chatChannelId: idValidation },
     bodySchema: sendChatMessageSchema,
@@ -59,7 +59,7 @@ registrar.post("/chat/channel/:chatChannelId/message", {
 });
 
 registrar.get("/chat/channel/:chatChannelId/messages", {
-  middlewares: [ensureTenantMiddleware(), authRoleMiddleware()],
+  middlewares: [ensureTenantMiddleware(), authPermissionMiddleware()],
   requestSchema: {
     paramsSchema: { chatChannelId: idValidation },
     querySchema: chatMessageListQuerySchema,
@@ -69,7 +69,7 @@ registrar.get("/chat/channel/:chatChannelId/messages", {
 });
 
 registrar.post("/chat/channel/:chatChannelId/message/:messageId/reaction", {
-  middlewares: [ensureTenantMiddleware(), authRoleMiddleware()],
+  middlewares: [ensureTenantMiddleware(), authPermissionMiddleware()],
   requestSchema: {
     paramsSchema: {
       chatChannelId: idValidation,
@@ -85,7 +85,7 @@ registrar.post("/chat/channel/:chatChannelId/message/:messageId/reaction", {
 });
 
 registrar.put("/chat/channel/:chatChannelId/message/:messageId", {
-  middlewares: [ensureTenantMiddleware(), authRoleMiddleware()],
+  middlewares: [ensureTenantMiddleware(), authPermissionMiddleware()],
   requestSchema: {
     paramsSchema: {
       chatChannelId: idValidation,
@@ -98,7 +98,7 @@ registrar.put("/chat/channel/:chatChannelId/message/:messageId", {
 });
 
 registrar.delete("/chat/channel/:chatChannelId/message/:messageId", {
-  middlewares: [ensureTenantMiddleware(), authRoleMiddleware()],
+  middlewares: [ensureTenantMiddleware(), authPermissionMiddleware()],
   requestSchema: {
     paramsSchema: {
       chatChannelId: idValidation,

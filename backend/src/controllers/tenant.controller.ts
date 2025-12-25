@@ -1,5 +1,5 @@
 import { Response, NextFunction } from "express";
-import { AuthenticatedRequest } from "@src/middleware/authRoleMiddleware";
+import { AuthenticatedRequest } from "@src/middleware/authPermissionMiddleware";
 import Tenant from "@src/services/tenant.service";
 import type {
   CreateTenantSchema,

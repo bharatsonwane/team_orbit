@@ -36,8 +36,8 @@ import {
   getUserJobDetails,
 } from "@src/controllers/user.controller";
 import RouteRegistrar from "@src/middleware/RouteRegistrar";
-import { authRoleMiddleware } from "@src/middleware/authRoleMiddleware";
-import { userRoleKeys } from "@src/utils/constants";
+import { authPermissionMiddleware } from "@src/middleware/authPermissionMiddleware";
+import { platformPermissionKeys } from "@src/utils/constants";
 import { ensureTenantMiddleware } from "@src/middleware/ensureTenantMiddleware";
 
 const registrar = new RouteRegistrar({
@@ -54,7 +54,11 @@ registrar.post("/user/login", {
 
 /**@description get user profile  */
 registrar.get("/user/profile", {
-  middlewares: [authRoleMiddleware()],
+  middlewares: [
+    authPermissionMiddleware({
+      allowedPlatformPermissions: [platformPermissionKeys.USER_READ],
+    }),
+  ],
   oasSchema: getUserProfileOASSchema,
   controller: getUserProfile,
 });
@@ -66,13 +70,21 @@ registrar.put("/user/:id/password/", {
     paramsSchema: { id: idValidation },
     bodySchema: userUpdatePasswordSchema,
   },
-  middlewares: [authRoleMiddleware()],
+  middlewares: [
+    authPermissionMiddleware({
+      allowedPlatformPermissions: [platformPermissionKeys.USER_UPDATE],
+    }),
+  ],
   controller: updateUserPassword,
 });
 
 /**@description update user authentication email  */
 registrar.put("/user/:id/auth-email/", {
-  middlewares: [authRoleMiddleware()],
+  middlewares: [
+    authPermissionMiddleware({
+      allowedPlatformPermissions: [platformPermissionKeys.USER_UPDATE],
+    }),
+  ],
   requestSchema: {
     paramsSchema: { id: idValidation },
     bodySchema: updateUserAuthEmailSchema,
@@ -91,7 +103,12 @@ registrar.put("/user/:id/auth-email/", {
 
 /**@description get all users with optional filtering */
 registrar.get("/user/list", {
-  middlewares: [ensureTenantMiddleware(), authRoleMiddleware()],
+  middlewares: [
+    ensureTenantMiddleware(),
+    authPermissionMiddleware({
+      allowedPlatformPermissions: [platformPermissionKeys.USER_READ],
+    }),
+  ],
   oasSchema: getUserOASSchema,
   requestSchema: { querySchema: getUsersQuerySchema },
   controller: getUsers,
@@ -99,7 +116,12 @@ registrar.get("/user/list", {
 
 /**@description get users count with optional search filtering */
 registrar.get("/count", {
-  middlewares: [ensureTenantMiddleware(), authRoleMiddleware()],
+  middlewares: [
+    ensureTenantMiddleware(),
+    authPermissionMiddleware({
+      allowedPlatformPermissions: [platformPermissionKeys.USER_READ],
+    }),
+  ],
   requestSchema: {
     querySchema: getUsersCountQuerySchema,
   },
@@ -114,7 +136,11 @@ registrar.get("/count", {
 
 /**@description get user authentication email  */
 registrar.get("/user/:id/auth-email/", {
-  middlewares: [authRoleMiddleware()],
+  middlewares: [
+    authPermissionMiddleware({
+      allowedPlatformPermissions: [platformPermissionKeys.USER_READ],
+    }),
+  ],
   requestSchema: {
     paramsSchema: { id: idValidation },
   },
@@ -131,7 +157,11 @@ registrar.get("/user/:id/auth-email/", {
 
 /**@description update user status and roles  */
 registrar.put("/user/:id/status-roles/", {
-  middlewares: [authRoleMiddleware()],
+  middlewares: [
+    authPermissionMiddleware({
+      allowedPlatformPermissions: [platformPermissionKeys.USER_UPDATE],
+    }),
+  ],
   requestSchema: {
     paramsSchema: { id: idValidation },
     bodySchema: updateUserStatusAndRolesSchema,
@@ -141,7 +171,11 @@ registrar.put("/user/:id/status-roles/", {
 
 /**@description Create User with Personal Information */
 registrar.post("/user/personal", {
-  middlewares: [authRoleMiddleware()],
+  middlewares: [
+    authPermissionMiddleware({
+      allowedPlatformPermissions: [platformPermissionKeys.USER_CREATE],
+    }),
+  ],
   requestSchema: { bodySchema: createUserSchema },
   responseSchemas: [{ statusCode: 201, schema: z.object({ id: z.number() }) }],
   controller: createUser,
@@ -149,7 +183,11 @@ registrar.post("/user/personal", {
 
 /**@description Update user personal information by id  */
 registrar.put("/user/:id/personal", {
-  middlewares: [authRoleMiddleware()],
+  middlewares: [
+    authPermissionMiddleware({
+      allowedPlatformPermissions: [platformPermissionKeys.USER_UPDATE],
+    }),
+  ],
   requestSchema: {
     paramsSchema: { id: idValidation },
     bodySchema: baseUserSchema.partial(),
@@ -160,21 +198,35 @@ registrar.put("/user/:id/personal", {
 
 /**@description get user by id  */
 registrar.get("/user/:id/personal", {
-  middlewares: [authRoleMiddleware()],
+  middlewares: [
+    authPermissionMiddleware({
+      allowedPlatformPermissions: [platformPermissionKeys.USER_READ],
+    }),
+  ],
   requestSchema: { paramsSchema: { id: idValidation } },
   controller: getUserById,
 });
 
 /**@description get user contacts by id  */
 registrar.get("/user/:id/contacts", {
-  middlewares: [authRoleMiddleware(), ensureTenantMiddleware()],
+  middlewares: [
+    authPermissionMiddleware({
+      allowedPlatformPermissions: [platformPermissionKeys.USER_READ],
+    }),
+    ensureTenantMiddleware(),
+  ],
   requestSchema: { paramsSchema: { id: idValidation } },
   controller: getUserContacts,
 });
 
 /**@description Save/Update user contact information  */
 registrar.put("/user/:id/contacts", {
-  middlewares: [authRoleMiddleware(), ensureTenantMiddleware()],
+  middlewares: [
+    authPermissionMiddleware({
+      allowedPlatformPermissions: [platformPermissionKeys.USER_UPDATE],
+    }),
+    ensureTenantMiddleware(),
+  ],
   requestSchema: {
     paramsSchema: { id: idValidation },
     bodySchema: saveUserContactsSchema,
@@ -184,7 +236,12 @@ registrar.put("/user/:id/contacts", {
 
 /**@description Save/Update user job details  */
 registrar.post("/user/:id/job-details", {
-  middlewares: [authRoleMiddleware(), ensureTenantMiddleware()],
+  middlewares: [
+    authPermissionMiddleware({
+      allowedPlatformPermissions: [platformPermissionKeys.USER_UPDATE],
+    }),
+    ensureTenantMiddleware(),
+  ],
   requestSchema: {
     paramsSchema: { id: idValidation },
     bodySchema: saveUserJobDetailsSchema,
@@ -194,7 +251,12 @@ registrar.post("/user/:id/job-details", {
 
 /**@description Get user job details  */
 registrar.get("/user/:id/job-details", {
-  middlewares: [authRoleMiddleware(), ensureTenantMiddleware()],
+  middlewares: [
+    authPermissionMiddleware({
+      allowedPlatformPermissions: [platformPermissionKeys.USER_READ],
+    }),
+    ensureTenantMiddleware(),
+  ],
   requestSchema: {
     paramsSchema: { id: idValidation },
   },

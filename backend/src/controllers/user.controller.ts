@@ -5,12 +5,12 @@ import {
   validatePassword,
   createJwtToken,
 } from "@src/utils/authHelper";
-import Lookup from "@src/services/lookup.service";
+import RoleAndPermission from "@src/services/roleAndPermission.service";
 import {
   UserLoginSchema,
   CreateUserSchema,
 } from "@src/schemaTypes/user.schemaTypes";
-import { AuthenticatedRequest } from "@src/middleware/authRoleMiddleware";
+import { AuthenticatedRequest } from "@src/middleware/authPermissionMiddleware";
 import {
   lookupTypeKeys,
   userRoleKeys,
@@ -47,11 +47,17 @@ export const userLogin = async (
 
     delete (userData as Partial<typeof userData>).hashPassword;
 
+    // Fetch user permissions from database
+    const { platformPermissions, tenantPermissions } =
+      await RoleAndPermission.getUserPermissions(req.db, userData.id);
+
     const token = createJwtToken({
       userId: userData.id,
       email: userData.authEmail, // Using authEmail (which is email)
       tenantId: userData.tenantId,
       userRoles: userData.roles,
+      platformPermissions: platformPermissions, // Map platformPermissions to platformPermissions for JWT
+      tenantPermissions,
     });
 
     res.status(200).json({

@@ -3,7 +3,7 @@ import { Server, Socket } from "socket.io";
 import { ExtendedError } from "socket.io/dist/namespace";
 import { envVariable } from "@src/config/envVariable";
 import { validateJwtToken } from "@src/utils/authHelper";
-import { JwtTokenPayload } from "@src/middleware/authRoleMiddleware";
+import { JwtTokenPayload } from "@src/middleware/authPermissionMiddleware";
 import { dbClientPool } from "@src/middleware/dbClientMiddleware";
 import db, { schemaNames } from "@src/database/db";
 import logger from "@src/utils/logger";

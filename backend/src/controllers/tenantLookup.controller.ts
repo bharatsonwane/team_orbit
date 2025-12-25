@@ -1,5 +1,5 @@
 import type { Response, NextFunction } from "express";
-import { AuthenticatedRequest } from "@src/middleware/authRoleMiddleware";
+import { AuthenticatedRequest } from "@src/middleware/authPermissionMiddleware";
 import { TenantLookupService } from "@src/services/tenantLookup.service";
 
 export const getTenantLookupTypeById = async (

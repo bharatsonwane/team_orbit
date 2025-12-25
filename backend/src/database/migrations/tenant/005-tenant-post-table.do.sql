@@ -20,23 +20,23 @@ END $$;
 -- ===========================================================
 CREATE TABLE IF NOT EXISTS post (
     id BIGSERIAL,
-    "userId" INT NOT NULL REFERENCES main.users (id) ON DELETE CASCADE,
+    "userId" INT NOT NULL REFERENCES main.users (id),
     "postType" post_type_enum NOT NULL,
     text TEXT,
     "isEdited" BOOLEAN DEFAULT FALSE NOT NULL,
     "isPinned" BOOLEAN DEFAULT FALSE NOT NULL,
     "pinnedAt" TIMESTAMP,
-    "pinnedBy" INT DEFAULT NULL REFERENCES main.users (id) ON DELETE SET NULL,
+    "pinnedBy" INT DEFAULT NULL REFERENCES main.users (id),
     "visibility" visibility_enum DEFAULT 'public',
-    "targetDepartmentId" INT REFERENCES tenant_lookups (id) ON DELETE SET NULL,
+    "targetDepartmentId" INT REFERENCES tenant_lookups (id),
     "targetTeamId" INT,
     "createdAt" TIMESTAMP DEFAULT NOW() NOT NULL,
-    "createdBy" INT DEFAULT NULL REFERENCES main.users (id) ON DELETE SET NULL,
+    "createdBy" INT DEFAULT NULL REFERENCES main.users (id),
     "updatedAt" TIMESTAMP DEFAULT NOW() NOT NULL,
-    "updatedBy" INT DEFAULT NULL REFERENCES main.users (id) ON DELETE SET NULL,
+    "updatedBy" INT DEFAULT NULL REFERENCES main.users (id),
     "isArchived" BOOLEAN DEFAULT FALSE NOT NULL,
     "archivedAt" TIMESTAMP DEFAULT NULL,
-    "archivedBy" INT DEFAULT NULL REFERENCES main.users (id) ON DELETE SET NULL,
+    "archivedBy" INT DEFAULT NULL REFERENCES main.users (id),
     PRIMARY KEY (id, "createdAt")
 ) PARTITION BY RANGE ("createdAt");
 
@@ -55,13 +55,13 @@ CREATE TABLE IF NOT EXISTS post_attachment (
     "thumbnailKey" VARCHAR(500),
     "sortOrder" INT DEFAULT 0 NOT NULL,
     "createdAt" TIMESTAMP DEFAULT NOW() NOT NULL,
-    "createdBy" INT DEFAULT NULL REFERENCES main.users (id) ON DELETE SET NULL,
+    "createdBy" INT DEFAULT NULL REFERENCES main.users (id),
     "updatedAt" TIMESTAMP DEFAULT NOW() NOT NULL,
-    "updatedBy" INT DEFAULT NULL REFERENCES main.users (id) ON DELETE SET NULL,
+    "updatedBy" INT DEFAULT NULL REFERENCES main.users (id),
     "isArchived" BOOLEAN DEFAULT FALSE NOT NULL,
     "archivedAt" TIMESTAMP DEFAULT NULL,
-    "archivedBy" INT DEFAULT NULL REFERENCES main.users (id) ON DELETE SET NULL,
-    CONSTRAINT fk_post_attachment_post FOREIGN KEY ("postId", "postCreatedAt") REFERENCES post (id, "createdAt") ON DELETE CASCADE
+    "archivedBy" INT DEFAULT NULL REFERENCES main.users (id),
+    CONSTRAINT fk_post_attachment_post FOREIGN KEY ("postId", "postCreatedAt") REFERENCES post (id, "createdAt")
 );
 
 -- ===========================================================
@@ -71,16 +71,16 @@ CREATE TABLE IF NOT EXISTS post_reaction (
     id SERIAL PRIMARY KEY,
     "postId" BIGINT NOT NULL,
     "postCreatedAt" TIMESTAMP NOT NULL,
-    "userId" INT NOT NULL REFERENCES main.users (id) ON DELETE CASCADE,
+    "userId" INT NOT NULL REFERENCES main.users (id),
     reaction VARCHAR(50) NOT NULL,
     "createdAt" TIMESTAMP DEFAULT NOW() NOT NULL,
-    "createdBy" INT DEFAULT NULL REFERENCES main.users (id) ON DELETE SET NULL,
+    "createdBy" INT DEFAULT NULL REFERENCES main.users (id),
     "updatedAt" TIMESTAMP DEFAULT NOW() NOT NULL,
-    "updatedBy" INT DEFAULT NULL REFERENCES main.users (id) ON DELETE SET NULL,
+    "updatedBy" INT DEFAULT NULL REFERENCES main.users (id),
     "isArchived" BOOLEAN DEFAULT FALSE NOT NULL,
     "archivedAt" TIMESTAMP DEFAULT NULL,
-    "archivedBy" INT DEFAULT NULL REFERENCES main.users (id) ON DELETE SET NULL,
-    CONSTRAINT fk_post_reaction_post FOREIGN KEY ("postId", "postCreatedAt") REFERENCES post (id, "createdAt") ON DELETE CASCADE,
+    "archivedBy" INT DEFAULT NULL REFERENCES main.users (id),
+    CONSTRAINT fk_post_reaction_post FOREIGN KEY ("postId", "postCreatedAt") REFERENCES post (id, "createdAt"),
     CONSTRAINT unique_post_user_reaction UNIQUE ("postId", "postCreatedAt", "userId")
 );
 
@@ -91,21 +91,21 @@ CREATE TABLE IF NOT EXISTS post_comment (
     id BIGSERIAL,
     "postId" BIGINT NOT NULL,
     "postCreatedAt" TIMESTAMP NOT NULL,
-    "userId" INT NOT NULL REFERENCES main.users (id) ON DELETE CASCADE,
+    "userId" INT NOT NULL REFERENCES main.users (id),
     "parentCommentId" BIGINT,
     "parentCommentCreatedAt" TIMESTAMP,
     text TEXT NOT NULL,
     "isEdited" BOOLEAN DEFAULT FALSE NOT NULL,
     "createdAt" TIMESTAMP DEFAULT NOW() NOT NULL,
-    "createdBy" INT DEFAULT NULL REFERENCES main.users (id) ON DELETE SET NULL,
+    "createdBy" INT DEFAULT NULL REFERENCES main.users (id),
     "updatedAt" TIMESTAMP DEFAULT NOW() NOT NULL,
-    "updatedBy" INT DEFAULT NULL REFERENCES main.users (id) ON DELETE SET NULL,
+    "updatedBy" INT DEFAULT NULL REFERENCES main.users (id),
     "isArchived" BOOLEAN DEFAULT FALSE NOT NULL,
     "archivedAt" TIMESTAMP DEFAULT NULL,
-    "archivedBy" INT DEFAULT NULL REFERENCES main.users (id) ON DELETE SET NULL,
+    "archivedBy" INT DEFAULT NULL REFERENCES main.users (id),
     PRIMARY KEY (id, "createdAt"),
-    CONSTRAINT fk_post_comment_post FOREIGN KEY ("postId", "postCreatedAt") REFERENCES post (id, "createdAt") ON DELETE CASCADE,
-    CONSTRAINT fk_post_comment_parent FOREIGN KEY ("parentCommentId", "parentCommentCreatedAt") REFERENCES post_comment (id, "createdAt") ON DELETE CASCADE
+    CONSTRAINT fk_post_comment_post FOREIGN KEY ("postId", "postCreatedAt") REFERENCES post (id, "createdAt"),
+    CONSTRAINT fk_post_comment_parent FOREIGN KEY ("parentCommentId", "parentCommentCreatedAt") REFERENCES post_comment (id, "createdAt")
 ) PARTITION BY RANGE ("createdAt");
 
 -- ===========================================================
@@ -115,16 +115,16 @@ CREATE TABLE IF NOT EXISTS post_comment_reaction (
     id SERIAL PRIMARY KEY,
     "commentId" BIGINT NOT NULL,
     "commentCreatedAt" TIMESTAMP NOT NULL,
-    "userId" INT NOT NULL REFERENCES main.users (id) ON DELETE CASCADE,
+    "userId" INT NOT NULL REFERENCES main.users (id),
     reaction VARCHAR(50) NOT NULL,
     "createdAt" TIMESTAMP DEFAULT NOW() NOT NULL,
-    "createdBy" INT DEFAULT NULL REFERENCES main.users (id) ON DELETE SET NULL,
+    "createdBy" INT DEFAULT NULL REFERENCES main.users (id),
     "updatedAt" TIMESTAMP DEFAULT NOW() NOT NULL,
-    "updatedBy" INT DEFAULT NULL REFERENCES main.users (id) ON DELETE SET NULL,
+    "updatedBy" INT DEFAULT NULL REFERENCES main.users (id),
     "isArchived" BOOLEAN DEFAULT FALSE NOT NULL,
     "archivedAt" TIMESTAMP DEFAULT NULL,
-    "archivedBy" INT DEFAULT NULL REFERENCES main.users (id) ON DELETE SET NULL,
-    CONSTRAINT fk_comment_reaction_comment FOREIGN KEY ("commentId", "commentCreatedAt") REFERENCES post_comment (id, "createdAt") ON DELETE CASCADE,
+    "archivedBy" INT DEFAULT NULL REFERENCES main.users (id),
+    CONSTRAINT fk_comment_reaction_comment FOREIGN KEY ("commentId", "commentCreatedAt") REFERENCES post_comment (id, "createdAt"),
     CONSTRAINT unique_comment_user_reaction UNIQUE ("commentId", "commentCreatedAt", "userId")
 );
 
@@ -141,15 +141,15 @@ CREATE TABLE IF NOT EXISTS post_poll (
     "endsAt" TIMESTAMP,
     "isClosed" BOOLEAN DEFAULT FALSE NOT NULL,
     "closedAt" TIMESTAMP,
-    "closedBy" INT DEFAULT NULL REFERENCES main.users (id) ON DELETE SET NULL,
+    "closedBy" INT DEFAULT NULL REFERENCES main.users (id),
     "createdAt" TIMESTAMP DEFAULT NOW() NOT NULL,
-    "createdBy" INT DEFAULT NULL REFERENCES main.users (id) ON DELETE SET NULL,
+    "createdBy" INT DEFAULT NULL REFERENCES main.users (id),
     "updatedAt" TIMESTAMP DEFAULT NOW() NOT NULL,
-    "updatedBy" INT DEFAULT NULL REFERENCES main.users (id) ON DELETE SET NULL,
+    "updatedBy" INT DEFAULT NULL REFERENCES main.users (id),
     "isArchived" BOOLEAN DEFAULT FALSE NOT NULL,
     "archivedAt" TIMESTAMP DEFAULT NULL,
-    "archivedBy" INT DEFAULT NULL REFERENCES main.users (id) ON DELETE SET NULL,
-    CONSTRAINT fk_post_poll_post FOREIGN KEY ("postId", "postCreatedAt") REFERENCES post (id, "createdAt") ON DELETE CASCADE,
+    "archivedBy" INT DEFAULT NULL REFERENCES main.users (id),
+    CONSTRAINT fk_post_poll_post FOREIGN KEY ("postId", "postCreatedAt") REFERENCES post (id, "createdAt"),
     CONSTRAINT unique_post_poll UNIQUE ("postId", "postCreatedAt")
 );
 
@@ -158,17 +158,17 @@ CREATE TABLE IF NOT EXISTS post_poll (
 -- ===========================================================
 CREATE TABLE IF NOT EXISTS post_poll_option (
     id SERIAL PRIMARY KEY,
-    "pollId" INT NOT NULL REFERENCES post_poll (id) ON DELETE CASCADE,
+    "pollId" INT NOT NULL REFERENCES post_poll (id),
     text TEXT NOT NULL,
     "imageKey" VARCHAR(500),
     "sortOrder" INT DEFAULT 0 NOT NULL,
     "createdAt" TIMESTAMP DEFAULT NOW() NOT NULL,
-    "createdBy" INT DEFAULT NULL REFERENCES main.users (id) ON DELETE SET NULL,
+    "createdBy" INT DEFAULT NULL REFERENCES main.users (id),
     "updatedAt" TIMESTAMP DEFAULT NOW() NOT NULL,
-    "updatedBy" INT DEFAULT NULL REFERENCES main.users (id) ON DELETE SET NULL,
+    "updatedBy" INT DEFAULT NULL REFERENCES main.users (id),
     "isArchived" BOOLEAN DEFAULT FALSE NOT NULL,
     "archivedAt" TIMESTAMP DEFAULT NULL,
-    "archivedBy" INT DEFAULT NULL REFERENCES main.users (id) ON DELETE SET NULL
+    "archivedBy" INT DEFAULT NULL REFERENCES main.users (id)
 );
 
 -- ===========================================================
@@ -176,16 +176,16 @@ CREATE TABLE IF NOT EXISTS post_poll_option (
 -- ===========================================================
 CREATE TABLE IF NOT EXISTS post_poll_vote (
     id SERIAL PRIMARY KEY,
-    "pollId" INT NOT NULL REFERENCES post_poll (id) ON DELETE CASCADE,
-    "optionId" INT NOT NULL REFERENCES post_poll_option (id) ON DELETE CASCADE,
-    "userId" INT NOT NULL REFERENCES main.users (id) ON DELETE CASCADE,
+    "pollId" INT NOT NULL REFERENCES post_poll (id),
+    "optionId" INT NOT NULL REFERENCES post_poll_option (id),
+    "userId" INT NOT NULL REFERENCES main.users (id),
     "createdAt" TIMESTAMP DEFAULT NOW() NOT NULL,
-    "createdBy" INT DEFAULT NULL REFERENCES main.users (id) ON DELETE SET NULL,
+    "createdBy" INT DEFAULT NULL REFERENCES main.users (id),
     "updatedAt" TIMESTAMP DEFAULT NOW() NOT NULL,
-    "updatedBy" INT DEFAULT NULL REFERENCES main.users (id) ON DELETE SET NULL,
+    "updatedBy" INT DEFAULT NULL REFERENCES main.users (id),
     "isArchived" BOOLEAN DEFAULT FALSE NOT NULL,
     "archivedAt" TIMESTAMP DEFAULT NULL,
-    "archivedBy" INT DEFAULT NULL REFERENCES main.users (id) ON DELETE SET NULL,
+    "archivedBy" INT DEFAULT NULL REFERENCES main.users (id),
     CONSTRAINT unique_poll_user_option UNIQUE ("pollId", "userId", "optionId")
 );
 
@@ -198,13 +198,13 @@ CREATE TABLE IF NOT EXISTS post_hashtag (
     "postCreatedAt" TIMESTAMP NOT NULL,
     hashtag VARCHAR(100) NOT NULL,
     "createdAt" TIMESTAMP DEFAULT NOW() NOT NULL,
-    "createdBy" INT DEFAULT NULL REFERENCES main.users (id) ON DELETE SET NULL,
+    "createdBy" INT DEFAULT NULL REFERENCES main.users (id),
     "updatedAt" TIMESTAMP DEFAULT NOW() NOT NULL,
-    "updatedBy" INT DEFAULT NULL REFERENCES main.users (id) ON DELETE SET NULL,
+    "updatedBy" INT DEFAULT NULL REFERENCES main.users (id),
     "isArchived" BOOLEAN DEFAULT FALSE NOT NULL,
     "archivedAt" TIMESTAMP DEFAULT NULL,
-    "archivedBy" INT DEFAULT NULL REFERENCES main.users (id) ON DELETE SET NULL,
-    CONSTRAINT fk_post_hashtag_post FOREIGN KEY ("postId", "postCreatedAt") REFERENCES post (id, "createdAt") ON DELETE CASCADE,
+    "archivedBy" INT DEFAULT NULL REFERENCES main.users (id),
+    CONSTRAINT fk_post_hashtag_post FOREIGN KEY ("postId", "postCreatedAt") REFERENCES post (id, "createdAt"),
     CONSTRAINT unique_post_hashtag UNIQUE ("postId", "postCreatedAt", hashtag)
 );
 
@@ -215,15 +215,15 @@ CREATE TABLE IF NOT EXISTS post_bookmark (
     id SERIAL PRIMARY KEY,
     "postId" BIGINT NOT NULL,
     "postCreatedAt" TIMESTAMP NOT NULL,
-    "userId" INT NOT NULL REFERENCES main.users (id) ON DELETE CASCADE,
+    "userId" INT NOT NULL REFERENCES main.users (id),
     "createdAt" TIMESTAMP DEFAULT NOW() NOT NULL,
-    "createdBy" INT DEFAULT NULL REFERENCES main.users (id) ON DELETE SET NULL,
+    "createdBy" INT DEFAULT NULL REFERENCES main.users (id),
     "updatedAt" TIMESTAMP DEFAULT NOW() NOT NULL,
-    "updatedBy" INT DEFAULT NULL REFERENCES main.users (id) ON DELETE SET NULL,
+    "updatedBy" INT DEFAULT NULL REFERENCES main.users (id),
     "isArchived" BOOLEAN DEFAULT FALSE NOT NULL,
     "archivedAt" TIMESTAMP DEFAULT NULL,
-    "archivedBy" INT DEFAULT NULL REFERENCES main.users (id) ON DELETE SET NULL,
-    CONSTRAINT fk_post_bookmark_post FOREIGN KEY ("postId", "postCreatedAt") REFERENCES post (id, "createdAt") ON DELETE CASCADE,
+    "archivedBy" INT DEFAULT NULL REFERENCES main.users (id),
+    CONSTRAINT fk_post_bookmark_post FOREIGN KEY ("postId", "postCreatedAt") REFERENCES post (id, "createdAt"),
     CONSTRAINT unique_post_user_bookmark UNIQUE ("postId", "postCreatedAt", "userId")
 );
 
@@ -234,15 +234,15 @@ CREATE TABLE IF NOT EXISTS post_category_xref (
     id SERIAL PRIMARY KEY,
     "postId" BIGINT NOT NULL,
     "postCreatedAt" TIMESTAMP NOT NULL,
-    "categoryId" INT NOT NULL REFERENCES tenant_lookups (id) ON DELETE CASCADE,
+    "categoryId" INT NOT NULL REFERENCES tenant_lookups (id),
     "createdAt" TIMESTAMP DEFAULT NOW() NOT NULL,
-    "createdBy" INT DEFAULT NULL REFERENCES main.users (id) ON DELETE SET NULL,
+    "createdBy" INT DEFAULT NULL REFERENCES main.users (id),
     "updatedAt" TIMESTAMP DEFAULT NOW() NOT NULL,
-    "updatedBy" INT DEFAULT NULL REFERENCES main.users (id) ON DELETE SET NULL,
+    "updatedBy" INT DEFAULT NULL REFERENCES main.users (id),
     "isArchived" BOOLEAN DEFAULT FALSE NOT NULL,
     "archivedAt" TIMESTAMP DEFAULT NULL,
-    "archivedBy" INT DEFAULT NULL REFERENCES main.users (id) ON DELETE SET NULL,
-    CONSTRAINT fk_post_category_post FOREIGN KEY ("postId", "postCreatedAt") REFERENCES post (id, "createdAt") ON DELETE CASCADE,
+    "archivedBy" INT DEFAULT NULL REFERENCES main.users (id),
+    CONSTRAINT fk_post_category_post FOREIGN KEY ("postId", "postCreatedAt") REFERENCES post (id, "createdAt"),
     CONSTRAINT unique_post_category UNIQUE ("postId", "postCreatedAt", "categoryId")
 );
 
@@ -253,15 +253,15 @@ CREATE TABLE IF NOT EXISTS post_mention (
     id SERIAL PRIMARY KEY,
     "postId" BIGINT NOT NULL,
     "postCreatedAt" TIMESTAMP NOT NULL,
-    "mentionedUserId" INT NOT NULL REFERENCES main.users (id) ON DELETE CASCADE,
+    "mentionedUserId" INT NOT NULL REFERENCES main.users (id),
     "createdAt" TIMESTAMP DEFAULT NOW() NOT NULL,
-    "createdBy" INT DEFAULT NULL REFERENCES main.users (id) ON DELETE SET NULL,
+    "createdBy" INT DEFAULT NULL REFERENCES main.users (id),
     "updatedAt" TIMESTAMP DEFAULT NOW() NOT NULL,
-    "updatedBy" INT DEFAULT NULL REFERENCES main.users (id) ON DELETE SET NULL,
+    "updatedBy" INT DEFAULT NULL REFERENCES main.users (id),
     "isArchived" BOOLEAN DEFAULT FALSE NOT NULL,
     "archivedAt" TIMESTAMP DEFAULT NULL,
-    "archivedBy" INT DEFAULT NULL REFERENCES main.users (id) ON DELETE SET NULL,
-    CONSTRAINT fk_post_mention_post FOREIGN KEY ("postId", "postCreatedAt") REFERENCES post (id, "createdAt") ON DELETE CASCADE,
+    "archivedBy" INT DEFAULT NULL REFERENCES main.users (id),
+    CONSTRAINT fk_post_mention_post FOREIGN KEY ("postId", "postCreatedAt") REFERENCES post (id, "createdAt"),
     CONSTRAINT unique_post_mention UNIQUE ("postId", "postCreatedAt", "mentionedUserId")
 );
 
@@ -272,16 +272,16 @@ CREATE TABLE IF NOT EXISTS post_view (
     id SERIAL PRIMARY KEY,
     "postId" BIGINT NOT NULL,
     "postCreatedAt" TIMESTAMP NOT NULL,
-    "userId" INT NOT NULL REFERENCES main.users (id) ON DELETE CASCADE,
+    "userId" INT NOT NULL REFERENCES main.users (id),
     "viewedAt" TIMESTAMP DEFAULT NOW() NOT NULL,
     "createdAt" TIMESTAMP DEFAULT NOW() NOT NULL,
-    "createdBy" INT DEFAULT NULL REFERENCES main.users (id) ON DELETE SET NULL,
+    "createdBy" INT DEFAULT NULL REFERENCES main.users (id),
     "updatedAt" TIMESTAMP DEFAULT NOW() NOT NULL,
-    "updatedBy" INT DEFAULT NULL REFERENCES main.users (id) ON DELETE SET NULL,
+    "updatedBy" INT DEFAULT NULL REFERENCES main.users (id),
     "isArchived" BOOLEAN DEFAULT FALSE NOT NULL,
     "archivedAt" TIMESTAMP DEFAULT NULL,
-    "archivedBy" INT DEFAULT NULL REFERENCES main.users (id) ON DELETE SET NULL,
-    CONSTRAINT fk_post_view_post FOREIGN KEY ("postId", "postCreatedAt") REFERENCES post (id, "createdAt") ON DELETE CASCADE,
+    "archivedBy" INT DEFAULT NULL REFERENCES main.users (id),
+    CONSTRAINT fk_post_view_post FOREIGN KEY ("postId", "postCreatedAt") REFERENCES post (id, "createdAt"),
     CONSTRAINT unique_post_user_view UNIQUE ("postId", "postCreatedAt", "userId")
 );
 

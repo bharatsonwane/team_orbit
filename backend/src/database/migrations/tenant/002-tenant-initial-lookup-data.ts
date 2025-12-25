@@ -15,6 +15,24 @@ interface TenantLookup {
   sortOrder: number;
 }
 
+interface Role {
+  id?: number;
+  name: string;
+  label: string;
+  description?: string;
+  sortOrder?: number;
+  isSystem: boolean;
+}
+
+interface Permission {
+  id?: number;
+  name: string;
+  label: string;
+  description?: string;
+  sortOrder?: number;
+  isSystem: boolean;
+}
+
 const lookupTypeKeys = {
   CONTACT_TYPE: "CONTACT_TYPE",
   DEPARTMENT: "DEPARTMENT",
@@ -125,6 +143,77 @@ const designationKeys = {
   INTERN: "INTERN",
   TRAINEE: "TRAINEE",
 };
+
+// Tenant-level permissions (stored in tenant schema)
+const tenantPermissionKeys = {
+  // Project permissions
+  PROJECT_CREATE: "PROJECT_CREATE",
+  PROJECT_READ: "PROJECT_READ",
+  PROJECT_UPDATE: "PROJECT_UPDATE",
+  PROJECT_DELETE: "PROJECT_DELETE",
+} as const;
+
+// Tenant roles
+const tenantRoleKeys = {
+  TENANT_ADMIN: "TENANT_ADMIN",
+  TENANT_MANAGER: "TENANT_MANAGER",
+  TENANT_USER: "TENANT_USER",
+};
+
+const tenantRolesData: Role[] = [
+  {
+    name: tenantRoleKeys.TENANT_ADMIN,
+    label: "Tenant Admin",
+    description: "Tenant administrator with full tenant access",
+    isSystem: true,
+    sortOrder: 1,
+  },
+  {
+    name: tenantRoleKeys.TENANT_MANAGER,
+    label: "Tenant Manager",
+    description: "Tenant manager with limited administrative access",
+    isSystem: true,
+    sortOrder: 2,
+  },
+  {
+    name: tenantRoleKeys.TENANT_USER,
+    label: "Tenant User",
+    description: "Standard tenant user with basic tenant access",
+    isSystem: true,
+    sortOrder: 3,
+  },
+];
+
+const tenantPermissionsData: Permission[] = [
+  {
+    name: tenantPermissionKeys.PROJECT_CREATE,
+    label: "Create Project",
+    description: "Permission to create new projects",
+    isSystem: true,
+    sortOrder: 1,
+  },
+  {
+    name: tenantPermissionKeys.PROJECT_READ,
+    label: "Read Project",
+    description: "Permission to view project information",
+    isSystem: true,
+    sortOrder: 2,
+  },
+  {
+    name: tenantPermissionKeys.PROJECT_UPDATE,
+    label: "Update Project",
+    description: "Permission to update project information",
+    isSystem: true,
+    sortOrder: 3,
+  },
+  {
+    name: tenantPermissionKeys.PROJECT_DELETE,
+    label: "Delete Project",
+    description: "Permission to delete projects",
+    isSystem: true,
+    sortOrder: 4,
+  },
+];
 
 export async function up(tenantPool: Pool, schemaName: string): Promise<void> {
   // Define tenant-specific lookup types and their values
@@ -748,6 +837,155 @@ export async function up(tenantPool: Pool, schemaName: string): Promise<void> {
   console.log(
     `Tenant ${schemaName}: Tenant-specific lookup data seeded successfully`
   );
+
+  // Insert tenant roles into roles table
+  const upsertAndFetchTenantRoles = async () => {
+    const roleMap: Record<string, number> = {};
+
+    for (const role of tenantRolesData) {
+      const roleResult = await tenantPool.query(
+        `
+          INSERT INTO roles (name, label, description, "sortOrder", "isSystem", "createdAt", "updatedAt")
+          VALUES ($1, $2, $3, $4, $5, NOW(), NOW())
+          ON CONFLICT (name) DO UPDATE
+          SET label = EXCLUDED.label,
+              description = EXCLUDED.description,
+              "sortOrder" = EXCLUDED."sortOrder",
+              "updatedAt" = NOW()
+          RETURNING id;
+        `,
+        [
+          role.name,
+          role.label,
+          role.description || null,
+          role.sortOrder || 0,
+          role.isSystem,
+        ]
+      );
+
+      if (roleResult.rows.length > 0) {
+        roleMap[role.name] = roleResult.rows[0].id;
+      } else {
+        // If it already existed, fetch the existing ID
+        const existingResult = await tenantPool.query(
+          "SELECT id FROM roles WHERE name = $1",
+          [role.name]
+        );
+        roleMap[role.name] = existingResult.rows[0].id;
+      }
+    }
+
+    const getRoleIdByName = (roleName: string): number => {
+      const roleId = roleMap[roleName];
+      if (!roleId) {
+        throw new Error(`Role not found for name: ${roleName}`);
+      }
+      return roleId;
+    };
+
+    return { getRoleIdByName };
+  };
+
+  // Insert tenant permissions into permissions table
+  const upsertAndFetchTenantPermissions = async () => {
+    const permissionMap: Record<string, number> = {};
+
+    for (const permission of tenantPermissionsData) {
+      const permissionResult = await tenantPool.query(
+        `
+          INSERT INTO permissions (name, label, description, "sortOrder", "isSystem", "createdAt", "updatedAt")
+          VALUES ($1, $2, $3, $4, $5, NOW(), NOW())
+          ON CONFLICT (name) DO UPDATE
+          SET label = EXCLUDED.label,
+              description = EXCLUDED.description,
+              "sortOrder" = EXCLUDED."sortOrder",
+              "updatedAt" = NOW()
+          RETURNING id;
+        `,
+        [
+          permission.name,
+          permission.label,
+          permission.description || null,
+          permission.sortOrder || 0,
+          permission.isSystem,
+        ]
+      );
+
+      if (permissionResult.rows.length > 0) {
+        permissionMap[permission.name] = permissionResult.rows[0].id;
+      } else {
+        // If it already existed, fetch the existing ID
+        const existingResult = await tenantPool.query(
+          "SELECT id FROM permissions WHERE name = $1",
+          [permission.name]
+        );
+        permissionMap[permission.name] = existingResult.rows[0].id;
+      }
+    }
+
+    const getPermissionIdByName = (permissionName: string): number => {
+      const permissionId = permissionMap[permissionName];
+      if (!permissionId) {
+        throw new Error(`Permission not found for name: ${permissionName}`);
+      }
+      return permissionId;
+    };
+
+    return { getPermissionIdByName };
+  };
+
+  const { getRoleIdByName } = await upsertAndFetchTenantRoles();
+  const { getPermissionIdByName } = await upsertAndFetchTenantPermissions();
+
+  // Assign permissions to tenant roles
+  const assignPermissionsToTenantRoles = async () => {
+    // Define tenant role-permission mappings
+    const rolePermissionMappings: Record<string, string[]> = {
+      [tenantRoleKeys.TENANT_ADMIN]: [
+        // All project permissions
+        tenantPermissionKeys.PROJECT_CREATE,
+        tenantPermissionKeys.PROJECT_READ,
+        tenantPermissionKeys.PROJECT_UPDATE,
+        tenantPermissionKeys.PROJECT_DELETE,
+      ],
+      [tenantRoleKeys.TENANT_MANAGER]: [
+        // Project permissions (create, read, update)
+        tenantPermissionKeys.PROJECT_CREATE,
+        tenantPermissionKeys.PROJECT_READ,
+        tenantPermissionKeys.PROJECT_UPDATE,
+      ],
+      [tenantRoleKeys.TENANT_USER]: [
+        // Read-only permissions
+        tenantPermissionKeys.PROJECT_READ,
+      ],
+    };
+
+    // Insert role-permission mappings
+    for (const [roleName, permissionNames] of Object.entries(
+      rolePermissionMappings
+    )) {
+      const roleId = getRoleIdByName(roleName);
+
+      for (const permissionName of permissionNames) {
+        const permissionId = getPermissionIdByName(permissionName);
+
+        await tenantPool.query(
+          `
+            INSERT INTO role_permissions_xref ("roleId", "permissionId", "createdAt", "updatedAt")
+            VALUES ($1, $2, NOW(), NOW())
+            ON CONFLICT ("roleId", "permissionId") DO NOTHING
+          `,
+          [roleId, permissionId]
+        );
+      }
+    }
+
+    console.log(
+      `Tenant ${schemaName}: Tenant role permissions assigned successfully`
+    );
+  };
+
+  await assignPermissionsToTenantRoles();
 }
 
 export async function down(

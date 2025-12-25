@@ -15,8 +15,8 @@ import {
   updateTenantLookupRequestSchema,
 } from "@src/schemaTypes/tenantLookup.schemaTypes";
 import { ensureTenantMiddleware } from "@src/middleware/ensureTenantMiddleware";
-import { authRoleMiddleware } from "@src/middleware/authRoleMiddleware";
-import { userRoleKeys } from "@src/utils/constants";
+import { authPermissionMiddleware } from "@src/middleware/authPermissionMiddleware";
+import { platformPermissionKeys } from "@src/utils/constants";
 
 const registrar = new RouteRegistrar({
   basePath: "/api",
@@ -46,12 +46,9 @@ registrar.get("/tenant-lookup/type/:id", {
 registrar.put("/tenant-lookup/:id", {
   middlewares: [
     ensureTenantMiddleware(),
-    authRoleMiddleware(
-      userRoleKeys.PLATFORM_SUPER_ADMIN,
-      userRoleKeys.PLATFORM_ADMIN,
-      userRoleKeys.PLATFORM_USER,
-      userRoleKeys.TENANT_ADMIN
-    ),
+    authPermissionMiddleware({
+      allowedPlatformPermissions: [platformPermissionKeys.TENANT_UPDATE],
+    }),
   ],
   requestSchema: {
     paramsSchema: { id: idValidation },
@@ -65,12 +62,9 @@ registrar.put("/tenant-lookup/:id", {
 registrar.post("/tenant-lookup/", {
   middlewares: [
     ensureTenantMiddleware(),
-    authRoleMiddleware(
-      userRoleKeys.PLATFORM_SUPER_ADMIN,
-      userRoleKeys.PLATFORM_ADMIN,
-      userRoleKeys.PLATFORM_USER,
-      userRoleKeys.TENANT_ADMIN
-    ),
+    authPermissionMiddleware({
+      allowedPlatformPermissions: [platformPermissionKeys.TENANT_UPDATE],
+    }),
   ],
   requestSchema: {
     bodySchema: createTenantLookupRequestSchema,

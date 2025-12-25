@@ -47,8 +47,25 @@ interface AppUserWithAuth extends AppUser {
   userRoles: number[];
 }
 
+interface Role {
+  id?: number;
+  name: string;
+  label: string;
+  description?: string;
+  sortOrder?: number;
+  isSystem: boolean;
+}
+
+interface Permission {
+  id?: number;
+  name: string;
+  label: string;
+  description?: string;
+  sortOrder?: number;
+  isSystem: boolean;
+}
+
 const lookupTypeKeys = {
-  USER_ROLE: "USER_ROLE",
   USER_STATUS: "USER_STATUS",
   TENANT_STATUS: "TENANT_STATUS",
 };
@@ -66,7 +83,6 @@ const tenantStatusKeys = {
 };
 
 const userRoleKeys = {
-  ANY: "ANY",
   PLATFORM_SUPER_ADMIN: "PLATFORM_SUPER_ADMIN",
   PLATFORM_ADMIN: "PLATFORM_ADMIN",
   PLATFORM_USER: "PLATFORM_USER",
@@ -82,62 +98,106 @@ const userStatusKeys = {
   ARCHIVED: "ARCHIVED",
 };
 
-const lookupData: LookupTypeWithLookupsSchema[] = [
+// Platform-level permissions (stored in main schema)
+const platformPermissionKeys = {
+  // User permissions
+  USER_CREATE: "USER_CREATE",
+  USER_READ: "USER_READ",
+  USER_UPDATE: "USER_UPDATE",
+  USER_DELETE: "USER_DELETE",
+  // Tenant permissions
+  TENANT_CREATE: "TENANT_CREATE",
+  TENANT_READ: "TENANT_READ",
+  TENANT_UPDATE: "TENANT_UPDATE",
+  TENANT_DELETE: "TENANT_DELETE",
+} as const;
+
+const rolesData: Role[] = [
   {
-    name: lookupTypeKeys.USER_ROLE,
-    label: "User Role",
+    name: userRoleKeys.PLATFORM_SUPER_ADMIN,
+    label: "Platform Super Admin",
+    description: "Highest level administrator with full system access",
     isSystem: true,
-    lookups: [
-      {
-        name: userRoleKeys.PLATFORM_SUPER_ADMIN,
-        label: "Platform Super Admin",
-        category: lookupCategoryKeys.PLATFORM,
-        description: "Highest level administrator with full system access",
-        isSystem: true,
-        sortOrder: 1,
-      },
-      {
-        name: userRoleKeys.PLATFORM_ADMIN,
-        label: "Platform Admin",
-        category: lookupCategoryKeys.PLATFORM,
-        description: "Platform administrator with administrative privileges",
-        isSystem: true,
-        sortOrder: 2,
-      },
-      {
-        name: userRoleKeys.PLATFORM_USER,
-        label: "Platform User",
-        category: lookupCategoryKeys.PLATFORM,
-        description: "Standard platform user with basic access",
-        isSystem: true,
-        sortOrder: 3,
-      },
-      {
-        name: userRoleKeys.TENANT_ADMIN,
-        label: "Tenant Admin",
-        category: lookupCategoryKeys.TENANT,
-        description: "Tenant administrator with full tenant access",
-        isSystem: true,
-        sortOrder: 4,
-      },
-      {
-        name: userRoleKeys.TENANT_MANAGER,
-        label: "Tenant Manager",
-        category: lookupCategoryKeys.TENANT,
-        description: "Tenant manager with limited administrative access",
-        isSystem: true,
-        sortOrder: 5,
-      },
-      {
-        name: userRoleKeys.TENANT_USER,
-        label: "Tenant User",
-        category: lookupCategoryKeys.TENANT,
-        description: "Standard tenant user with basic tenant access",
-        isSystem: true,
-        sortOrder: 6,
-      },
-    ],
+    sortOrder: 1,
   },
+  {
+    name: userRoleKeys.PLATFORM_ADMIN,
+    label: "Platform Admin",
+    description: "Platform administrator with administrative privileges",
+    isSystem: true,
+    sortOrder: 2,
+  },
+  {
+    name: userRoleKeys.PLATFORM_USER,
+    label: "Platform User",
+    description: "Standard platform user with basic access",
+    isSystem: true,
+    sortOrder: 3,
+  },
+];
+
+const permissionsData: Permission[] = [
+  // User permissions (platform)
+  {
+    name: platformPermissionKeys.USER_CREATE,
+    label: "Create User",
+    description: "Permission to create new users",
+    isSystem: true,
+    sortOrder: 1,
+  },
+  {
+    name: platformPermissionKeys.USER_READ,
+    label: "Read User",
+    description: "Permission to view user information",
+    isSystem: true,
+    sortOrder: 2,
+  },
+  {
+    name: platformPermissionKeys.USER_UPDATE,
+    label: "Update User",
+    description: "Permission to update user information",
+    isSystem: true,
+    sortOrder: 3,
+  },
+  {
+    name: platformPermissionKeys.USER_DELETE,
+    label: "Delete User",
+    description: "Permission to delete users",
+    isSystem: true,
+    sortOrder: 4,
+  },
+  // Tenant permissions (platform)
+  {
+    name: platformPermissionKeys.TENANT_CREATE,
+    label: "Create Tenant",
+    description: "Permission to create new tenants",
+    isSystem: true,
+    sortOrder: 5,
+  },
+  {
+    name: platformPermissionKeys.TENANT_READ,
+    label: "Read Tenant",
+    description: "Permission to view tenant information",
+    isSystem: true,
+    sortOrder: 6,
+  },
+  {
+    name: platformPermissionKeys.TENANT_UPDATE,
+    label: "Update Tenant",
+    description: "Permission to update tenant information",
+    isSystem: true,
+    sortOrder: 7,
+  },
+  {
+    name: platformPermissionKeys.TENANT_DELETE,
+    label: "Delete Tenant",
+    description: "Permission to delete tenants",
+    isSystem: true,
+    sortOrder: 8,
+  },
+];
+
+const lookupData: LookupTypeWithLookupsSchema[] = [
   {
     name: lookupTypeKeys.USER_STATUS,
     label: "User Status",
@@ -284,6 +344,162 @@ export async function up(
   const { getLookupDataByLookupTypeNameAndLookupName } =
     await upsertAndFetchLookupData();
 
+  // Insert roles into roles table
+  const upsertAndFetchRoles = async () => {
+    const roleMap: Record<string, number> = {};
+
+    for (const role of rolesData) {
+      const roleResult = await client.query(
+        `
+          INSERT INTO roles (name, label, description, "sortOrder", "isSystem", "createdAt", "updatedAt")
+          VALUES ($1, $2, $3, $4, $5, NOW(), NOW())
+          ON CONFLICT (name) DO UPDATE
+          SET label = EXCLUDED.label,
+              description = EXCLUDED.description,
+              "sortOrder" = EXCLUDED."sortOrder",
+              "updatedAt" = NOW()
+          RETURNING id;
+        `,
+        [
+          role.name,
+          role.label,
+          role.description || null,
+          role.sortOrder || 0,
+          role.isSystem,
+        ]
+      );
+
+      if (roleResult.rows.length > 0) {
+        roleMap[role.name] = roleResult.rows[0].id;
+      } else {
+        // If it already existed, fetch the existing ID
+        const existingResult = await client.query(
+          "SELECT id FROM roles WHERE name = $1",
+          [role.name]
+        );
+        roleMap[role.name] = existingResult.rows[0].id;
+      }
+    }
+
+    const getRoleIdByName = (roleName: string): number => {
+      const roleId = roleMap[roleName];
+      if (!roleId) {
+        throw new Error(`Role not found for name: ${roleName}`);
+      }
+      return roleId;
+    };
+
+    return { getRoleIdByName };
+  };
+
+  // Insert permissions into permissions table
+  const upsertAndFetchPermissions = async () => {
+    const permissionMap: Record<string, number> = {};
+
+    for (const permission of permissionsData) {
+      const permissionResult = await client.query(
+        `
+          INSERT INTO permissions (name, label, description, "sortOrder", "isSystem", "createdAt", "updatedAt")
+          VALUES ($1, $2, $3, $4, $5, NOW(), NOW())
+          ON CONFLICT (name) DO UPDATE
+          SET label = EXCLUDED.label,
+              description = EXCLUDED.description,
+              "sortOrder" = EXCLUDED."sortOrder",
+              "updatedAt" = NOW()
+          RETURNING id;
+        `,
+        [
+          permission.name,
+          permission.label,
+          permission.description || null,
+          permission.sortOrder || 0,
+          permission.isSystem,
+        ]
+      );
+
+      if (permissionResult.rows.length > 0) {
+        permissionMap[permission.name] = permissionResult.rows[0].id;
+      } else {
+        // If it already existed, fetch the existing ID
+        const existingResult = await client.query(
+          "SELECT id FROM permissions WHERE name = $1",
+          [permission.name]
+        );
+        permissionMap[permission.name] = existingResult.rows[0].id;
+      }
+    }
+
+    const getPermissionIdByName = (permissionName: string): number => {
+      const permissionId = permissionMap[permissionName];
+      if (!permissionId) {
+        throw new Error(`Permission not found for name: ${permissionName}`);
+      }
+      return permissionId;
+    };
+
+    return { getPermissionIdByName };
+  };
+
+  const { getRoleIdByName } = await upsertAndFetchRoles();
+  const { getPermissionIdByName } = await upsertAndFetchPermissions();
+
+  // Assign permissions to roles
+  const assignPermissionsToRoles = async () => {
+    // Define role-permission mappings
+    const rolePermissionMappings: Record<string, string[]> = {
+      [userRoleKeys.PLATFORM_SUPER_ADMIN]: [
+        // All user permissions
+        platformPermissionKeys.USER_CREATE,
+        platformPermissionKeys.USER_READ,
+        platformPermissionKeys.USER_UPDATE,
+        platformPermissionKeys.USER_DELETE,
+        // All tenant permissions
+        platformPermissionKeys.TENANT_CREATE,
+        platformPermissionKeys.TENANT_READ,
+        platformPermissionKeys.TENANT_UPDATE,
+        platformPermissionKeys.TENANT_DELETE,
+      ],
+      [userRoleKeys.PLATFORM_ADMIN]: [
+        // User permissions
+        platformPermissionKeys.USER_CREATE,
+        platformPermissionKeys.USER_READ,
+        platformPermissionKeys.USER_UPDATE,
+        platformPermissionKeys.USER_DELETE,
+        // Tenant permissions (read-only)
+        platformPermissionKeys.TENANT_READ,
+      ],
+      [userRoleKeys.PLATFORM_USER]: [
+        // Read-only permissions
+        platformPermissionKeys.USER_READ,
+        platformPermissionKeys.TENANT_READ,
+      ],
+    };
+
+    // Insert role-permission mappings
+    for (const [roleName, permissionNames] of Object.entries(
+      rolePermissionMappings
+    )) {
+      const roleId = getRoleIdByName(roleName);
+
+      for (const permissionName of permissionNames) {
+        const permissionId = getPermissionIdByName(permissionName);
+
+        await client.query(
+          `
+            INSERT INTO role_permissions_xref ("roleId", "permissionId", "createdAt", "updatedAt")
+            VALUES ($1, $2, NOW(), NOW())
+            ON CONFLICT ("roleId", "permissionId") DO NOTHING
+          `,
+          [roleId, permissionId]
+        );
+      }
+    }
+
+    console.log("Role permissions assigned successfully");
+  };
+
+  await assignPermissionsToRoles();
+
   // Create default platform tenant
   const createDefaultPlatformTenant = async () => {
     // Check if platform tenant already exists
@@ -325,10 +541,7 @@ export async function up(
 
   const platformTenantId = await createDefaultPlatformTenant();
 
-  const superAdminRoleData = await getLookupDataByLookupTypeNameAndLookupName({
-    lookupName: userRoleKeys.PLATFORM_SUPER_ADMIN,
-    lookupTypeName: lookupTypeKeys.USER_ROLE,
-  });
+  const superAdminRoleId = getRoleIdByName(userRoleKeys.PLATFORM_SUPER_ADMIN);
 
   const activeUserStatusData = await getLookupDataByLookupTypeNameAndLookupName(
     {
@@ -357,7 +570,7 @@ export async function up(
           password: "Super@123",
           passwordUpdatedAt: new Date(),
         },
-        userRoles: [superAdminRoleData.id as number],
+        userRoles: [superAdminRoleId],
       },
     ];
 
@@ -453,8 +666,9 @@ export async function up(
       for (const roleId of userData.userRoles) {
         await client.query(
           `
-            INSERT INTO user_role_xref ("userId", "roleId", "createdAt", "updatedAt")
+            INSERT INTO user_roles_xref ("userId", "roleId", "createdAt", "updatedAt")
             VALUES ($1, $2, NOW(), NOW())
+            ON CONFLICT ("userId", "roleId") DO NOTHING
           `,
           [userResponse.id, roleId]
         );

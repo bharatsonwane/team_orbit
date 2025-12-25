@@ -11,22 +11,20 @@ import {
   updateTenant,
 } from "@src/controllers/tenant.controller";
 import RouteRegistrar from "@src/middleware/RouteRegistrar";
-import { authRoleMiddleware } from "@src/middleware/authRoleMiddleware";
-import { userRoleKeys } from "@src/utils/constants";
+import { authPermissionMiddleware } from "@src/middleware/authPermissionMiddleware";
+import { platformPermissionKeys } from "@src/utils/constants";
 
 const registrar = new RouteRegistrar({
   basePath: "/api",
   tags: ["Tenant"],
 });
 
-/**@description Create new tenant with Tenant Admin */
+/**@description Create new tenant */
 registrar.post("/tenant/create", {
   middlewares: [
-    authRoleMiddleware(
-      userRoleKeys.PLATFORM_SUPER_ADMIN,
-      userRoleKeys.PLATFORM_ADMIN,
-      userRoleKeys.PLATFORM_USER
-    ),
+    authPermissionMiddleware({
+      allowedPlatformPermissions: [platformPermissionKeys.TENANT_CREATE],
+    }),
   ],
   requestSchema: { bodySchema: createTenantSchema },
   responseSchemas: [{ statusCode: 201, schema: tenantWithTrackingSchema }],
@@ -36,11 +34,9 @@ registrar.post("/tenant/create", {
 /**@description Update tenant */
 registrar.put("/tenant/:id", {
   middlewares: [
-    authRoleMiddleware(
-      userRoleKeys.PLATFORM_SUPER_ADMIN,
-      userRoleKeys.PLATFORM_ADMIN,
-      userRoleKeys.PLATFORM_USER
-    ),
+    authPermissionMiddleware({
+      allowedPlatformPermissions: [platformPermissionKeys.TENANT_UPDATE],
+    }),
   ],
   requestSchema: {
     paramsSchema: { id: idValidation },
@@ -53,11 +49,9 @@ registrar.put("/tenant/:id", {
 /**@description Get all tenants */
 registrar.get("/tenant/list", {
   middlewares: [
-    authRoleMiddleware(
-      userRoleKeys.PLATFORM_SUPER_ADMIN,
-      userRoleKeys.PLATFORM_ADMIN,
-      userRoleKeys.PLATFORM_USER
-    ),
+    authPermissionMiddleware({
+      allowedPlatformPermissions: [platformPermissionKeys.TENANT_READ],
+    }),
   ],
   controller: getTenants,
 });
@@ -65,11 +59,9 @@ registrar.get("/tenant/list", {
 /**@description Get tenant by ID */
 registrar.get("/tenant/:id", {
   middlewares: [
-    authRoleMiddleware(
-      userRoleKeys.PLATFORM_SUPER_ADMIN,
-      userRoleKeys.PLATFORM_ADMIN,
-      userRoleKeys.PLATFORM_USER
-    ),
+    authPermissionMiddleware({
+      allowedPlatformPermissions: [platformPermissionKeys.TENANT_READ],
+    }),
   ],
   requestSchema: { paramsSchema: { id: idValidation } },
   responseSchemas: [{ statusCode: 200, schema: tenantWithTrackingSchema }],
