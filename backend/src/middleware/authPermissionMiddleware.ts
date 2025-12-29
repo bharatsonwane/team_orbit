@@ -1,24 +1,15 @@
 import { Request, Response, NextFunction } from "express";
-import { validateJwtToken } from "@src/utils/authHelper";
+import { JwtTokenPayload, validateJwtToken } from "@src/utils/authHelper";
+import User from "@src/services/user.service";
 import RoleAndPermission from "@src/services/roleAndPermission.service";
 import type { dbClientPool } from "./dbClientMiddleware";
-
-export interface JwtTokenPayload {
-  userId: number;
-  email: string;
-  tenantId: number;
-  userRoles: Array<{
-    id: number;
-    name: string;
-    label: string;
-    lookupTypeId?: number;
-  }>;
-  platformPermissions: string[];
-  tenantPermissions: string[];
-}
+import {
+  PermissionWithIdSchema,
+  RolesAndPermissionsSchema,
+} from "@src/schemaTypes/roleAndPermission.schemaTypes";
 
 export interface AuthenticatedRequest extends Request {
-  user: JwtTokenPayload;
+  user: JwtTokenPayload & { tenantId: number | 0 };
   db: dbClientPool;
   headers: Request["headers"] & {
     "x-tenant"?: string;
@@ -61,7 +52,7 @@ export const authPermissionMiddleware = ({
         return;
       }
 
-      // Ensure db is available (should be set by dbClientMiddleware)
+      /** Ensure db is available (should be set by dbClientMiddleware)*/
       if (!req.db || !req.db.mainPool) {
         res.status(500).json({
           message: "Database connection not available",
@@ -69,66 +60,71 @@ export const authPermissionMiddleware = ({
         return;
       }
 
-      // Fetch user's roles from database
-      const { platformRoles, tenantRoles } =
-        await RoleAndPermission.getUserRoles(req.db, decodedJwt.userId);
+      const userAuth = await User.getUserAuthById(req.db, decodedJwt.userId);
 
-      // Use permissions from JWT token (for performance and frontend access)
-      // Fallback to database if not present in token (for backward compatibility)
-      let platformPermissions: string[] = decodedJwt.platformPermissions || [];
-      let tenantPermissions: string[] = decodedJwt.tenantPermissions || [];
-
-      // If permissions are not in JWT, fetch from database (fallback)
-      if (!decodedJwt.platformPermissions || !decodedJwt.tenantPermissions) {
-        const dbPermissions = await RoleAndPermission.getUserPermissions(
-          req.db,
-          decodedJwt.userId
-        );
-        platformPermissions = dbPermissions.platformPermissions;
-        tenantPermissions = dbPermissions.tenantPermissions;
+      if (!userAuth || !userAuth.authEmail) {
+        res.status(401).json({ message: "User not authenticated." });
+        return;
       }
 
-      const checkUserHasValidTenantAndRole = (): boolean => {
-        // Extract tenantId from the decodedJwt token
-        const tenantIdFromToken =
-          typeof decodedJwt === "object" ? decodedJwt?.tenantId : null;
-
-        // Check if user has platform roles (roles from main schema)
-        const isPlatformUser = platformRoles.length > 0;
-
-        // If tenantId from header is the same as tenantId from token or the user is a platform user, return true
-        if (
-          tenantIdFromHeader === tenantIdFromToken?.toString() ||
-          isPlatformUser
-        ) {
+      const checkUserHasValidTenant = (): boolean => {
+        if (userAuth.isPlatformUser) {
           return true;
+        } else if (tenantIdFromHeader) {
+          return (
+            userAuth.userTenants?.some(
+              tenant => tenant.id === parseInt(tenantIdFromHeader)
+            ) || false
+          );
+        } else {
+          return false;
         }
-        return false; // If tenantId from header is not the same as tenantId from token and the user is not a platform user, return false
       };
 
-      const checkUserHasRequiredPermissions = (): boolean => {
+      const checkUserHasRequiredPermissions = async (): Promise<boolean> => {
         // If no specific permissions are required, proceed to the next middleware
         if (!allowedPlatformPermissions && !allowedTenantPermissions) {
           return true;
         }
 
-        // Check main permissions if required
+        /* Check main i.e platform permissions if required */
         if (
           allowedPlatformPermissions &&
           allowedPlatformPermissions.length > 0
         ) {
+          let platformPermissions: PermissionWithIdSchema[] = [];
+          if (userAuth.isPlatformUser) {
+            const platformData =
+              await RoleAndPermission.getPlatformUserRolesAndPermissions(
+                req.db,
+                decodedJwt.userId
+              );
+            platformPermissions = platformData.permissions;
+          }
+          const platformPermissionNames = platformPermissions.map(p => p.name);
           const hasAllMainPermissions = allowedPlatformPermissions.every(
-            permission => platformPermissions.includes(permission)
+            permission => platformPermissionNames.includes(permission)
           );
           if (!hasAllMainPermissions) {
             return false;
           }
         }
 
-        // Check tenant permissions if required
+        /* Check tenant permissions if required */
         if (allowedTenantPermissions && allowedTenantPermissions.length > 0) {
+          let tenantPermissions: PermissionWithIdSchema[] = [];
+          if (tenantIdFromHeader) {
+            const tenantData =
+              await RoleAndPermission.getTenantUserRolesAndPermissions(
+                req.db,
+                decodedJwt.userId
+              );
+
+            tenantPermissions = tenantData.permissions;
+          }
+          const tenantPermissionNames = tenantPermissions.map(p => p.name);
           const hasAllTenantPermissions = allowedTenantPermissions.every(
-            permission => tenantPermissions.includes(permission)
+            permission => tenantPermissionNames.includes(permission)
           );
           if (!hasAllTenantPermissions) {
             return false;
@@ -139,18 +135,20 @@ export const authPermissionMiddleware = ({
       };
 
       // Check if the user has a valid tenant and required permissions
-      const isValidTenantAndRole = checkUserHasValidTenantAndRole();
+      const isValidTenant = checkUserHasValidTenant();
       const hasRequiredPermissions = checkUserHasRequiredPermissions();
 
-      if (!hasRequiredPermissions || !isValidTenantAndRole) {
+      if (!isValidTenant || !hasRequiredPermissions) {
         res
           .status(403)
           .json({ message: "Access forbidden: Insufficient permissions." });
         return;
       }
 
-      req.user = decodedJwt;
-
+      req.user = {
+        ...decodedJwt,
+        tenantId: tenantIdFromHeader ? parseInt(tenantIdFromHeader) : 0,
+      };
       // Proceed to the next middleware
       next();
     } catch (err) {

@@ -189,7 +189,7 @@ SELECT
     '[]'
   ) AS roles
 FROM user u
-LEFT JOIN user_role_xref urx ON u.id = urx."userId"
+LEFT JOIN user_roles_xref urx ON u.id = urx."userId"
 LEFT JOIN lookup lr ON urx."roleId" = lr.id
 LEFT JOIN lookup ls ON u."statusId" = ls.id
 WHERE u."isArchived" = false
@@ -610,7 +610,7 @@ static async createUserWithRole(userData: any, mainPool: Pool): Promise<User> {
 
     // Assign role
     await client.query(
-      'INSERT INTO user_role_xref ("userId", "roleId") VALUES ($1, $2)',
+      'INSERT INTO user_roles_xref ("userId", "roleId") VALUES ($1, $2)',
       [userResult.rows[0].id, roleId]
     );
 
@@ -644,7 +644,7 @@ static async getUserWithRoles(id: string, mainPool: Pool): Promise<User> {
         '[]'
       ) AS roles
     FROM user u
-    LEFT JOIN user_role_xref urx ON u.id = urx."userId"
+    LEFT JOIN user_roles_xref urx ON u.id = urx."userId"
     LEFT JOIN lookup r ON urx."roleId" = r.id
     WHERE u.id = $1
     GROUP BY u.id
@@ -658,7 +658,7 @@ static async getUserWithRoles(id: string, mainPool: Pool): Promise<User> {
 static async getUserWithRoles(id: string, mainPool: Pool): Promise<User> {
   const user = await mainPool.query('SELECT * FROM user WHERE id = $1', [id]);
   const roles = await mainPool.query(
-    'SELECT r.* FROM lookup r JOIN user_role_xref urx ON r.id = urx."roleId" WHERE urx."userId" = $1',
+    'SELECT r.* FROM lookup r JOIN user_roles_xref urx ON r.id = urx."roleId" WHERE urx."userId" = $1',
     [id]
   );
   return { ...user.rows[0], roles: roles.rows };

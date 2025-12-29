@@ -1,6 +1,5 @@
 import { z } from "zod";
 import { oasRegisterSchemas } from "@src/openApiSpecification/openAPIDocumentGenerator";
-import { baseLookupSchema } from "./lookup.schemaTypes";
 import {
   titleEnum,
   genderEnum,
@@ -8,8 +7,21 @@ import {
   marriedStatusEnum,
   userStatusName,
 } from "@src/utils/constants";
+import {
+  permissionWithIdSchema,
+  roleWithIdSchema,
+} from "./roleAndPermission.schemaTypes";
+import { tenantWithIdSchema } from "./tenant.schemaTypes";
 
 /** @description ZOD SCHEMAS */
+export const userAuthSchema = z.object({
+  userId: z.number().int(),
+  authEmail: z.string().email("Invalid email"),
+  isPlatformUser: z.boolean().default(false),
+  statusId: z.number().int(),
+  userTenants: z.array(tenantWithIdSchema).optional(),
+});
+
 export const baseUserSchema = z.object({
   title: titleEnum.optional(),
   firstName: z.string().min(2),
@@ -29,8 +41,8 @@ export const baseUserSchema = z.object({
   bio: z.string().optional(),
 });
 
-// lookupTypeWithTrackingSchema
-export const userWithTrackingSchema = baseUserSchema.extend({
+// lookupTypeWithIdSchema
+export const userWithIdSchema = baseUserSchema.extend({
   id: z.number().int(),
   authEmail: z.string().optional(), // Email for authentication from user_auths
   hashPassword: z.string().optional(),
@@ -42,18 +54,28 @@ export const userWithTrackingSchema = baseUserSchema.extend({
   lastPasswordChangedAt: z.string().optional(),
   statusId: z.number().int().optional(),
   statusName: userStatusName,
-  tenantId: z.number().int().optional(),
-  roleIds: z.array(z.number().int()).optional(),
-  roles: z.array(baseLookupSchema).optional(),
 });
 
-export const userDataWithHashPasswordSchema = userWithTrackingSchema.extend({
+export const userWithTenantRolesAndPermissionsSchema = userWithIdSchema.extend({
+  platformRoles: z.array(roleWithIdSchema).optional(),
+  tenantRoles: z.array(roleWithIdSchema).optional(),
+  platformPermissions: z.array(permissionWithIdSchema).optional(),
+  tenantPermissions: z.array(permissionWithIdSchema).optional(),
+});
+
+export const userDataWithHashPasswordSchema = userWithIdSchema.extend({
   hashPassword: z.string(),
 });
 
 export const userLoginSchema = z.object({
   email: z.string().email("Invalid email"),
   password: z.string(),
+});
+
+export const userLoginResponseSchema = z.object({
+  token: z.string(),
+  userId: z.number().int(),
+  email: z.string().email(),
 });
 
 export const userSignupSchema = baseUserSchema.extend({
@@ -116,8 +138,12 @@ export const getUsersCountResponseSchema = z.object({
 });
 
 /** @description SCHEMAS TYPES */
+export type UserAuthSchema = z.infer<typeof userAuthSchema>;
 export type BaseUserSchema = z.infer<typeof baseUserSchema>;
-export type UserWithTrackingSchema = z.infer<typeof userWithTrackingSchema>;
+export type UserWithIdSchema = z.infer<typeof userWithIdSchema>;
+export type UserWithTenantRolesAndPermissionsSchema = z.infer<
+  typeof userWithTenantRolesAndPermissionsSchema
+>;
 export type UserDataWithHashPasswordSchema = z.infer<
   typeof userDataWithHashPasswordSchema
 >;
@@ -142,8 +168,10 @@ export type GetUsersCountResponseSchema = z.infer<
 
 /** @description OPENAPI SCHEMAS REGISTRATION */
 oasRegisterSchemas([
+  { schemaName: "UserAuthSchema", schema: userAuthSchema },
   { schemaName: "BaseUserSchema", schema: baseUserSchema },
   { schemaName: "UserLoginSchema", schema: userLoginSchema },
+  { schemaName: "UserLoginResponseSchema", schema: userLoginResponseSchema },
   { schemaName: "UserSignupSchema", schema: userSignupSchema },
   { schemaName: "UserUpdatePasswordSchema", schema: userUpdatePasswordSchema },
   { schemaName: "UserSignupServiceSchema", schema: userSignupServiceSchema },

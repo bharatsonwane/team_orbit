@@ -19,7 +19,10 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { type AuthRoute, RouteGuardRenderer } from "./RouteGuardRenderer";
-import { userRoleKeys, type UserRoleName } from "@/utils/constants";
+import {
+  platformPermissionKeys,
+  tenantPermissionKeys,
+} from "@/utils/constants";
 
 // Import pages
 import TenantHome from "../../pages/tenant/TenantHome";
@@ -38,7 +41,7 @@ import type { BreadcrumbLayoutProps } from "@/components/AppLayout";
 import TenantDepartments from "@/pages/platform/tenant/TenantDepartments";
 import TenantDesignations from "@/pages/platform/tenant/TenantDesignations";
 import ChatPage from "@/pages/tenant/chat/ChatPage";
-import NewsFeed from "@/pages/tenant/posts/Newsfeed";
+import NewsFeed from "@/pages/tenant/posts/NewsFeed";
 
 export interface SidebarRouteWithChildren {
   title: string;
@@ -46,7 +49,8 @@ export interface SidebarRouteWithChildren {
   icon?: LucideIcon; // or React.ComponentType<any> if not fixed to Lucide
   href?: string;
   path?: string; // Made optional for parent navigation items
-  allowedRoles: UserRoleName[]; // adjust to (keyof typeof roleKeys)[] if roleKeys is an enum/object
+  allowedPlatformPermissions?: string[];
+  allowedTenantPermissions?: string[];
   element?: ReactNode;
   description?: string;
   childItems?: SidebarRouteWithChildren[]; // recursive
@@ -65,7 +69,8 @@ const flattenNavigationItems = (
       // Convert SidebarRouteWithChildren to AuthRoute
       const route: AuthRoute = {
         title: item.title,
-        allowedRoles: item.allowedRoles,
+        allowedPlatformPermissions: item.allowedPlatformPermissions,
+        allowedTenantPermissions: item.allowedTenantPermissions,
         path: item.path,
         description: item.description,
         element: item.element,
@@ -86,14 +91,12 @@ export const publicRouteList: AuthRoute[] = [
   {
     path: "/login",
     element: <Login />,
-    allowedRoles: [],
     title: "Login",
     description: "User login page",
   },
   {
     path: "/signup",
     element: <Signup />,
-    allowedRoles: [],
     title: "Sign Up",
     description: "User registration page",
   },
@@ -106,16 +109,16 @@ export const platformSidebarNavigationItems: SidebarRouteWithChildren[] = [
     icon: Home,
     href: "/platform/dashboard",
     path: "/platform/dashboard",
-    allowedRoles: [userRoleKeys.ANY],
+    allowedPlatformPermissions: [platformPermissionKeys.ANY],
     element: <PlatformDashboard />,
   },
   {
     title: "Platform Management",
     isShownInSidebar: true,
     icon: Home,
-    allowedRoles: [
-      userRoleKeys.PLATFORM_SUPER_ADMIN,
-      userRoleKeys.PLATFORM_ADMIN,
+    allowedPlatformPermissions: [
+      platformPermissionKeys.ANY,
+      platformPermissionKeys.ANY,
     ],
     href: "/tenant/:tenantId/home",
     path: "/tenant/:tenantId/home",
@@ -125,9 +128,9 @@ export const platformSidebarNavigationItems: SidebarRouteWithChildren[] = [
     title: "Tenant Management",
     isShownInSidebar: true,
     icon: Home,
-    allowedRoles: [
-      userRoleKeys.PLATFORM_SUPER_ADMIN,
-      userRoleKeys.PLATFORM_ADMIN,
+    allowedPlatformPermissions: [
+      platformPermissionKeys.ANY,
+      platformPermissionKeys.ANY,
     ],
     childItems: [
       {
@@ -136,10 +139,7 @@ export const platformSidebarNavigationItems: SidebarRouteWithChildren[] = [
         icon: Home,
         href: "/platform/tenant-list",
         path: "/platform/tenant-list",
-        allowedRoles: [
-          userRoleKeys.PLATFORM_SUPER_ADMIN,
-          userRoleKeys.PLATFORM_ADMIN,
-        ],
+        allowedPlatformPermissions: [platformPermissionKeys.ANY],
         element: <Tenants />,
         breadcrumbs: [
           { label: "Dashboard", href: "/platform/dashboard" },
@@ -153,7 +153,7 @@ export const platformSidebarNavigationItems: SidebarRouteWithChildren[] = [
     isShownInSidebar: true,
     href: "/platform/profile",
     path: "/platform/profile",
-    allowedRoles: [userRoleKeys.ANY],
+    allowedPlatformPermissions: [platformPermissionKeys.ANY],
     element: <Profile />,
     description: "User profile management",
   },
@@ -162,10 +162,7 @@ export const platformSidebarNavigationItems: SidebarRouteWithChildren[] = [
     isShownInSidebar: false,
     href: "/platform/tenant/:id",
     path: "/platform/tenant/:id",
-    allowedRoles: [
-      userRoleKeys.PLATFORM_ADMIN,
-      userRoleKeys.PLATFORM_SUPER_ADMIN,
-    ],
+    allowedPlatformPermissions: [platformPermissionKeys.ANY],
     element: <TenantDetail />,
     description: "View tenant details and manage users",
   },
@@ -175,7 +172,7 @@ export const platformSidebarNavigationItems: SidebarRouteWithChildren[] = [
     icon: Bell,
     href: "/platform/notifications",
     path: "/platform/notifications",
-    allowedRoles: [userRoleKeys.ANY],
+    allowedPlatformPermissions: [platformPermissionKeys.ANY],
     element: <PlatformNotifications />,
     description: "Platform notifications",
   },
@@ -187,7 +184,7 @@ export const tenantSidebarNavigationItems: SidebarRouteWithChildren[] = [
     isShownInSidebar: true,
     href: "/tenant/:tenantId/home",
     path: "/tenant/:tenantId/home",
-    allowedRoles: [userRoleKeys.ANY],
+    allowedTenantPermissions: [tenantPermissionKeys.ANY],
     element: <TenantHome />,
     description: "Application home page",
   },
@@ -195,7 +192,7 @@ export const tenantSidebarNavigationItems: SidebarRouteWithChildren[] = [
     title: "Organization Management",
     isShownInSidebar: true,
     icon: Users,
-    allowedRoles: [userRoleKeys.ANY],
+    allowedTenantPermissions: [tenantPermissionKeys.ANY],
     childItems: [
       {
         title: "Users",
@@ -203,7 +200,8 @@ export const tenantSidebarNavigationItems: SidebarRouteWithChildren[] = [
         icon: Users,
         href: "/tenant/:tenantId/users",
         path: "/tenant/:tenantId/users",
-        allowedRoles: [userRoleKeys.ANY],
+        allowedPlatformPermissions: [platformPermissionKeys.USER_READ],
+        allowedTenantPermissions: [tenantPermissionKeys.ANY],
         element: <TenantUsers />,
         description: "Browse and manage all users in your organization",
       },
@@ -213,12 +211,8 @@ export const tenantSidebarNavigationItems: SidebarRouteWithChildren[] = [
         icon: Building2,
         href: "/tenant/:tenantId/departments",
         path: "/tenant/:tenantId/departments",
-        allowedRoles: [
-          userRoleKeys.TENANT_ADMIN,
-          userRoleKeys.TENANT_MANAGER,
-          userRoleKeys.PLATFORM_ADMIN,
-          userRoleKeys.PLATFORM_SUPER_ADMIN,
-        ],
+        allowedPlatformPermissions: [platformPermissionKeys.ANY],
+        allowedTenantPermissions: [tenantPermissionKeys.ANY],
         element: <TenantDepartments />,
         description: "Manage organizational departments and structure.",
         // <ComingSoon
@@ -232,12 +226,8 @@ export const tenantSidebarNavigationItems: SidebarRouteWithChildren[] = [
         icon: Building2,
         href: "/tenant/:tenantId/designations",
         path: "/tenant/:tenantId/designations",
-        allowedRoles: [
-          userRoleKeys.TENANT_ADMIN,
-          userRoleKeys.TENANT_MANAGER,
-          userRoleKeys.PLATFORM_ADMIN,
-          userRoleKeys.PLATFORM_SUPER_ADMIN,
-        ],
+        allowedPlatformPermissions: [platformPermissionKeys.ANY],
+        allowedTenantPermissions: [tenantPermissionKeys.ANY],
         element: <TenantDesignations />,
         description: "Manage organizational designations and structure.",
         // <ComingSoon
@@ -251,7 +241,7 @@ export const tenantSidebarNavigationItems: SidebarRouteWithChildren[] = [
         icon: Users,
         href: "/tenant/:tenantId/teams",
         path: "/tenant/:tenantId/teams",
-        allowedRoles: [userRoleKeys.ANY],
+        allowedTenantPermissions: [tenantPermissionKeys.ANY],
         element: (
           <ComingSoon
             title="Teams"
@@ -265,7 +255,7 @@ export const tenantSidebarNavigationItems: SidebarRouteWithChildren[] = [
     title: "Attendance & Leave",
     isShownInSidebar: true,
     icon: Clock,
-    allowedRoles: [userRoleKeys.ANY],
+    allowedTenantPermissions: [tenantPermissionKeys.ANY],
     childItems: [
       {
         title: "Check In/Out",
@@ -273,7 +263,7 @@ export const tenantSidebarNavigationItems: SidebarRouteWithChildren[] = [
         icon: Clock,
         href: "/tenant/:tenantId/attendance/checkin",
         path: "/tenant/:tenantId/attendance/checkin",
-        allowedRoles: [userRoleKeys.ANY],
+        allowedTenantPermissions: [tenantPermissionKeys.ANY],
         element: (
           <ComingSoon
             title="Check In/Out"
@@ -287,7 +277,7 @@ export const tenantSidebarNavigationItems: SidebarRouteWithChildren[] = [
         icon: BarChart3,
         href: "/tenant/:tenantId/attendance/logs",
         path: "/tenant/:tenantId/attendance/logs",
-        allowedRoles: [userRoleKeys.ANY],
+        allowedTenantPermissions: [tenantPermissionKeys.ANY],
         element: (
           <ComingSoon
             title="Attendance Logs"
@@ -301,7 +291,7 @@ export const tenantSidebarNavigationItems: SidebarRouteWithChildren[] = [
         icon: Calendar,
         href: "/tenant/:tenantId/leave/requests",
         path: "/tenant/:tenantId/leave/requests",
-        allowedRoles: [userRoleKeys.ANY],
+        allowedTenantPermissions: [tenantPermissionKeys.ANY],
         element: (
           <ComingSoon
             title="Leave Requests"
@@ -315,12 +305,8 @@ export const tenantSidebarNavigationItems: SidebarRouteWithChildren[] = [
         icon: UserCheck,
         href: "/tenant/:tenantId/leave/approvals",
         path: "/tenant/:tenantId/leave/approvals",
-        allowedRoles: [
-          userRoleKeys.TENANT_ADMIN,
-          userRoleKeys.TENANT_MANAGER,
-          userRoleKeys.PLATFORM_ADMIN,
-          userRoleKeys.PLATFORM_SUPER_ADMIN,
-        ],
+        allowedPlatformPermissions: [platformPermissionKeys.USER_UPDATE],
+        allowedTenantPermissions: [tenantPermissionKeys.ANY],
         element: (
           <ComingSoon
             title="Leave Approvals"
@@ -334,12 +320,8 @@ export const tenantSidebarNavigationItems: SidebarRouteWithChildren[] = [
         icon: BarChart3,
         href: "/tenant/:tenantId/attendance/analytics",
         path: "/tenant/:tenantId/attendance/analytics",
-        allowedRoles: [
-          userRoleKeys.TENANT_ADMIN,
-          userRoleKeys.TENANT_MANAGER,
-          userRoleKeys.PLATFORM_ADMIN,
-          userRoleKeys.PLATFORM_SUPER_ADMIN,
-        ],
+        allowedPlatformPermissions: [platformPermissionKeys.USER_READ],
+        allowedTenantPermissions: [tenantPermissionKeys.ANY],
         element: (
           <ComingSoon
             title="Attendance Analytics"
@@ -353,7 +335,7 @@ export const tenantSidebarNavigationItems: SidebarRouteWithChildren[] = [
     title: "Training & Learning",
     isShownInSidebar: true,
     icon: GraduationCap,
-    allowedRoles: [userRoleKeys.ANY],
+    allowedTenantPermissions: [tenantPermissionKeys.ANY],
     childItems: [
       {
         title: "Training Programs",
@@ -361,12 +343,8 @@ export const tenantSidebarNavigationItems: SidebarRouteWithChildren[] = [
         icon: BookOpen,
         href: "/tenant/:tenantId/training/programs",
         path: "/tenant/:tenantId/training/programs",
-        allowedRoles: [
-          userRoleKeys.TENANT_ADMIN,
-          userRoleKeys.TENANT_MANAGER,
-          userRoleKeys.PLATFORM_ADMIN,
-          userRoleKeys.PLATFORM_SUPER_ADMIN,
-        ],
+        allowedPlatformPermissions: [platformPermissionKeys.USER_UPDATE],
+        allowedTenantPermissions: [tenantPermissionKeys.ANY],
         element: (
           <ComingSoon
             title="Training Programs"
@@ -380,7 +358,7 @@ export const tenantSidebarNavigationItems: SidebarRouteWithChildren[] = [
         icon: GraduationCap,
         href: "/tenant/:tenantId/training/my-learning",
         path: "/tenant/:tenantId/training/my-learning",
-        allowedRoles: [userRoleKeys.ANY],
+        allowedTenantPermissions: [tenantPermissionKeys.ANY],
         element: (
           <ComingSoon
             title="My Learning"
@@ -394,7 +372,7 @@ export const tenantSidebarNavigationItems: SidebarRouteWithChildren[] = [
         icon: FileText,
         href: "/tenant/:tenantId/training/assessments",
         path: "/tenant/:tenantId/training/assessments",
-        allowedRoles: [userRoleKeys.ANY],
+        allowedTenantPermissions: [tenantPermissionKeys.ANY],
         element: (
           <ComingSoon
             title="Assessments"
@@ -408,7 +386,7 @@ export const tenantSidebarNavigationItems: SidebarRouteWithChildren[] = [
         icon: Award,
         href: "/tenant/:tenantId/training/certificates",
         path: "/tenant/:tenantId/training/certificates",
-        allowedRoles: [userRoleKeys.ANY],
+        allowedTenantPermissions: [tenantPermissionKeys.ANY],
         element: (
           <ComingSoon
             title="Certificates"
@@ -422,12 +400,8 @@ export const tenantSidebarNavigationItems: SidebarRouteWithChildren[] = [
         icon: BarChart3,
         href: "/tenant/:tenantId/training/progress",
         path: "/tenant/:tenantId/training/progress",
-        allowedRoles: [
-          userRoleKeys.TENANT_ADMIN,
-          userRoleKeys.TENANT_MANAGER,
-          userRoleKeys.PLATFORM_ADMIN,
-          userRoleKeys.PLATFORM_SUPER_ADMIN,
-        ],
+        allowedPlatformPermissions: [platformPermissionKeys.USER_READ],
+        allowedTenantPermissions: [tenantPermissionKeys.ANY],
         element: (
           <ComingSoon
             title="Progress Tracking"
@@ -441,7 +415,7 @@ export const tenantSidebarNavigationItems: SidebarRouteWithChildren[] = [
     title: "Social Network",
     isShownInSidebar: true,
     icon: Hash,
-    allowedRoles: [userRoleKeys.ANY],
+    allowedTenantPermissions: [tenantPermissionKeys.ANY],
     childItems: [
       {
         title: "Newsfeed",
@@ -449,7 +423,7 @@ export const tenantSidebarNavigationItems: SidebarRouteWithChildren[] = [
         icon: Hash,
         href: "/tenant/:tenantId/social/feed",
         path: "/tenant/:tenantId/social/feed",
-        allowedRoles: [userRoleKeys.ANY],
+        allowedTenantPermissions: [tenantPermissionKeys.ANY],
         element: <NewsFeed />,
       },
       {
@@ -458,12 +432,8 @@ export const tenantSidebarNavigationItems: SidebarRouteWithChildren[] = [
         icon: Bell,
         href: "/tenant/:tenantId/social/announcements",
         path: "/tenant/:tenantId/social/announcements",
-        allowedRoles: [
-          userRoleKeys.TENANT_ADMIN,
-          userRoleKeys.TENANT_MANAGER,
-          userRoleKeys.PLATFORM_ADMIN,
-          userRoleKeys.PLATFORM_SUPER_ADMIN,
-        ],
+        allowedPlatformPermissions: [platformPermissionKeys.USER_UPDATE],
+        allowedTenantPermissions: [tenantPermissionKeys.ANY],
         element: (
           <ComingSoon
             title="Announcements"
@@ -477,7 +447,7 @@ export const tenantSidebarNavigationItems: SidebarRouteWithChildren[] = [
         icon: BarChart3,
         href: "/tenant/:tenantId/social/polls",
         path: "/tenant/:tenantId/social/polls",
-        allowedRoles: [userRoleKeys.ANY],
+        allowedTenantPermissions: [tenantPermissionKeys.ANY],
         element: (
           <ComingSoon
             title="Polls & Surveys"
@@ -491,7 +461,7 @@ export const tenantSidebarNavigationItems: SidebarRouteWithChildren[] = [
     title: "Chats",
     isShownInSidebar: true,
     icon: MessageSquare,
-    allowedRoles: [userRoleKeys.ANY],
+    allowedTenantPermissions: [tenantPermissionKeys.ANY],
     childItems: [
       {
         title: "Direct Chats",
@@ -499,7 +469,7 @@ export const tenantSidebarNavigationItems: SidebarRouteWithChildren[] = [
         icon: User,
         href: "/tenant/:tenantId/chat/direct",
         path: "/tenant/:tenantId/chat/direct",
-        allowedRoles: [userRoleKeys.ANY],
+        allowedTenantPermissions: [tenantPermissionKeys.ANY],
         element: <ChatPage channelType="direct" />,
       },
       {
@@ -508,7 +478,7 @@ export const tenantSidebarNavigationItems: SidebarRouteWithChildren[] = [
         icon: Users,
         href: "/tenant/:tenantId/chat/group",
         path: "/tenant/:tenantId/chat/group",
-        allowedRoles: [userRoleKeys.ANY],
+        allowedTenantPermissions: [tenantPermissionKeys.ANY],
         element: <ChatPage channelType="group" />,
       },
     ],
@@ -519,7 +489,7 @@ export const tenantSidebarNavigationItems: SidebarRouteWithChildren[] = [
     icon: Settings,
     href: "/tenant/:tenantId/settings",
     path: "/tenant/:tenantId/settings",
-    allowedRoles: [userRoleKeys.ANY],
+    allowedTenantPermissions: [tenantPermissionKeys.ANY],
     element: (
       <ComingSoon
         title="Settings"
@@ -533,7 +503,7 @@ export const tenantSidebarNavigationItems: SidebarRouteWithChildren[] = [
     icon: Bell,
     href: "/tenant/:tenantId/notifications",
     path: "/tenant/:tenantId/notifications",
-    allowedRoles: [userRoleKeys.ANY],
+    allowedTenantPermissions: [tenantPermissionKeys.ANY],
     element: <TenantNotifications />,
     description: "Tenant notifications",
   },
@@ -542,7 +512,7 @@ export const tenantSidebarNavigationItems: SidebarRouteWithChildren[] = [
     isShownInSidebar: false,
     href: "/tenant/:tenantId/profile",
     path: "/tenant/:tenantId/profile",
-    allowedRoles: [userRoleKeys.ANY],
+    allowedTenantPermissions: [tenantPermissionKeys.ANY],
     element: <Profile />,
     description: "User profile management",
   },
@@ -574,7 +544,8 @@ export const mainRouteList: AuthRoute[] = [
         <RouteGuardRenderer routes={protectedRouteList} />
       </AppLayout>
     ),
-    allowedRoles: [userRoleKeys.ANY],
+    allowedPlatformPermissions: [platformPermissionKeys.ANY],
+    allowedTenantPermissions: [tenantPermissionKeys.ANY],
     title: "Page Not Found",
     description: "The page you are looking for does not exist.",
   },

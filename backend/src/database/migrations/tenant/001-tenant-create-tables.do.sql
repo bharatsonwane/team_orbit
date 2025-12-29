@@ -10,14 +10,14 @@ CREATE TABLE IF NOT EXISTS tenant_lookup_types (
     -- System values that cannot be deleted
 
     "createdAt" TIMESTAMP DEFAULT NOW() NOT NULL,
-    "createdBy" INT DEFAULT NULL REFERENCES main.users (id),
+    "createdBy" INT DEFAULT NULL REFERENCES main.users(id),
 
     "updatedAt" TIMESTAMP DEFAULT NOW() NOT NULL,
-    "updatedBy" INT DEFAULT NULL REFERENCES main.users (id),
+    "updatedBy" INT DEFAULT NULL REFERENCES main.users(id),
 
     "isArchived" BOOLEAN DEFAULT FALSE NOT NULL,
     "archivedAt" TIMESTAMP DEFAULT NULL,
-    "archivedBy" INT DEFAULT NULL REFERENCES main.users (id)
+    "archivedBy" INT DEFAULT NULL REFERENCES main.users(id)
 );
 -- tenant_lookups Table (tenant-specific lookup values)
 CREATE TABLE IF NOT EXISTS tenant_lookups (
@@ -34,14 +34,14 @@ CREATE TABLE IF NOT EXISTS tenant_lookups (
     "isSystem" BOOLEAN DEFAULT FALSE NOT NULL,
     "sortOrder" INT DEFAULT 0 NOT NULL,
     "createdAt" TIMESTAMP DEFAULT NOW() NOT NULL,
-    "createdBy" INT DEFAULT NULL REFERENCES main.users (id),
+    "createdBy" INT DEFAULT NULL REFERENCES main.users(id),
 
     "updatedAt" TIMESTAMP DEFAULT NOW() NOT NULL,
-    "updatedBy" INT DEFAULT NULL REFERENCES main.users (id),
+    "updatedBy" INT DEFAULT NULL REFERENCES main.users(id),
     
     "isArchived" BOOLEAN DEFAULT FALSE NOT NULL,
     "archivedAt" TIMESTAMP DEFAULT NULL,
-    "archivedBy" INT DEFAULT NULL REFERENCES main.users (id),
+    "archivedBy" INT DEFAULT NULL REFERENCES main.users(id),
 
     CONSTRAINT fk_tenant_lookups_tenant_lookup_types FOREIGN KEY ("lookupTypeId") REFERENCES tenant_lookup_types (id),
     CONSTRAINT unique_tenant_lookup_type_id_name UNIQUE ("lookupTypeId", name),
@@ -62,13 +62,13 @@ CREATE TABLE roles (
     "isSystem" BOOLEAN NOT NULL DEFAULT FALSE,
 
     "createdAt" TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    "createdBy" INT REFERENCES users(id),
+    "createdBy" INT REFERENCES main.users(id),
     "updatedAt" TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    "updatedBy" INT REFERENCES users(id),
+    "updatedBy" INT REFERENCES main.users(id),
 
     "isArchived" BOOLEAN NOT NULL DEFAULT FALSE,
     "archivedAt" TIMESTAMPTZ,
-    "archivedBy" INT REFERENCES users(id)
+    "archivedBy" INT REFERENCES main.users(id)
 );
 
 /* ============================================================
@@ -85,13 +85,35 @@ CREATE TABLE permissions (
     "isSystem" BOOLEAN NOT NULL DEFAULT FALSE,
 
     "createdAt" TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    "createdBy" INT REFERENCES users(id),
+    "createdBy" INT REFERENCES main.users(id),
     "updatedAt" TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    "updatedBy" INT REFERENCES users(id),
+    "updatedBy" INT REFERENCES main.users(id),
 
     "isArchived" BOOLEAN NOT NULL DEFAULT FALSE,
     "archivedAt" TIMESTAMPTZ,
-    "archivedBy" INT REFERENCES users(id)
+    "archivedBy" INT REFERENCES main.users(id)
+);
+
+/* ============================================================
+   ROLE PERMISSIONS XREF
+   ============================================================ */
+CREATE TABLE role_permissions_xref (
+    id SERIAL PRIMARY KEY,
+
+    "roleId" INT NOT NULL REFERENCES roles(id),
+    "permissionId" INT NOT NULL REFERENCES permissions(id),
+
+    "createdAt" TIMESTAMPTZ DEFAULT NOW() NOT NULL,
+    "createdBy" INT DEFAULT NULL REFERENCES main.users(id),
+
+    "updatedAt" TIMESTAMPTZ DEFAULT NOW() NOT NULL,
+    "updatedBy" INT DEFAULT NULL REFERENCES main.users(id),
+    
+    "isArchived" BOOLEAN DEFAULT FALSE NOT NULL,
+    "archivedAt" TIMESTAMPTZ DEFAULT NULL,
+    "archivedBy" INT DEFAULT NULL REFERENCES main.users(id),
+
+    UNIQUE ("roleId", "permissionId")
 );
 
 -- ==================== USER MANAGEMENT TABLES ====================
@@ -110,16 +132,16 @@ CREATE TABLE IF NOT EXISTS user_contacts (
     -- Is this contact verified
     
     "createdAt" TIMESTAMP DEFAULT NOW() NOT NULL,
-    "createdBy" INT DEFAULT NULL REFERENCES main.users (id),
+    "createdBy" INT DEFAULT NULL REFERENCES main.users(id),
 
     "updatedAt" TIMESTAMP DEFAULT NOW() NOT NULL,
-    "updatedBy" INT DEFAULT NULL REFERENCES main.users (id),
+    "updatedBy" INT DEFAULT NULL REFERENCES main.users(id),
     
     "isArchived" BOOLEAN DEFAULT FALSE NOT NULL,
     "archivedAt" TIMESTAMP DEFAULT NULL,
-    "archivedBy" INT DEFAULT NULL REFERENCES main.users (id),
+    "archivedBy" INT DEFAULT NULL REFERENCES main.users(id),
 
-    CONSTRAINT fk_user_contacts_user FOREIGN KEY ("userId") REFERENCES main.users (id),
+    CONSTRAINT fk_user_contacts_user FOREIGN KEY ("userId") REFERENCES main.users(id),
     CONSTRAINT fk_user_contacts_contact_type FOREIGN KEY ("contactTypeId") REFERENCES tenant_lookups (id),
     CONSTRAINT unique_user_contact_type_value UNIQUE ("userId", "contactTypeId", value) -- Same user can't have duplicate contacts
 );
@@ -140,21 +162,21 @@ CREATE TABLE IF NOT EXISTS user_job_details (
     "department" VARCHAR(255),
     -- Legacy field for backward compatibility (can be removed later)
     "ctc" DECIMAL(15, 2),
-    "reportingManagerId" INT DEFAULT NULL REFERENCES main.users (id),
+    "reportingManagerId" INT DEFAULT NULL REFERENCES main.users(id),
 
     "createdAt" TIMESTAMP DEFAULT NOW() NOT NULL,
-    "createdBy" INT DEFAULT NULL REFERENCES main.users (id),
+    "createdBy" INT DEFAULT NULL REFERENCES main.users(id),
 
     "updatedAt" TIMESTAMP DEFAULT NOW() NOT NULL,
-    "updatedBy" INT DEFAULT NULL REFERENCES main.users (id),
+    "updatedBy" INT DEFAULT NULL REFERENCES main.users(id),
     
     "isArchived" BOOLEAN DEFAULT FALSE NOT NULL,
     "archivedAt" TIMESTAMP DEFAULT NULL,
-    "archivedBy" INT DEFAULT NULL REFERENCES main.users (id),
+    "archivedBy" INT DEFAULT NULL REFERENCES main.users(id),
 
-    CONSTRAINT fk_user_job_details_user FOREIGN KEY ("userId") REFERENCES main.users (id),
+    CONSTRAINT fk_user_job_details_user FOREIGN KEY ("userId") REFERENCES main.users(id),
     CONSTRAINT fk_user_job_details_designation FOREIGN KEY ("designationId") REFERENCES tenant_lookups (id),
     CONSTRAINT fk_user_job_details_department FOREIGN KEY ("departmentId") REFERENCES tenant_lookups (id),
-    CONSTRAINT fk_user_job_details_manager FOREIGN KEY ("reportingManagerId") REFERENCES main.users (id),
+    CONSTRAINT fk_user_job_details_manager FOREIGN KEY ("reportingManagerId") REFERENCES main.users(id),
     CONSTRAINT unique_user_job_details UNIQUE ("userId") -- One job detail record per user
 );

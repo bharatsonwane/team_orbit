@@ -412,7 +412,7 @@ export default class UserService {
             '[]'
           ) AS roles
         FROM user u
-        LEFT JOIN user_role_xref urx ON u.id = urx."userId"
+        LEFT JOIN user_roles_xref urx ON u.id = urx."userId"
         LEFT JOIN lookup r ON urx."roleId" = r.id
         WHERE u.id = $1 AND u.is_active = true
         GROUP BY u.id

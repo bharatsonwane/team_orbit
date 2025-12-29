@@ -1,8 +1,8 @@
 import type { SidebarRouteWithChildren } from "@/components/routing/AppRoutes";
-import { hasRoleAccess } from "./authHelper";
+import { hasPermissionAccess } from "./authHelper";
 import type { User } from "@/schemaTypes/userSchemaTypes";
 
-// Recursive function to filter navigation items based on user role
+// Recursive function to filter navigation items based on user permissions
 export const filterNavigationItems = ({
   loggedInUser,
   items,
@@ -15,9 +15,11 @@ export const filterNavigationItems = ({
   // Step 1: Iterate through each navigation item
   for (const item of items) {
     // Step 2: Check if user has access to the main item
-    const isAuthorized = hasRoleAccess({
-      allowedRoleNames: item.allowedRoles,
-      userRoles: loggedInUser?.roles || [],
+    const isAuthorized = hasPermissionAccess({
+      allowedPlatformPermissions: item.allowedPlatformPermissions,
+      allowedTenantPermissions: item.allowedTenantPermissions,
+      userPlatformPermissions: loggedInUser?.platformPermissions,
+      userTenantPermissions: loggedInUser?.tenantPermissions,
     });
 
     if (!isAuthorized) {

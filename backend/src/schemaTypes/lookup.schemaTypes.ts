@@ -9,7 +9,7 @@ export const baseLookupTypeSchema = z.object({
   createdBy: z.number().int().optional(),
 });
 
-export const lookupTypeWithTrackingSchema = baseLookupTypeSchema.extend({
+export const lookupTypeWithIdSchema = baseLookupTypeSchema.extend({
   id: z.number().int(),
   isArchived: z.boolean().default(false),
   createdAt: z.string().optional(),
@@ -30,7 +30,7 @@ export const baseLookupSchema = z.object({
   lookupTypeId: z.number().int(),
 });
 
-export const lookupWithTrackingSchema = baseLookupSchema.extend({
+export const lookupWithIdSchema = baseLookupSchema.extend({
   id: z.number().int(),
   isArchived: z.boolean().default(false),
   createdAt: z.string().optional(),
@@ -58,12 +58,10 @@ export const lookupListSchema = z.array(lookupTypeWithLookupsSchema);
 
 /** @description SCHEMAS TYPES */
 export type BaseLookupTypeSchema = z.infer<typeof baseLookupTypeSchema>;
-export type LookupTypeWithTrackingSchema = z.infer<
-  typeof lookupTypeWithTrackingSchema
->;
+export type LookupTypeWithIdSchema = z.infer<typeof lookupTypeWithIdSchema>;
 
 export type BaseLookupSchema = z.infer<typeof baseLookupSchema>;
-export type LookupWithTrackingSchema = z.infer<typeof lookupWithTrackingSchema>;
+export type LookupWithIdSchema = z.infer<typeof lookupWithIdSchema>;
 export type LookupTypeWithLookupsSchema = z.infer<
   typeof lookupTypeWithLookupsSchema
 >;
@@ -74,8 +72,8 @@ export type LookupListSchema = z.infer<typeof lookupListSchema>;
 oasRegisterSchemas([
   { schemaName: "BaseLookupTypeSchema", schema: baseLookupTypeSchema },
   {
-    schemaName: "LookupTypeWithTrackingSchema",
-    schema: lookupTypeWithTrackingSchema,
+    schemaName: "LookupTypeWithIdSchema",
+    schema: lookupTypeWithIdSchema,
   },
   { schemaName: "BaseLookupSchema", schema: baseLookupSchema },
   {

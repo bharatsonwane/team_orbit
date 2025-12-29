@@ -1,6 +1,7 @@
 import { z } from "zod";
 import {
   userLoginSchema,
+  userLoginResponseSchema,
   baseUserSchema,
   userUpdatePasswordSchema,
   createUserSchema,
@@ -48,7 +49,7 @@ const registrar = new RouteRegistrar({
 /**@description user login  */
 registrar.post("/user/login", {
   requestSchema: { bodySchema: userLoginSchema },
-  responseSchemas: [{ statusCode: 200, schema: baseUserSchema }],
+  responseSchemas: [{ statusCode: 200, schema: userLoginResponseSchema }],
   controller: userLogin,
 });
 

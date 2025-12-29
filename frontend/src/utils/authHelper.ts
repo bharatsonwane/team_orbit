@@ -1,27 +1,65 @@
 import type { LookupItem } from "@/schemaTypes/lookupSchemaTypes";
-import { userRoleKeys, type UserRoleName } from "@/utils/constants";
+import {
+  platformPermissionKeys,
+  tenantPermissionKeys,
+} from "@/utils/constants";
+
 /**
- * Checks if any of the allowed roles match the user's roles
- * @param options - Object containing allowedRoles and userRoles (both default to empty arrays)
- * @returns true if any allowed role matches any user role, false otherwise
+ * Checks if user has any of the required permissions
+ * @param options - Object containing allowedPermissions (platform and tenant) and user permissions
+ * @returns true if user has any of the required permissions, false otherwise
  */
-export function hasRoleAccess({
-  allowedRoleNames,
-  userRoles,
+export function hasPermissionAccess({
+  allowedPlatformPermissions,
+  allowedTenantPermissions,
+  userPlatformPermissions,
+  userTenantPermissions,
 }: {
-  allowedRoleNames?: UserRoleName[];
-  userRoles?: LookupItem[];
+  allowedPlatformPermissions?: string[];
+  allowedTenantPermissions?: string[];
+  userPlatformPermissions?: string[];
+  userTenantPermissions?: string[];
 }): boolean {
-  if (allowedRoleNames?.length === 0) {
+  // If no permissions required, allow access
+  const hasPlatformRestrictions =
+    allowedPlatformPermissions && allowedPlatformPermissions.length > 0;
+  const hasTenantRestrictions =
+    allowedTenantPermissions && allowedTenantPermissions.length > 0;
+
+  if (!hasPlatformRestrictions && !hasTenantRestrictions) {
     return true; // No restrictions, allow access
-  } else if (!userRoles || userRoles?.length === 0) {
-    return false;
-  } else if (allowedRoleNames?.includes(userRoleKeys.ANY)) {
-    return true;
-  } else {
-    const isAuthorized = allowedRoleNames?.some(allowedRole =>
-      userRoles?.some(userRole => userRole.name === allowedRole)
-    );
-    return isAuthorized ?? false;
   }
+
+  // Check for ANY permission
+  if (
+    (hasPlatformRestrictions &&
+      allowedPlatformPermissions?.includes(platformPermissionKeys.ANY)) ||
+    (hasTenantRestrictions &&
+      allowedTenantPermissions?.includes(tenantPermissionKeys.ANY))
+  ) {
+    return true;
+  }
+
+  // Check platform permissions
+  if (hasPlatformRestrictions) {
+    const hasPlatformAccess = allowedPlatformPermissions?.some(permission =>
+      userPlatformPermissions?.includes(permission)
+    );
+    if (hasPlatformAccess) {
+      return true;
+    }
+  }
+
+  // Check tenant permissions
+  if (hasTenantRestrictions) {
+    const hasTenantAccess = allowedTenantPermissions?.some(permission =>
+      userTenantPermissions?.includes(permission)
+    );
+    if (hasTenantAccess) {
+      return true;
+    }
+  }
+
+  // If we have restrictions but no access, deny
+  return false;
 }

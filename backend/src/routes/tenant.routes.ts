@@ -1,7 +1,7 @@
 import {
   createTenantSchema,
   updateTenantSchema,
-  tenantWithTrackingSchema,
+  tenantWithIdSchema,
 } from "@src/schemaTypes/tenant.schemaTypes";
 import { idValidation } from "@src/schemaTypes/common.schemaTypes";
 import {
@@ -27,7 +27,7 @@ registrar.post("/tenant/create", {
     }),
   ],
   requestSchema: { bodySchema: createTenantSchema },
-  responseSchemas: [{ statusCode: 201, schema: tenantWithTrackingSchema }],
+  responseSchemas: [{ statusCode: 201, schema: tenantWithIdSchema }],
   controller: createTenant,
 });
 
@@ -42,7 +42,7 @@ registrar.put("/tenant/:id", {
     paramsSchema: { id: idValidation },
     bodySchema: updateTenantSchema,
   },
-  responseSchemas: [{ statusCode: 200, schema: tenantWithTrackingSchema }],
+  responseSchemas: [{ statusCode: 200, schema: tenantWithIdSchema }],
   controller: updateTenant,
 });
 
@@ -64,7 +64,7 @@ registrar.get("/tenant/:id", {
     }),
   ],
   requestSchema: { paramsSchema: { id: idValidation } },
-  responseSchemas: [{ statusCode: 200, schema: tenantWithTrackingSchema }],
+  responseSchemas: [{ statusCode: 200, schema: tenantWithIdSchema }],
   controller: getTenantById,
 });
 

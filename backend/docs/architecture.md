@@ -401,7 +401,7 @@ PostgreSQL Database: teamorbit
 │   ├── lookup_type        # Reference data categories
 │   ├── lookup             # Reference data values
 │   ├── tenant             # Tenant organizations
-│   └── user_role_xref     # User-role relationships
+│   └── user_roles_xref     # User-role relationships
 ├── tenant_1               # Tenant-specific data
 │   ├── chat_channel       # Chat channels
 │   ├── chat_message       # Chat messages

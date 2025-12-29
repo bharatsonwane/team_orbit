@@ -109,7 +109,7 @@ class RouteRegistrar {
       middlewares?.forEach(middleware => {
         const functionName = middleware.name;
 
-        if (functionName === "validateAuthRoles") {
+        if (functionName === "validateAuthPermissions") {
           securityObject[bearerAuth.name] = [];
         } else if (functionName === "validateTenantHeader") {
           securityObject[tenantSchemaHeader.name] = [];

@@ -88,7 +88,6 @@ END $$;
    ============================================================ */
 CREATE TABLE IF NOT EXISTS users (
     id SERIAL PRIMARY KEY,
-    "tenantId" INT,
     title title_enum, -- Use ENUM type
     "firstName" VARCHAR(255) NOT NULL,
     "lastName" VARCHAR(255) NOT NULL,
@@ -103,12 +102,12 @@ CREATE TABLE IF NOT EXISTS users (
     "isPlatformUser" BOOLEAN DEFAULT FALSE NOT NULL,
     "statusId" INT NOT NULL REFERENCES lookups (id),
     "createdAt" TIMESTAMPTZ DEFAULT NOW() NOT NULL,
-    "createdBy" INT DEFAULT NULL REFERENCES users (id),
+    "createdBy" INT DEFAULT NULL REFERENCES users(id),
     "updatedAt" TIMESTAMPTZ DEFAULT NOW() NOT NULL,
-    "updatedBy" INT DEFAULT NULL REFERENCES users (id),
+    "updatedBy" INT DEFAULT NULL REFERENCES users(id),
     "isArchived" BOOLEAN DEFAULT FALSE NOT NULL,
     "archivedAt" TIMESTAMPTZ DEFAULT NULL,
-    "archivedBy" INT DEFAULT NULL REFERENCES users (id)
+    "archivedBy" INT DEFAULT NULL REFERENCES users(id)
 );
 
 /* ============================================================
@@ -151,7 +150,7 @@ ALTER TABLE lookups
    ============================================================ */
 CREATE TABLE IF NOT EXISTS user_auths (
     id SERIAL PRIMARY KEY,    
-    "userId" INT NOT NULL REFERENCES users (id) UNIQUE,
+    "userId" INT NOT NULL REFERENCES users(id) UNIQUE,
     -- Local login
     "authEmail" VARCHAR(255) UNIQUE NOT NULL,  -- Office Email for authentication/login
     "authMobileNumber" VARCHAR(255) UNIQUE DEFAULT NULL,  -- Mobile Number for authentication/login
@@ -169,14 +168,14 @@ CREATE TABLE IF NOT EXISTS user_auths (
     "lastLoginAt" TIMESTAMPTZ,
 
     "createdAt" TIMESTAMPTZ DEFAULT NOW() NOT NULL,
-    "createdBy" INT DEFAULT NULL REFERENCES users (id),
+    "createdBy" INT DEFAULT NULL REFERENCES users(id),
 
     "updatedAt" TIMESTAMPTZ DEFAULT NOW() NOT NULL,
-    "updatedBy" INT DEFAULT NULL REFERENCES users (id),
+    "updatedBy" INT DEFAULT NULL REFERENCES users(id),
 
     "isArchived" BOOLEAN DEFAULT FALSE NOT NULL,
     "archivedAt" TIMESTAMPTZ DEFAULT NULL,
-    "archivedBy" INT DEFAULT NULL REFERENCES users (id)
+    "archivedBy" INT DEFAULT NULL REFERENCES users(id)
 );
 
 /* ============================================================
@@ -235,14 +234,14 @@ CREATE TABLE user_roles_xref (
     "roleId" INT NOT NULL REFERENCES roles(id),
 
     "createdAt" TIMESTAMPTZ DEFAULT NOW() NOT NULL,
-    "createdBy" INT DEFAULT NULL REFERENCES users (id),
+    "createdBy" INT DEFAULT NULL REFERENCES users(id),
 
     "updatedAt" TIMESTAMPTZ DEFAULT NOW() NOT NULL,
-    "updatedBy" INT DEFAULT NULL REFERENCES users (id),
+    "updatedBy" INT DEFAULT NULL REFERENCES users(id),
     
     "isArchived" BOOLEAN DEFAULT FALSE NOT NULL,
     "archivedAt" TIMESTAMPTZ DEFAULT NULL,
-    "archivedBy" INT DEFAULT NULL REFERENCES users (id),
+    "archivedBy" INT DEFAULT NULL REFERENCES users(id),
 
     UNIQUE ("userId", "roleId")
 );
@@ -257,14 +256,14 @@ CREATE TABLE role_permissions_xref (
     "permissionId" INT NOT NULL REFERENCES permissions(id),
 
     "createdAt" TIMESTAMPTZ DEFAULT NOW() NOT NULL,
-    "createdBy" INT DEFAULT NULL REFERENCES users (id),
+    "createdBy" INT DEFAULT NULL REFERENCES users(id),
 
     "updatedAt" TIMESTAMPTZ DEFAULT NOW() NOT NULL,
-    "updatedBy" INT DEFAULT NULL REFERENCES users (id),
+    "updatedBy" INT DEFAULT NULL REFERENCES users(id),
     
     "isArchived" BOOLEAN DEFAULT FALSE NOT NULL,
     "archivedAt" TIMESTAMPTZ DEFAULT NULL,
-    "archivedBy" INT DEFAULT NULL REFERENCES users (id),
+    "archivedBy" INT DEFAULT NULL REFERENCES users(id),
 
     UNIQUE ("roleId", "permissionId")
 );
@@ -282,17 +281,34 @@ CREATE TABLE IF NOT EXISTS tenants (
     "statusId" INT NOT NULL REFERENCES lookups (id),
 
     "createdAt" TIMESTAMPTZ DEFAULT NOW() NOT NULL,
-    "createdBy" INT DEFAULT NULL REFERENCES users (id),
+    "createdBy" INT DEFAULT NULL REFERENCES users(id),
 
     "updatedAt" TIMESTAMPTZ DEFAULT NOW() NOT NULL,
-    "updatedBy" INT DEFAULT NULL REFERENCES users (id),
+    "updatedBy" INT DEFAULT NULL REFERENCES users(id),
     
     "isArchived" BOOLEAN DEFAULT FALSE NOT NULL,
     "archivedAt" TIMESTAMPTZ DEFAULT NULL,
-    "archivedBy" INT DEFAULT NULL REFERENCES users (id)
+    "archivedBy" INT DEFAULT NULL REFERENCES users(id)
 );
 
-ALTER TABLE users
-    ADD CONSTRAINT "fk_users_tenantId" 
-        FOREIGN KEY ("tenantId") REFERENCES tenants(id) 
-        DEFERRABLE INITIALLY DEFERRED;
+/* ============================================================
+   USER TENANTS XREF
+   ============================================================ */
+CREATE TABLE user_tenants_xref (
+    id SERIAL PRIMARY KEY,
+
+    "userId" INT NOT NULL REFERENCES users(id),
+    "tenantId" INT NOT NULL REFERENCES tenants(id),
+
+    "createdAt" TIMESTAMPTZ DEFAULT NOW() NOT NULL,
+    "createdBy" INT DEFAULT NULL REFERENCES users(id),
+
+    "updatedAt" TIMESTAMPTZ DEFAULT NOW() NOT NULL,
+    "updatedBy" INT DEFAULT NULL REFERENCES users(id),
+    
+    "isArchived" BOOLEAN DEFAULT FALSE NOT NULL,
+    "archivedAt" TIMESTAMPTZ DEFAULT NULL,
+    "archivedBy" INT DEFAULT NULL REFERENCES users(id),
+
+    UNIQUE ("userId", "tenantId")
+);

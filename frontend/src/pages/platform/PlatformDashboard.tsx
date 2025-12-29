@@ -9,30 +9,12 @@ import {
 } from "@/components/ui/card";
 import { HeaderLayout } from "@/components/AppLayout";
 import { useAuthService } from "@/contexts/AuthContextProvider";
-import { hasRoleAccess } from "@/utils/authHelper";
 import { userRoleKeys, type UserRoleName } from "@/utils/constants";
 
 export default function PlatformDashboard() {
   const { loggedInUser, logout } = useAuthService();
 
   // Check user roles using the new authHelper
-
-  const isAdmin = loggedInUser
-    ? hasRoleAccess({
-        allowedRoleNames: [
-          userRoleKeys.PLATFORM_ADMIN,
-          userRoleKeys.PLATFORM_SUPER_ADMIN,
-        ],
-        userRoles: loggedInUser?.roles || [],
-      })
-    : false;
-
-  const isSuper = loggedInUser
-    ? hasRoleAccess({
-        allowedRoleNames: [userRoleKeys.PLATFORM_SUPER_ADMIN],
-        userRoles: loggedInUser?.roles || [],
-      })
-    : false;
 
   const handleLogout = () => {
     logout();
@@ -96,16 +78,6 @@ export default function PlatformDashboard() {
             <Button asChild variant="ghost" className="w-full justify-start">
               <Link to="/profile">Profile</Link>
             </Button>
-            {isAdmin && (
-              <Button asChild variant="ghost" className="w-full justify-start">
-                <Link to="/admin">Admin Panel</Link>
-              </Button>
-            )}
-            {isSuper && (
-              <Button asChild variant="ghost" className="w-full justify-start">
-                <Link to="/super-admin">Super Admin</Link>
-              </Button>
-            )}
             <Button asChild variant="ghost" className="w-full justify-start">
               <Link to="/">Home Page</Link>
             </Button>

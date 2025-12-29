@@ -18,7 +18,7 @@ import {
   roleListSchema,
   createPermissionSchema,
   updatePermissionSchema,
-  permissionWithTrackingSchema,
+  permissionWithIdSchema,
   permissionListSchema,
 } from "@src/schemaTypes/roleAndPermission.schemaTypes";
 import { idValidation } from "@src/schemaTypes/common.schemaTypes";
@@ -137,7 +137,7 @@ registrar.get("/permission/:id", {
   requestSchema: {
     paramsSchema: { id: idValidation },
   },
-  responseSchemas: [{ statusCode: 200, schema: permissionWithTrackingSchema }],
+  responseSchemas: [{ statusCode: 200, schema: permissionWithIdSchema }],
   controller: getPermissionById,
 });
 

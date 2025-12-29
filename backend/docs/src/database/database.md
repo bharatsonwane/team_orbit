@@ -15,7 +15,7 @@ PostgreSQL Database: teamorbit
 │   ├── lookup_type        # Reference data categories
 │   ├── lookup             # Reference data values
 │   ├── tenant             # Tenant organizations
-│   └── user_role_xref     # User-role relationships
+│   └── user_roles_xref     # User-role relationships
 ├── tenant_1               # Tenant 1's data
 │   ├── chat_channel
 │   ├── chat_message
@@ -130,7 +130,7 @@ SELECT
     'label', r.label
   )) AS roles
 FROM user u
-LEFT JOIN user_role_xref urx ON u.id = urx."userId"
+LEFT JOIN user_roles_xref urx ON u.id = urx."userId"
 LEFT JOIN lookup r ON urx."roleId" = r.id
 WHERE u.id = 1
 GROUP BY u.id;
@@ -250,13 +250,13 @@ export async function up(pool: Pool): Promise<void> {
 
     // Update existing users with default roles
     await pool.query(`
-      INSERT INTO user_role_xref ("userId", "roleId")
+      INSERT INTO user_roles_xref ("userId", "roleId")
       SELECT u.id, r.id
       FROM user u
       CROSS JOIN lookup r
       WHERE r.key = 'PLATFORM_USER'
       AND NOT EXISTS (
-        SELECT 1 FROM user_role_xref urx 
+        SELECT 1 FROM user_roles_xref urx 
         WHERE urx."userId" = u.id
       )
     `);
@@ -274,7 +274,7 @@ export async function down(pool: Pool): Promise<void> {
 
     // Remove the default roles that were added
     await pool.query(`
-      DELETE FROM user_role_xref
+      DELETE FROM user_roles_xref
       WHERE "roleId" IN (
         SELECT id FROM lookup WHERE key = 'PLATFORM_USER'
       )

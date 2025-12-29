@@ -33,7 +33,7 @@ interface AppUser {
   marriedStatus: string;
   bio: string;
   statusId: number;
-  tenantId?: number;
+  tenantIds?: number[]; // Array of tenant IDs for user_tenants_xref
 }
 
 interface UserAuth {
@@ -82,13 +82,10 @@ const tenantStatusKeys = {
   ARCHIVED: "ARCHIVED",
 };
 
-const userRoleKeys = {
-  PLATFORM_SUPER_ADMIN: "PLATFORM_SUPER_ADMIN",
-  PLATFORM_ADMIN: "PLATFORM_ADMIN",
-  PLATFORM_USER: "PLATFORM_USER",
-  TENANT_ADMIN: "TENANT_ADMIN",
-  TENANT_MANAGER: "TENANT_MANAGER",
-  TENANT_USER: "TENANT_USER",
+const platformRoleKeys = {
+  SUPER_ADMIN: "SUPER_ADMIN",
+  ADMIN: "ADMIN",
+  USER: "USER",
 };
 
 const userStatusKeys = {
@@ -114,21 +111,21 @@ const platformPermissionKeys = {
 
 const rolesData: Role[] = [
   {
-    name: userRoleKeys.PLATFORM_SUPER_ADMIN,
+    name: platformRoleKeys.SUPER_ADMIN,
     label: "Platform Super Admin",
     description: "Highest level administrator with full system access",
     isSystem: true,
     sortOrder: 1,
   },
   {
-    name: userRoleKeys.PLATFORM_ADMIN,
+    name: platformRoleKeys.ADMIN,
     label: "Platform Admin",
     description: "Platform administrator with administrative privileges",
     isSystem: true,
     sortOrder: 2,
   },
   {
-    name: userRoleKeys.PLATFORM_USER,
+    name: platformRoleKeys.USER,
     label: "Platform User",
     description: "Standard platform user with basic access",
     isSystem: true,
@@ -447,7 +444,7 @@ export async function up(
   const assignPermissionsToRoles = async () => {
     // Define role-permission mappings
     const rolePermissionMappings: Record<string, string[]> = {
-      [userRoleKeys.PLATFORM_SUPER_ADMIN]: [
+      [platformRoleKeys.SUPER_ADMIN]: [
         // All user permissions
         platformPermissionKeys.USER_CREATE,
         platformPermissionKeys.USER_READ,
@@ -459,7 +456,7 @@ export async function up(
         platformPermissionKeys.TENANT_UPDATE,
         platformPermissionKeys.TENANT_DELETE,
       ],
-      [userRoleKeys.PLATFORM_ADMIN]: [
+      [platformRoleKeys.ADMIN]: [
         // User permissions
         platformPermissionKeys.USER_CREATE,
         platformPermissionKeys.USER_READ,
@@ -468,7 +465,7 @@ export async function up(
         // Tenant permissions (read-only)
         platformPermissionKeys.TENANT_READ,
       ],
-      [userRoleKeys.PLATFORM_USER]: [
+      [platformRoleKeys.USER]: [
         // Read-only permissions
         platformPermissionKeys.USER_READ,
         platformPermissionKeys.TENANT_READ,
@@ -541,7 +538,7 @@ export async function up(
 
   const platformTenantId = await createDefaultPlatformTenant();
 
-  const superAdminRoleId = getRoleIdByName(userRoleKeys.PLATFORM_SUPER_ADMIN);
+  const superAdminRoleId = getRoleIdByName(platformRoleKeys.SUPER_ADMIN);
 
   const activeUserStatusData = await getLookupDataByLookupTypeNameAndLookupName(
     {
@@ -564,7 +561,7 @@ export async function up(
         marriedStatus: "Married",
         bio: "This is Super Admin",
         statusId: activeUserStatusData.id as number,
-        tenantId: platformTenantId,
+        tenantIds: [platformTenantId], // Array of tenant IDs for user_tenants_xref
         userAuth: {
           authEmail: "superadmin@gmail.com", // Official email as authEmail
           password: "Super@123",
@@ -611,12 +608,11 @@ export async function up(
             bio,
             "isPlatformUser",
             "statusId",
-            "tenantId",
             "createdAt",
             "updatedAt"
             )
           VALUES (
-              $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, NOW(), NOW()
+              $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, NOW(), NOW()
           )
           RETURNING *;
         `;
@@ -635,7 +631,6 @@ export async function up(
           userData.bio,
           true, // isPlatformUser = true for super admin
           userData.statusId,
-          userData.tenantId,
         ])
       ).rows;
 
@@ -672,6 +667,20 @@ export async function up(
           `,
           [userResponse.id, roleId]
         );
+      }
+
+      /** Insert user-tenant relationships into user_tenants_xref */
+      if (userData.tenantIds && userData.tenantIds.length > 0) {
+        for (const tenantId of userData.tenantIds) {
+          await client.query(
+            `
+              INSERT INTO user_tenants_xref ("userId", "tenantId", "createdAt", "updatedAt")
+              VALUES ($1, $2, NOW(), NOW())
+              ON CONFLICT ("userId", "tenantId") DO NOTHING
+            `,
+            [userResponse.id, tenantId]
+          );
+        }
       }
     }
   };

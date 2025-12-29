@@ -32,9 +32,12 @@ export const loginAction = createAsyncThunk(
 /** Get user profile action - API call only */
 export const getUserProfileAction = createAsyncThunk(
   "user/getUserProfileAction",
-  async (_, { rejectWithValue }) => {
+  async (tenantId: number | undefined, { rejectWithValue }) => {
     try {
-      const response = await getAxios().get<User>("/api/user/profile");
+      const params = tenantId ? { tenantId } : {};
+      const response = await getAxios().get<User>("/api/user/profile", {
+        params,
+      });
       return response.data;
     } catch (error: unknown) {
       return rejectWithValue(getAppErrorMessage(error));

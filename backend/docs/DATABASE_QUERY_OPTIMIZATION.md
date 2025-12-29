@@ -112,7 +112,7 @@ WHERE u.id = ${userId};
 ### 4. `updateUserStatusAndRoles()`
 
 ```sql
--- Updates users table and user_role_xref
+-- Updates users table and user_roles_xref
 
 -- Then fetches user
 SELECT u.*, ua."authEmail"

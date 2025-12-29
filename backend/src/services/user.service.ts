@@ -1,7 +1,8 @@
 import { dbClientPool } from "@src/middleware/dbClientMiddleware";
 import {
   BaseUserSchema,
-  UserWithTrackingSchema,
+  UserAuthSchema,
+  UserWithIdSchema,
   UserDataWithHashPasswordSchema,
   CreateUserSchema,
   SaveUserContactsSchema,
@@ -13,6 +14,43 @@ import { dbTransactionKeys } from "@src/utils/constants";
 import db, { schemaNames } from "@src/database/db";
 
 export default class User {
+  static async getUserAuthById(
+    dbClient: dbClientPool,
+    userId: number
+  ): Promise<UserAuthSchema> {
+    const query = `
+      SELECT 
+        u.id as "userId",
+        ua."authEmail",
+        u."isPlatformUser",
+        u."statusId",
+        COALESCE(
+          JSON_AGG(
+            JSON_BUILD_OBJECT(
+              'id', t.id,
+              'name', t.name,
+              'label', t.label,
+              'description', t.description,
+              'statusId', t."statusId",
+              'isArchived', t."isArchived",
+              'createdAt', t."createdAt",
+              'updatedAt', t."updatedAt",
+              'archivedAt', t."archivedAt"
+            )
+          ) FILTER (WHERE t.id IS NOT NULL),
+          '[]'::json
+        ) as "userTenants"
+      FROM user_auths ua
+      INNER JOIN users u ON ua."userId" = u.id
+      LEFT JOIN user_tenants_xref utx ON u.id = utx."userId" AND utx."isArchived" = FALSE
+      LEFT JOIN tenants t ON utx."tenantId" = t.id AND t."isArchived" = FALSE
+      WHERE ua."userId" = $1
+      GROUP BY u.id, ua."authEmail", u."isPlatformUser", u."statusId"
+    `;
+    const results = await dbClient.mainPool.query(query, [userId]);
+    const row = results.rows[0] as UserAuthSchema;
+    return row;
+  }
   static async createUser(
     dbClient: dbClientPool,
     userData: CreateUserSchema
@@ -121,9 +159,9 @@ export default class User {
       updateData,
     }: {
       userId: number;
-      updateData: Partial<UserWithTrackingSchema>;
+      updateData: Partial<UserWithIdSchema>;
     }
-  ): Promise<UserWithTrackingSchema> {
+  ): Promise<UserWithIdSchema> {
     const acceptedKeys = [
       "title",
       "firstName",
@@ -271,7 +309,7 @@ export default class User {
 
       // Get existing roles for the user
       const existingRolesResult = await dbClient.mainPool.query(
-        `SELECT "roleId" FROM user_role_xref WHERE "userId" = $1`,
+        `SELECT "roleId" FROM user_roles_xref WHERE "userId" = $1`,
         [userId]
       );
       const existingRoleIds = existingRolesResult.rows.map(
@@ -291,7 +329,7 @@ export default class User {
       // Delete roles that are no longer needed
       if (rolesToDelete.length > 0) {
         await dbClient.mainPool.query(
-          `DELETE FROM user_role_xref WHERE "userId" = $1 AND "roleId" = ANY($2)`,
+          `DELETE FROM user_roles_xref WHERE "userId" = $1 AND "roleId" = ANY($2)`,
           [userId, rolesToDelete]
         );
       }
@@ -302,7 +340,7 @@ export default class User {
           .map(roleId => `(${userId}, ${roleId}, NOW(), NOW())`)
           .join(", ");
         await dbClient.mainPool.query(
-          `INSERT INTO user_role_xref ("userId", "roleId", "createdAt", "updatedAt") VALUES ${roleValues}`
+          `INSERT INTO user_roles_xref ("userId", "roleId", "createdAt", "updatedAt") VALUES ${roleValues}`
         );
       }
 
@@ -333,7 +371,7 @@ export default class User {
 
     // Build WHERE conditions based on provided parameters
     if (userId) {
-      whereConditions.push(`up.id = ${userId}`);
+      whereConditions.push(`us.id = ${userId}`);
     }
     if (authEmail) {
       whereConditions.push(`ua."authEmail" = '${authEmail}'`);
@@ -350,50 +388,32 @@ export default class User {
 
     const queryString = `
         SELECT 
-        up.id,
-        up.title,
-        up."firstName",
-        up."lastName",
-        up."middleName",
-        up."maidenName",
-        up.gender,
-        TO_CHAR(up.dob, 'YYYY-MM-DD') as dob,
-        up."bloodGroup",
-        up."marriedStatus",
-        up."isArchived",
+        us.id,
+        us.title,
+        us."firstName",
+        us."lastName",
+        us."middleName",
+        us."maidenName",
+        us.gender,
+        TO_CHAR(us.dob, 'YYYY-MM-DD') as dob,
+        us."bloodGroup",
+        us."marriedStatus",
+        us."isArchived",
         ua."authEmail",
         ${includePassword ? 'ua."hashPassword",' : ""}
-        up.bio,
-        up."isPlatformUser",
-        up."statusId",
+        us.bio,
+        us."isPlatformUser",
+        us."statusId",
         ls.name as "statusName",
         ls.label as "statusLabel",
-        up."tenantId",
-        t.name as "tenantName",
-        t.label as "tenantLabel",
-        up."createdAt",
-        up."updatedAt",
-        COALESCE(
-          JSON_AGG(
-            JSON_BUILD_OBJECT(
-              'id', l.id,
-              'name', l.name,
-              'label', l.label,
-              'lookupTypeId', l."lookupTypeId",
-              'isSystem', l."isSystem"
-            )
-          ) FILTER (WHERE l.id IS NOT NULL), 
-          '[]'::json
-        ) as "roles"
+        us."tenantId",
+        us."createdAt",
+        us."updatedAt"
       FROM 
-        users up
-      LEFT JOIN user_auths ua ON up.id = ua."userId"
-      LEFT JOIN lookups ls ON up."statusId" = ls.id
-      LEFT JOIN tenants t ON up."tenantId" = t.id
-      LEFT JOIN user_role_xref urx ON up.id = urx."userId"
-      LEFT JOIN lookups l ON urx."roleId" = l.id
-      WHERE ${whereClause}
-      GROUP BY up.id, ua."authEmail", ${includePassword ? 'ua."hashPassword",' : ""} up."isPlatformUser", up."isArchived", ls.name, ls.label, t.name, t.label;
+        users us
+      LEFT JOIN user_auths ua ON us.id = ua."userId"
+      LEFT JOIN lookups ls ON us."statusId" = ls.id
+      WHERE ${whereClause};
     `;
 
     const results = await dbClient.mainPool.query(queryString);
@@ -744,7 +764,7 @@ export default class User {
       page?: number;
       limit?: number;
     }
-  ): Promise<UserWithTrackingSchema[]> {
+  ): Promise<UserWithIdSchema[]> {
     try {
       const hasSearch = !!searchText && searchText.trim().length > 0;
 
@@ -775,12 +795,13 @@ export default class User {
                 'id', r.id,
                 'name', r.name,
                 'label', r.label,
-                'lookupTypeId', r."lookupTypeId",
+                'description', r.description,
+                'sortOrder', r."sortOrder",
                 'isSystem', r."isSystem"
               ))
-              FROM user_role_xref ur
-              JOIN lookups r ON ur."roleId" = r.id
-              WHERE ur."userId" = up.id
+              FROM user_roles_xref ur
+              JOIN roles r ON ur."roleId" = r.id
+              WHERE ur."userId" = up.id AND ur."isArchived" = FALSE AND r."isArchived" = FALSE
             ), '[]'::json
           ) AS roles
         FROM users up

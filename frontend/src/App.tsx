@@ -1,7 +1,10 @@
 import { Routes, Route, Navigate } from "react-router-dom";
 import { mainRouteList } from "./components/routing/AppRoutes";
 import { RouteGuardRenderer } from "./components/routing/RouteGuardRenderer";
-import { userRoleKeys } from "./utils/constants";
+import {
+  platformPermissionKeys,
+  tenantPermissionKeys,
+} from "./utils/constants";
 
 function App() {
   return (
@@ -13,7 +16,8 @@ function App() {
           element={
             <RouteGuardRenderer
               key={route.path}
-              allowedRoles={route.allowedRoles}
+              allowedPlatformPermissions={route.allowedPlatformPermissions}
+              allowedTenantPermissions={route.allowedTenantPermissions}
             >
               {route.element}
             </RouteGuardRenderer>
@@ -25,7 +29,10 @@ function App() {
       <Route
         path="*"
         element={
-          <RouteGuardRenderer allowedRoles={[userRoleKeys.ANY]}>
+          <RouteGuardRenderer
+            allowedPlatformPermissions={[platformPermissionKeys.ANY]}
+            allowedTenantPermissions={[tenantPermissionKeys.ANY]}
+          >
             <Navigate to="/platform/dashboard" replace />
           </RouteGuardRenderer>
         }

@@ -231,7 +231,6 @@ export interface SidebarRouteWithChildren {
 const filterNavigationItems = (
   items: SidebarRouteWithChildren[]
 ): SidebarRouteWithChildren[] => {
-  // Checks hasRoleAccess for each item
   // Recursively filters child items
   // Returns only authorized items
 };

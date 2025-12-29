@@ -50,6 +50,11 @@ export const getUserOASSchema = ({
   });
 };
 
+/**@description Get User Profile query schema */
+export const getUserProfileQuerySchema = z.object({
+  tenantId: z.coerce.number().int().positive().optional(),
+});
+
 /**@description Get User Profile open api specification */
 export const getUserProfileOASSchema = ({
   routePath,
@@ -64,10 +69,30 @@ export const getUserProfileOASSchema = ({
     security,
     summary: "Get authenticated user profile",
     description:
-      "Retrieve the profile information of the currently authenticated user including roles",
+      "Retrieve the profile information of the currently authenticated user including roles and permissions. If tenantId query param is provided (for platform users), returns tenant roles and permissions for that tenant.",
+    request: { query: getUserProfileQuerySchema },
     responses: createApiResponse(
-      z.object({
-        user: baseUserSchema,
+      baseUserSchema.extend({
+        platformRoles: z
+          .array(
+            z.object({
+              id: z.number(),
+              name: z.string(),
+              label: z.string(),
+            })
+          )
+          .optional(),
+        tenantRoles: z
+          .array(
+            z.object({
+              id: z.number(),
+              name: z.string(),
+              label: z.string(),
+            })
+          )
+          .optional(),
+        platformPermissions: z.array(z.string()).optional(),
+        tenantPermissions: z.array(z.string()).optional(),
       }),
       "User profile retrieved successfully"
     ),

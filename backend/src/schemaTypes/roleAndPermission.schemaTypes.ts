@@ -18,7 +18,7 @@ export const updateRoleSchema = baseRoleSchema.partial().extend({
   permissionIds: z.array(z.number().int()).optional(),
 });
 
-export const roleWithTrackingSchema = baseRoleSchema.extend({
+export const roleWithIdSchema = baseRoleSchema.extend({
   id: z.number().int(),
   isArchived: z.boolean().default(false),
   createdAt: z.string().optional(),
@@ -29,14 +29,16 @@ export const roleWithTrackingSchema = baseRoleSchema.extend({
   archivedBy: z.number().int().optional(),
 });
 
-export const roleWithPermissionsSchema = roleWithTrackingSchema.extend({
-  permissions: z.array(
-    z.object({
-      id: z.number().int(),
-      name: z.string(),
-      label: z.string(),
-    })
-  ).optional(),
+export const roleWithPermissionsSchema = roleWithIdSchema.extend({
+  permissions: z
+    .array(
+      z.object({
+        id: z.number().int(),
+        name: z.string(),
+        label: z.string(),
+      })
+    )
+    .optional(),
 });
 
 export const roleListSchema = z.array(roleWithPermissionsSchema);
@@ -54,7 +56,7 @@ export const createPermissionSchema = basePermissionSchema;
 
 export const updatePermissionSchema = basePermissionSchema.partial();
 
-export const permissionWithTrackingSchema = basePermissionSchema.extend({
+export const permissionWithIdSchema = basePermissionSchema.extend({
   id: z.number().int(),
   isArchived: z.boolean().default(false),
   createdAt: z.string().optional(),
@@ -65,7 +67,7 @@ export const permissionWithTrackingSchema = basePermissionSchema.extend({
   archivedBy: z.number().int().optional(),
 });
 
-export const permissionListSchema = z.array(permissionWithTrackingSchema);
+export const permissionListSchema = z.array(permissionWithIdSchema);
 
 /** @description ZOD SCHEMAS - ROLE PERMISSION MAPPING */
 export const rolePermissionMappingSchema = z.object({
@@ -73,24 +75,32 @@ export const rolePermissionMappingSchema = z.object({
   permissionId: z.number().int(),
 });
 
+export const rolesAndPermissionsSchema = z.object({
+  roles: z.array(roleWithIdSchema),
+  permissions: z.array(permissionWithIdSchema),
+});
+
 /** @description SCHEMA TYPES */
 export type BaseRoleSchema = z.infer<typeof baseRoleSchema>;
 export type CreateRoleSchema = z.infer<typeof createRoleSchema>;
 export type UpdateRoleSchema = z.infer<typeof updateRoleSchema>;
-export type RoleWithTrackingSchema = z.infer<typeof roleWithTrackingSchema>;
-export type RoleWithPermissionsSchema = z.infer<typeof roleWithPermissionsSchema>;
+export type RoleWithIdSchema = z.infer<typeof roleWithIdSchema>;
+export type RoleWithPermissionsSchema = z.infer<
+  typeof roleWithPermissionsSchema
+>;
 export type RoleListSchema = z.infer<typeof roleListSchema>;
 
 export type BasePermissionSchema = z.infer<typeof basePermissionSchema>;
 export type CreatePermissionSchema = z.infer<typeof createPermissionSchema>;
 export type UpdatePermissionSchema = z.infer<typeof updatePermissionSchema>;
-export type PermissionWithTrackingSchema = z.infer<
-  typeof permissionWithTrackingSchema
->;
+export type PermissionWithIdSchema = z.infer<typeof permissionWithIdSchema>;
 export type PermissionListSchema = z.infer<typeof permissionListSchema>;
 
 export type RolePermissionMappingSchema = z.infer<
   typeof rolePermissionMappingSchema
+>;
+export type RolesAndPermissionsSchema = z.infer<
+  typeof rolesAndPermissionsSchema
 >;
 
 /** @description OPENAPI SCHEMAS REGISTRATION */
@@ -98,7 +108,7 @@ oasRegisterSchemas([
   { schemaName: "BaseRoleSchema", schema: baseRoleSchema },
   { schemaName: "CreateRoleSchema", schema: createRoleSchema },
   { schemaName: "UpdateRoleSchema", schema: updateRoleSchema },
-  { schemaName: "RoleWithTrackingSchema", schema: roleWithTrackingSchema },
+  { schemaName: "RoleWithIdSchema", schema: roleWithIdSchema },
   {
     schemaName: "RoleWithPermissionsSchema",
     schema: roleWithPermissionsSchema,
@@ -114,9 +124,8 @@ oasRegisterSchemas([
     schema: updatePermissionSchema,
   },
   {
-    schemaName: "PermissionWithTrackingSchema",
-    schema: permissionWithTrackingSchema,
+    schemaName: "PermissionWithIdSchema",
+    schema: permissionWithIdSchema,
   },
   { schemaName: "PermissionListSchema", schema: permissionListSchema },
 ]);
-

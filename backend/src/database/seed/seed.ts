@@ -4,12 +4,13 @@ import db, { schemaNames } from "../db";
 import logger from "../../utils/logger";
 import {
   BaseLookupSchema,
-  LookupWithTrackingSchema,
+  LookupWithIdSchema,
 } from "../../schemaTypes/lookup.schemaTypes";
 import { UserSignupSchema } from "../../schemaTypes/user.schemaTypes";
 import {
   lookupTypeKeys,
-  userRoleKeys,
+  platformRoleKeys,
+  tenantRoleKeys,
   userStatusKeys,
   tenantStatusKeys,
 } from "../../utils/constants";
@@ -25,7 +26,7 @@ const getLookupDataByLookupTypeNameAndLookupName = async ({
   client: PoolClient;
   lookupTypeName: string;
   lookupName: string;
-}): Promise<LookupWithTrackingSchema> => {
+}): Promise<LookupWithIdSchema> => {
   /** Get lookup data query */
   const getLookupDataQuery = `
         SELECT l.id, l.name, l.label, l."lookupTypeId", lt.name as typeName
@@ -81,13 +82,30 @@ async function main(): Promise<void> {
     );
     const tenantId = tenantResult.rows[0].id;
 
-    // Get tenant admin role data
-    const tenantAdminRoleData =
-      await getLookupDataByLookupTypeNameAndLookupName({
-        client: pool,
-        lookupTypeName: lookupTypeKeys.USER_ROLE,
-        lookupName: userRoleKeys.TENANT_ADMIN,
-      });
+    // Get tenant admin role from tenant schema roles table
+    const tenantSchemaName = schemaNames.tenantSchemaName(tenantId.toString());
+    const tenantPool = await db.getSchemaPool(tenantSchemaName);
+
+    let tenantAdminRoleId: number | null = null;
+    try {
+      const tenantRoleResult = await tenantPool.query(
+        `SELECT id FROM roles WHERE name = $1 AND "isArchived" = FALSE`,
+        [tenantRoleKeys.ADMIN]
+      );
+      if (tenantRoleResult.rows.length > 0) {
+        tenantAdminRoleId = tenantRoleResult.rows[0].id;
+      } else {
+        logger.warn(
+          `Tenant admin role not found in tenant schema. Tenant roles may not be seeded yet.`
+        );
+      }
+    } catch (error) {
+      logger.warn(
+        `Could not fetch tenant admin role from tenant schema: ${error}`
+      );
+    } finally {
+      tenantPool.release();
+    }
 
     const activeUserStatusData =
       await getLookupDataByLookupTypeNameAndLookupName({
@@ -100,7 +118,8 @@ async function main(): Promise<void> {
       UserSignupSchema & {
         statusId: number;
         tenantId: number;
-        roleIds: number[];
+        platformRoleNames?: string[];
+        tenantRoleNames?: string[];
       }
     > = [
       {
@@ -119,7 +138,10 @@ async function main(): Promise<void> {
         bio: "iConnect Tenant Admin",
         statusId: activeUserStatusData.id,
         tenantId: tenantId,
-        roleIds: [tenantAdminRoleData.id],
+        // No platform roles for tenant users
+        platformRoleNames: [],
+        // Tenant role
+        tenantRoleNames: tenantAdminRoleId ? [tenantRoleKeys.ADMIN] : [],
       },
     ];
 
@@ -202,15 +224,75 @@ async function main(): Promise<void> {
         [userResponse.id, userData.authEmail, hashPassword] // Using authEmail
       );
 
-      if (userData.roleIds) {
-        for (const roleId of userData.roleIds) {
-          await pool.query(
-            `
-              INSERT INTO user_role_xref ("userId", "roleId", "createdAt", "updatedAt")
-              VALUES ($1, $2, NOW(), NOW())
-            `,
-            [userResponse.id, roleId]
+      // Assign platform roles (from main schema)
+      if (userData.platformRoleNames && userData.platformRoleNames.length > 0) {
+        for (const roleName of userData.platformRoleNames) {
+          const roleResult = await pool.query(
+            `SELECT id FROM roles WHERE name = $1 AND "isArchived" = FALSE`,
+            [roleName]
           );
+          if (roleResult.rows.length > 0) {
+            const roleId = roleResult.rows[0].id;
+            await pool.query(
+              `
+                INSERT INTO user_roles_xref ("userId", "roleId", "createdAt", "updatedAt")
+                VALUES ($1, $2, NOW(), NOW())
+                ON CONFLICT ("userId", "roleId") DO NOTHING
+              `,
+              [userResponse.id, roleId]
+            );
+          } else {
+            logger.warn(`Platform role not found: ${roleName}`);
+          }
+        }
+      }
+
+      // Assign tenant roles (from tenant schema)
+      if (userData.tenantRoleNames && userData.tenantRoleNames.length > 0) {
+        const tenantSchemaName = schemaNames.tenantSchemaName(
+          userData.tenantId.toString()
+        );
+        const tenantPool = await db.getSchemaPool(tenantSchemaName);
+        try {
+          // Check if user_roles_xref table exists in tenant schema
+          const tableCheck = await tenantPool.query(
+            `SELECT EXISTS (
+              SELECT FROM information_schema.tables 
+              WHERE table_schema = $1 
+              AND table_name = 'user_roles_xref'
+            )`,
+            [tenantSchemaName]
+          );
+
+          if (tableCheck.rows[0].exists) {
+            for (const roleName of userData.tenantRoleNames) {
+              const roleResult = await tenantPool.query(
+                `SELECT id FROM roles WHERE name = $1 AND "isArchived" = FALSE`,
+                [roleName]
+              );
+              if (roleResult.rows.length > 0) {
+                const roleId = roleResult.rows[0].id;
+                await tenantPool.query(
+                  `
+                    INSERT INTO user_roles_xref ("userId", "roleId", "createdAt", "updatedAt")
+                    VALUES ($1, $2, NOW(), NOW())
+                    ON CONFLICT ("userId", "roleId") DO NOTHING
+                  `,
+                  [userResponse.id, roleId]
+                );
+              } else {
+                logger.warn(`Tenant role not found: ${roleName}`);
+              }
+            }
+          } else {
+            logger.warn(
+              `user_roles_xref table does not exist in tenant schema ${tenantSchemaName}. Tenant roles will not be assigned.`
+            );
+          }
+        } catch (error) {
+          logger.error(`Error assigning tenant roles: ${error}`, error);
+        } finally {
+          tenantPool.release();
         }
       }
     }

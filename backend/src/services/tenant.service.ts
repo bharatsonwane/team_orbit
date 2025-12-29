@@ -2,7 +2,7 @@ import type {
   CreateTenantSchema,
   UpdateTenantSchema,
   BaseTenantSchema,
-  TenantWithTrackingSchema,
+  TenantWithIdSchema,
 } from "@src/schemaTypes/tenant.schemaTypes";
 import type { dbClientPool } from "@src/middleware/dbClientMiddleware";
 import { buildUpdateFields } from "@src/utils/queryHelper";
@@ -18,7 +18,7 @@ export default class Tenant {
   static async createTenant(
     dbClient: dbClientPool,
     { tenantData }: { tenantData: CreateTenantSchema }
-  ): Promise<TenantWithTrackingSchema> {
+  ): Promise<TenantWithIdSchema> {
     try {
       // Start transaction
       await dbClient.mainPool.query(dbTransactionKeys.BEGIN);
@@ -111,7 +111,7 @@ export default class Tenant {
       tenantId,
       updateData,
     }: { tenantId: number; updateData: UpdateTenantSchema }
-  ): Promise<TenantWithTrackingSchema> {
+  ): Promise<TenantWithIdSchema> {
     const acceptedKeys = ["label", "description", "isArchived"];
 
     const updateFields = buildUpdateFields(acceptedKeys, updateData);
@@ -141,6 +141,22 @@ export default class Tenant {
     `;
 
     const results = await db.mainPool.query(queryString);
-    return results.rows[0] as TenantWithTrackingSchema;
+    return results.rows[0] as TenantWithIdSchema;
+  }
+
+  static async getTenantsByUserId(
+    db: dbClientPool,
+    { userId }: { userId: number }
+  ): Promise<TenantWithIdSchema[]> {
+    const query = `
+      SELECT t.id, t.name, t.label, t.description, t."statusId", t."isArchived", t."createdAt", t."updatedAt", t."archivedAt"
+      FROM tenants t
+      INNER JOIN user_tenants_xref utx ON t.id = utx."tenantId"
+      WHERE utx."userId" = $1 AND utx."isArchived" = FALSE
+      ORDER BY t."createdAt" DESC
+    `;
+
+    const results = await db.mainPool.query(query, [userId]);
+    return results.rows;
   }
 }

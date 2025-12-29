@@ -110,7 +110,7 @@ export const saveChannelMessage = async (
   next: NextFunction
 ): Promise<void> => {
   try {
-    const tenantId = req.user.tenantId;
+    const tenantId = req.user.tenantId!;
     const userId = req.user.userId;
     const chatChannelId = Number(req.params.chatChannelId);
     const payload = req.body as SendChatMessageSchema;
@@ -133,8 +133,8 @@ export const saveChannelMessage = async (
       userId,
       socketId: payload.socketId!,
       message: {
-      ...message,
-      tempId: payload.tempId,
+        ...message,
+        tempId: payload.tempId,
       },
     });
     res.status(201).json(message);

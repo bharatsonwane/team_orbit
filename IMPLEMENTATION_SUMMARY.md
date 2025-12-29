@@ -83,7 +83,7 @@ user_auths
 ├── hashPassword
 └── SSO fields (googleId, outlookId, appleId)
 
-user_role_xref
+user_roles_xref
 ├── userId
 └── roleId
 ```

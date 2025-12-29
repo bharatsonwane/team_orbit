@@ -22,17 +22,13 @@ import {
   loginAction,
 } from "../redux/actions/userActions";
 import { store, type AppDispatch } from "../redux/store";
-import { platformRoleList } from "@/utils/constants";
 import { getTenantIdFromUrl } from "@/utils/tenantHelper";
 import { getLookupListAction } from "@/redux/actions/lookupAction";
 import { useDispatch } from "react-redux";
 import { getTenantLookupListAction } from "@/redux/actions/tenantLookupActions";
 import { getTenantAction } from "@/redux/actions/tenantActions";
 import { SocketManager } from "@/lib/socketManager";
-import {
-  LoadingOverlay,
-  LoadingSpinner,
-} from "@/components/ui/loading-indicator";
+import { LoadingOverlay } from "@/components/ui/loading-indicator";
 
 // Auth context type
 export interface AuthContextType {
@@ -88,18 +84,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   const [error, setError] = useState<string | null>(null);
   const tenantIdFromUrl = getTenantIdFromUrl();
 
-  /** Compute tenantId based on user role */
+  /** Compute tenantId based on user type */
   const { tenantId, hasPlatformRole } = useMemo(() => {
     let tenantId = null;
     let hasPlatformRole = false;
 
     if (loggedInUser) {
-      /* Check if user has platform roles */
-      hasPlatformRole = loggedInUser.roles?.some(role =>
-        platformRoleList.includes(
-          role.name as (typeof platformRoleList)[number]
-        )
-      );
+      /* Check if user is platform user (from isPlatformUser flag or has platform permissions) */
+      hasPlatformRole =
+        loggedInUser.isPlatformUser === true ||
+        (loggedInUser.platformPermissions &&
+          loggedInUser.platformPermissions.length > 0) ||
+        false;
 
       if (hasPlatformRole) {
         /* Platform users: Get tenantId from URL (to access different tenants) */
@@ -114,7 +110,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     }
 
     return { tenantId, hasPlatformRole };
-  }, [loggedInUser, location.pathname]);
+  }, [loggedInUser, location.pathname, tenantIdFromUrl]);
 
   /** Handle automatic navigation based on auth state */
   useEffect(() => {
@@ -151,7 +147,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     } else if (loggedInUser === undefined || loggedInUser === null) {
       /* Token exists but no user: restore session */
       try {
-        const userData = await dispatch(getUserProfileAction()).unwrap();
+        // Get tenantId from URL if available (for platform users)
+        const tenantIdForProfile = tenantIdFromUrl || undefined;
+        const userData = await dispatch(
+          getUserProfileAction(tenantIdForProfile)
+        ).unwrap();
         setLoggedInUser(userData || null);
       } catch (error: unknown) {
         Cookies.remove(envVariable.JWT_STORAGE_KEY);
@@ -184,14 +184,28 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       const result = await store.dispatch(loginAction(credentials));
       if (loginAction.fulfilled.match(result)) {
         /* Login successful - handle localStorage and state */
-        const user = result.payload.user;
-        const token = result.payload.token;
+        const { token, userId } = result.payload;
 
         /* Store token in localStorage */
         Cookies.set(envVariable.JWT_STORAGE_KEY, token);
 
-        /* Update local state */
-        setLoggedInUser(user);
+        /* Fetch full user profile with permissions */
+        try {
+          const userData = await dispatch(getUserProfileAction()).unwrap();
+          setLoggedInUser(userData || null);
+        } catch (profileError) {
+          console.error("Failed to fetch user profile:", profileError);
+          // Even if profile fetch fails, we have the token, so set a minimal user
+          setLoggedInUser({
+            id: userId,
+            email: result.payload.email,
+            firstName: "",
+            lastName: "",
+            createdAt: "",
+            updatedAt: "",
+          } as User);
+        }
+
         setIsLoading(false);
         setError(null);
       } else {

@@ -1,12 +1,12 @@
 import { Fragment, type ReactNode } from "react";
 import { Routes, Route } from "react-router-dom";
 import { useAuthService } from "@/contexts/AuthContextProvider";
-import { hasRoleAccess } from "@/utils/authHelper";
-import type { UserRoleName } from "@/utils/constants";
+import { hasPermissionAccess } from "@/utils/authHelper";
 
 export interface AuthRoute {
   title: string;
-  allowedRoles: UserRoleName[]; // adjust to (keyof typeof roleKeys)[] if roleKeys is an enum/object
+  allowedPlatformPermissions?: string[];
+  allowedTenantPermissions?: string[];
   path: string; // Made optional for parent navigation items
   description?: string;
   element: ReactNode;
@@ -14,20 +14,24 @@ export interface AuthRoute {
 
 export interface RouteGuardRendererProps {
   children?: React.ReactNode;
-  allowedRoles?: UserRoleName[];
+  allowedPlatformPermissions?: string[];
+  allowedTenantPermissions?: string[];
   routes?: AuthRoute[];
 }
 
 export const RouteGuardRenderer: React.FC<RouteGuardRendererProps> = ({
   children,
-  allowedRoles = [],
+  allowedPlatformPermissions = [],
+  allowedTenantPermissions = [],
   routes = [],
 }) => {
   const { loggedInUser } = useAuthService();
 
-  const isAuthorized = hasRoleAccess({
-    allowedRoleNames: allowedRoles,
-    userRoles: loggedInUser?.roles || [],
+  const isAuthorized = hasPermissionAccess({
+    allowedPlatformPermissions,
+    allowedTenantPermissions,
+    userPlatformPermissions: loggedInUser?.platformPermissions,
+    userTenantPermissions: loggedInUser?.tenantPermissions,
   });
 
   if (!isAuthorized) {
@@ -67,7 +71,8 @@ export const RouteGuardRenderer: React.FC<RouteGuardRendererProps> = ({
             element={
               <RouteGuardRenderer
                 key={route.path}
-                allowedRoles={route.allowedRoles}
+                allowedPlatformPermissions={route.allowedPlatformPermissions}
+                allowedTenantPermissions={route.allowedTenantPermissions}
               >
                 {route.element}
               </RouteGuardRenderer>

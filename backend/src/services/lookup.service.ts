@@ -3,7 +3,7 @@ import { dbClientPool } from "@src/middleware/dbClientMiddleware";
 import {
   LookupListSchema,
   LookupTypeWithLookupsSchema,
-  LookupWithTrackingSchema,
+  LookupWithIdSchema,
 } from "@src/schemaTypes/lookup.schemaTypes";
 
 export default class Lookup {
@@ -138,7 +138,7 @@ export default class Lookup {
   static async getLookupDataById(
     dbClient: dbClientPool,
     id: number
-  ): Promise<LookupWithTrackingSchema | null> {
+  ): Promise<LookupWithIdSchema | null> {
     const queryString = `
       SELECT 
         l.id,

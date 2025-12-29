@@ -6,8 +6,9 @@ import type {
   RoleListSchema,
   CreatePermissionSchema,
   UpdatePermissionSchema,
-  PermissionWithTrackingSchema,
+  PermissionWithIdSchema,
   PermissionListSchema,
+  RolesAndPermissionsSchema,
 } from "@src/schemaTypes/roleAndPermission.schemaTypes";
 import { buildUpdateFields } from "@src/utils/queryHelper";
 import { dbTransactionKeys } from "@src/utils/constants";
@@ -414,7 +415,7 @@ export default class RoleAndPermission {
   static async getPermissionById(
     dbClient: dbClientPool,
     permissionId: number
-  ): Promise<PermissionWithTrackingSchema | null> {
+  ): Promise<PermissionWithIdSchema | null> {
     const query = `
       SELECT 
         id,
@@ -600,111 +601,91 @@ export default class RoleAndPermission {
   }
 
   /**
-   * Get all permissions for a user from both platform and tenant schemas
-   * Returns separate arrays for platform and tenant permissions
+   * Get platform user roles and permissions from main schema
+   * Returns both roles and permissions for the platform
    */
-  static async getUserPermissions(
+  static async getPlatformUserRolesAndPermissions(
     dbClient: dbClientPool,
     userId: number
-  ): Promise<{ platformPermissions: string[]; tenantPermissions: string[] }> {
-    const platformPermissions: string[] = [];
-    const tenantPermissions: string[] = [];
-
-    // Get platform permissions from main schema
-    const platformQuery = `
-      SELECT DISTINCT p.name
-      FROM permissions p
-      INNER JOIN role_permissions_xref rpx ON p.id = rpx."permissionId" AND rpx."isArchived" = FALSE
-      INNER JOIN user_roles_xref urx ON rpx."roleId" = urx."roleId" AND urx."isArchived" = FALSE
-      WHERE urx."userId" = $1 
-        AND p."isArchived" = FALSE
-    `;
-
-    const platformResult = await dbClient.mainPool.query(platformQuery, [
-      userId,
-    ]);
-    platformPermissions.push(
-      ...platformResult.rows.map((row: { name: string }) => row.name)
-    );
-
-    // Get tenant-specific permissions if tenantPool is available
-    if (dbClient.tenantPool) {
-      try {
-        const tenantQuery = `
-          SELECT DISTINCT p.name
-          FROM permissions p
-          INNER JOIN role_permissions_xref rpx ON p.id = rpx."permissionId" AND rpx."isArchived" = FALSE
-          INNER JOIN user_roles_xref urx ON rpx."roleId" = urx."roleId" AND urx."isArchived" = FALSE
-          WHERE urx."userId" = $1 
-            AND p."isArchived" = FALSE
-        `;
-
-        const tenantResult = await dbClient.tenantPool.query(tenantQuery, [
-          userId,
-        ]);
-        tenantPermissions.push(
-          ...tenantResult.rows.map((row: { name: string }) => row.name)
-        );
-      } catch (error) {
-        // If tenant schema doesn't have permissions/roles tables yet, silently continue
-        // This allows the system to work with platform permissions only
-      }
-    }
-
-    return { platformPermissions, tenantPermissions };
-  }
-
-  /**
-   * Get all roles for a user from both platform and tenant schemas
-   * Returns separate arrays for platform and tenant roles
-   */
-  static async getUserRoles(
-    dbClient: dbClientPool,
-    userId: number
-  ): Promise<{
-    platformRoles: Array<{ id: number; name: string; label: string }>;
-    tenantRoles: Array<{ id: number; name: string; label: string }>;
-  }> {
-    const platformRoles: Array<{ id: number; name: string; label: string }> =
-      [];
-    const tenantRoles: Array<{ id: number; name: string; label: string }> =
-      [];
-
+  ): Promise<RolesAndPermissionsSchema> {
     // Get platform roles from main schema
-    const platformQuery = `
+    const rolesResult = await dbClient.mainPool.query(
+      `
       SELECT r.id, r.name, r.label
       FROM roles r
       INNER JOIN user_roles_xref urx ON r.id = urx."roleId" AND urx."isArchived" = FALSE
       WHERE urx."userId" = $1 
         AND r."isArchived" = FALSE
-    `;
+    `,
+      [userId]
+    );
+    const roles = rolesResult.rows;
 
-    const platformResult = await dbClient.mainPool.query(platformQuery, [
-      userId,
-    ]);
-    platformRoles.push(...platformResult.rows);
+    // Get platform permissions from main schema
+    const permissionsResult = await dbClient.mainPool.query(
+      `
+      SELECT DISTINCT p.id, p.name, p.label
+      FROM permissions p
+      INNER JOIN role_permissions_xref rpx ON p.id = rpx."permissionId" AND rpx."isArchived" = FALSE
+      INNER JOIN user_roles_xref urx ON rpx."roleId" = urx."roleId" AND urx."isArchived" = FALSE
+      WHERE urx."userId" = $1 
+        AND p."isArchived" = FALSE
+    `,
+      [userId]
+    );
 
-    // Get tenant-specific roles if tenantPool is available
-    if (dbClient.tenantPool) {
-      try {
-        const tenantQuery = `
-          SELECT r.id, r.name, r.label
-          FROM roles r
-          INNER JOIN user_roles_xref urx ON r.id = urx."roleId" AND urx."isArchived" = FALSE
-          WHERE urx."userId" = $1 
-            AND r."isArchived" = FALSE
-        `;
+    const permissions = permissionsResult.rows;
 
-        const tenantResult = await dbClient.tenantPool.query(tenantQuery, [
-          userId,
-        ]);
-        tenantRoles.push(...tenantResult.rows);
-      } catch (error) {
-        // If tenant schema doesn't have roles tables yet, silently continue
-        // This allows the system to work with platform roles only
-      }
+    return { roles, permissions };
+  }
+
+  /**
+   * Get tenant user roles and permissions from tenant schema
+   * Requires tenantPool to be available in dbClient
+   * Returns both roles and permissions for the tenant
+   */
+  static async getTenantUserRolesAndPermissions(
+    dbClient: dbClientPool,
+    userId: number
+  ): Promise<RolesAndPermissionsSchema> {
+    if (!dbClient.tenantPool) {
+      // If tenantPool is not available, return empty arrays
+      return { roles: [], permissions: [] };
     }
 
-    return { platformRoles, tenantRoles };
+    try {
+      // Get tenant roles from tenant schema
+      const rolesResult = await dbClient.tenantPool.query(
+        `
+        SELECT r.id, r.name, r.label
+        FROM roles r
+        INNER JOIN user_roles_xref urx ON r.id = urx."roleId" AND urx."isArchived" = FALSE
+        WHERE urx."userId" = $1 
+          AND r."isArchived" = FALSE
+      `,
+        [userId]
+      );
+      const roles = rolesResult.rows;
+
+      // Get tenant permissions from tenant schema
+      const permissionsResult = await dbClient.tenantPool.query(
+        `
+        SELECT DISTINCT p.id, p.name, p.label
+        FROM permissions p
+        INNER JOIN role_permissions_xref rpx ON p.id = rpx."permissionId" AND rpx."isArchived" = FALSE
+        INNER JOIN user_roles_xref urx ON rpx."roleId" = urx."roleId" AND urx."isArchived" = FALSE
+        WHERE urx."userId" = $1 
+          AND p."isArchived" = FALSE
+      `,
+        [userId]
+      );
+      const permissions = permissionsResult.rows;
+
+      return { roles, permissions };
+    } catch (error) {
+      // If tenant schema doesn't have permissions/roles tables yet, silently continue
+      // This allows the system to work with platform permissions only
+      return { roles: [], permissions: [] };
+    }
   }
 }

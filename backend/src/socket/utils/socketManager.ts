@@ -2,8 +2,7 @@ import { Server as HttpServer } from "http";
 import { Server, Socket } from "socket.io";
 import { ExtendedError } from "socket.io/dist/namespace";
 import { envVariable } from "@src/config/envVariable";
-import { validateJwtToken } from "@src/utils/authHelper";
-import { JwtTokenPayload } from "@src/middleware/authPermissionMiddleware";
+import { validateJwtToken, JwtTokenPayload } from "@src/utils/authHelper";
 import { dbClientPool } from "@src/middleware/dbClientMiddleware";
 import db, { schemaNames } from "@src/database/db";
 import logger from "@src/utils/logger";
@@ -67,6 +66,11 @@ export class SocketManager {
         socket.handshake.headers?.authorization?.split(" ")?.[1] ||
         socket.handshake.headers?.authorization;
 
+      const tenantId =
+        socket.handshake.auth?.token ||
+        (socket.handshake.query?.tenantId as string | undefined) ||
+        (socket.handshake.headers?.["tenantId"] as string | undefined);
+
       if (!token) {
         logger.warn("Socket.IO connection attempt without token", {
           socketId: socket.id,
@@ -85,7 +89,7 @@ export class SocketManager {
 
       socket.user = decodedToken;
 
-      socket.tenantId = decodedToken.tenantId;
+      socket.tenantId = tenantId;
 
       next();
     } catch (error) {

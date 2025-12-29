@@ -1,5 +1,7 @@
 import { Request, Response, NextFunction } from "express";
+import db, { schemaNames } from "@src/database/db";
 import User from "@src/services/user.service";
+import Tenant from "@src/services/tenant.service";
 import {
   getHashPassword,
   validatePassword,
@@ -11,11 +13,11 @@ import {
   CreateUserSchema,
 } from "@src/schemaTypes/user.schemaTypes";
 import { AuthenticatedRequest } from "@src/middleware/authPermissionMiddleware";
+import { userStatusKeys } from "@src/utils/constants";
 import {
-  lookupTypeKeys,
-  userRoleKeys,
-  userStatusKeys,
-} from "@src/utils/constants";
+  PermissionWithIdSchema,
+  RoleWithIdSchema,
+} from "@src/schemaTypes/roleAndPermission.schemaTypes";
 
 export const userLogin = async (
   req: Request,
@@ -45,24 +47,18 @@ export const userLogin = async (
       throw { statusCode: 401, message: "Invalid credentials" };
     }
 
-    delete (userData as Partial<typeof userData>).hashPassword;
-
-    // Fetch user permissions from database
-    const { platformPermissions, tenantPermissions } =
-      await RoleAndPermission.getUserPermissions(req.db, userData.id);
-
+    // Create minimal JWT token (no roles or permissions)
     const token = createJwtToken({
       userId: userData.id,
-      email: userData.authEmail, // Using authEmail (which is email)
-      tenantId: userData.tenantId,
-      userRoles: userData.roles,
-      platformPermissions: platformPermissions, // Map platformPermissions to platformPermissions for JWT
-      tenantPermissions,
+      email: userData.authEmail || "", // Using authEmail (which is email)
+      isPlatformUser: userData.isPlatformUser || false,
     });
 
+    // Return only token, userId, and email
     res.status(200).json({
-      user: userData,
       token,
+      userId: userData.id,
+      email: userData.authEmail,
     });
   } catch (error) {
     next(error);
@@ -96,16 +92,30 @@ export const createUser = async (
       userId: loggedInUser.userId,
     });
 
-    if (!currentUser || !currentUser.roles) {
+    if (!currentUser) {
       throw {
         statusCode: 401,
-        message: "User not found or no roles assigned",
+        message: "User not found",
+      };
+    }
+
+    // Fetch user roles to check permissions
+    const platformRolesData =
+      await RoleAndPermission.getPlatformUserRolesAndPermissions(
+        req.db,
+        loggedInUser.userId
+      );
+
+    if (!platformRolesData.roles || platformRolesData.roles.length === 0) {
+      throw {
+        statusCode: 401,
+        message: "User has no roles assigned",
       };
     }
 
     // Get role names for validation
-    const currentUserRoleNames = currentUser.roles.map(
-      (role: any) => role.name
+    const currentUserRoleNames = platformRolesData.roles.map(
+      (role: { name: string }) => role.name
     );
 
     // Get lookup data for the roles being assigned
@@ -238,18 +248,94 @@ export const getUserProfile = async (
 ): Promise<void> => {
   try {
     const userId = req.user?.userId;
+    /* Get tenantId from query param if provided */
+    const tenantIdFromQuery = (req.query.tenantId as string | undefined)
+      ? parseInt(req.query.tenantId as string)
+      : null;
+
+    /* Get tenantId from header if provided */
+    const tenantIdFromHeader = req.xTenantId;
 
     if (!userId) {
       throw { statusCode: 401, message: "User not authenticated" };
     }
-
+    // Fetch user data
     const userData = await User.getUserByIdOrAuthEmail(req.db, { userId });
 
     if (!userData) {
       throw { statusCode: 404, message: "User profile not found" };
     }
 
-    res.status(200).json(userData);
+    delete (userData as Partial<typeof userData>).hashPassword;
+
+    const userTenants = await Tenant.getTenantsByUserId(req.db, { userId });
+    const userFirstTenantId = userTenants.length > 0 ? userTenants[0].id : null;
+
+    // Determine target tenant for fetching tenant roles/permissions
+    // If tenantId query param is provided and user is platform user, use that
+    // Otherwise use tenantId from header, or user's first tenant
+    let targetTenantId: number | null =
+      tenantIdFromQuery || tenantIdFromHeader || userFirstTenantId;
+    if (req.user.isPlatformUser) {
+      targetTenantId = tenantIdFromQuery;
+    } else {
+      const currentTenant = userTenants.find(
+        tenant => tenant.id === targetTenantId
+      );
+      if (!currentTenant) {
+        throw { statusCode: 404, message: "Tenant not found" };
+      }
+    }
+
+    const tempDbClient = {
+      mainPool: req.db.mainPool,
+      tenantPool: req.db.tenantPool,
+    };
+
+    if (targetTenantId && targetTenantId !== tenantIdFromHeader) {
+      const tenantSchemaName = schemaNames.tenantSchemaName(
+        targetTenantId!.toString()
+      );
+      const tenantPool = await db.getSchemaPool(tenantSchemaName);
+      tempDbClient.tenantPool = tenantPool;
+    }
+
+    /* Fetch tenant roles and permissions from current tenant pool (if available) */
+    let tenantRoles: RoleWithIdSchema[] = [];
+    let tenantPermissions: PermissionWithIdSchema[] = [];
+    if (tempDbClient.tenantPool) {
+      const tenantDataFromCurrentPool =
+        await RoleAndPermission.getTenantUserRolesAndPermissions(
+          tempDbClient,
+          userId
+        );
+      tenantRoles = tenantDataFromCurrentPool.roles;
+      tenantPermissions = tenantDataFromCurrentPool.permissions;
+    }
+
+    /* Fetch platform roles and permissions (always from main schema) */
+    let platformRoles: RoleWithIdSchema[] = [];
+    let platformPermissions: PermissionWithIdSchema[] = [];
+    if (req.user.isPlatformUser) {
+      const platformData =
+        await RoleAndPermission.getPlatformUserRolesAndPermissions(
+          tempDbClient,
+          userId
+        );
+      platformRoles = platformData.roles;
+      platformPermissions = platformData.permissions;
+    }
+
+    // Combine user data with roles and permissions
+    const response = {
+      ...userData,
+      tenantRoles,
+      tenantPermissions,
+      platformRoles,
+      platformPermissions,
+    };
+
+    res.status(200).json(response);
   } catch (error) {
     next(error);
   }

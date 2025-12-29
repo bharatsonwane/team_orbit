@@ -1,6 +1,5 @@
 import { z } from "zod";
-import { lookupItemSchema } from "./lookupSchemaTypes";
-import { userRoleName } from "@/utils/constants";
+import { permissionSchema, roleSchema } from "./userRolesAndPermissions";
 
 // User schema
 export const userSchema = z.object({
@@ -9,16 +8,24 @@ export const userSchema = z.object({
   firstName: z.string(),
   lastName: z.string(),
   tenantId: z.number().optional(),
-  roles: z.array(
-    lookupItemSchema.extend({
-      name: userRoleName,
-    })
-  ),
+  isPlatformUser: z.boolean().optional(),
+  platformRoles: z.array(roleSchema).optional(),
+  tenantRoles: z.array(roleSchema).optional(),
+  platformPermissions: z.array(z.string()).optional(),
+  tenantPermissions: z.array(z.string()).optional(),
   createdAt: z.string(), // use camelCase consistently
   updatedAt: z.string(),
 });
 
 export type User = z.infer<typeof userSchema>;
+
+export const loginUserSchema = userSchema.extend({
+  platformRoles: z.array(roleSchema),
+  tenantRoles: z.array(roleSchema),
+  platformPermissions: z.array(permissionSchema),
+  tenantPermissions: z.array(permissionSchema),
+});
+export type LoginUser = z.infer<typeof loginUserSchema>;
 
 export const paginationSchema = z.object({
   page: z.number(),
@@ -55,11 +62,8 @@ export const detailedUserSchema = z.object({
   statusId: z.number(),
   statusName: z.string(),
   statusLabel: z.string(),
-  roles: z.array(
-    lookupItemSchema.extend({
-      name: userRoleName,
-    })
-  ),
+  platformPermissions: z.array(z.string()).optional(),
+  tenantPermissions: z.array(z.string()).optional(),
   createdAt: z.string(),
   updatedAt: z.string(),
 });
@@ -84,7 +88,16 @@ export const registerDataSchema = z.object({
 
 export type RegisterData = z.infer<typeof registerDataSchema>;
 
-// Auth response schema
+// Login response schema (minimal - only token, userId, email)
+export const loginResponseSchema = z.object({
+  token: z.string(),
+  userId: z.number(),
+  email: z.string().email(),
+});
+
+export type LoginResponse = z.infer<typeof loginResponseSchema>;
+
+// Auth response schema (for register endpoint)
 export const authResponseSchema = z.object({
   success: z.boolean(),
   data: z
@@ -242,11 +255,6 @@ export type UpdateUserPasswordFormData = z.infer<
   typeof updateUserPasswordSchema
 >;
 
-// Login response interface
-export interface LoginResponse {
-  user: User;
-  token: string;
-}
 
 // ==================== WIZARD SCHEMAS ====================
 

@@ -13,7 +13,7 @@ export const baseTenantSchema = z.object({
   createdBy: z.number().optional(),
 });
 
-export const tenantWithTrackingSchema = baseTenantSchema.extend({
+export const tenantWithIdSchema = baseTenantSchema.extend({
   id: z.number().int(),
   isArchived: z.boolean().default(false),
   createdAt: z.string().optional(),
@@ -31,13 +31,13 @@ export const updateTenantSchema = z.object({
 
 /** @description SCHEMAS TYPES */
 export type BaseTenantSchema = z.infer<typeof baseTenantSchema>;
-export type TenantWithTrackingSchema = z.infer<typeof tenantWithTrackingSchema>;
+export type TenantWithIdSchema = z.infer<typeof tenantWithIdSchema>;
 export type CreateTenantSchema = z.infer<typeof createTenantSchema>;
 export type UpdateTenantSchema = z.infer<typeof updateTenantSchema>;
 
 /** @description OPENAPI SCHEMAS REGISTRATION */
 oasRegisterSchemas([
-  { schemaName: "TenantWithTrackingSchema", schema: tenantWithTrackingSchema },
+  { schemaName: "TenantWithIdSchema", schema: tenantWithIdSchema },
   { schemaName: "CreateTenantSchema", schema: createTenantSchema },
   { schemaName: "UpdateTenantSchema", schema: updateTenantSchema },
 ]);

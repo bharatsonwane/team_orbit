@@ -35,31 +35,12 @@ export const dbTransactionName = z.enum(Object.values(dbTransactionKeys));
 export type DbTransactionName = z.infer<typeof dbTransactionName>;
 
 export const lookupTypeKeys = {
-  USER_ROLE: "USER_ROLE",
   USER_STATUS: "USER_STATUS",
   TENANT_STATUS: "TENANT_STATUS",
   CHAT_TYPE: "CHAT_TYPE",
 };
 export const lookupTypeName = z.enum(Object.values(lookupTypeKeys));
 export type LookupTypeName = z.infer<typeof lookupTypeName>;
-
-export const userRoleCategoryKeys = {
-  PLATFORM: "PLATFORM",
-  TENANT: "TENANT",
-};
-
-export const userRoleKeys = {
-  ANY: "ANY",
-  PLATFORM_SUPER_ADMIN: "PLATFORM_SUPER_ADMIN",
-  PLATFORM_ADMIN: "PLATFORM_ADMIN",
-  PLATFORM_USER: "PLATFORM_USER",
-  TENANT_ADMIN: "TENANT_ADMIN",
-  TENANT_MANAGER: "TENANT_MANAGER",
-  TENANT_USER: "TENANT_USER",
-} as const;
-export const userRoleName = z.enum(Object.values(userRoleKeys));
-/*export type UserRoleName = (typeof userRoleKeys)[keyof typeof userRoleKeys];*/
-export type UserRoleName = z.infer<typeof userRoleName>;
 
 export const userStatusKeys = {
   PENDING: "PENDING",
@@ -85,6 +66,24 @@ export const chatTypeKeys = {
 };
 export const chatTypeName = z.enum(Object.values(chatTypeKeys));
 export type ChatTypeName = z.infer<typeof chatTypeName>;
+
+export const platformRoleKeys = {
+  SUPER_ADMIN: "SUPER_ADMIN",
+  ADMIN: "ADMIN",
+  USER: "USER",
+} as const;
+export const platformRoleName = z.enum(Object.values(platformRoleKeys));
+/*export type PlatformRoleName = (typeof platformRoleKeys)[keyof typeof platformRoleKeys];*/
+export type PlatformRoleName = z.infer<typeof platformRoleName>;
+
+export const tenantRoleKeys = {
+  ADMIN: "ADMIN",
+  MANAGER: "MANAGER",
+  USER: "USER",
+} as const;
+export const tenantRoleName = z.enum(Object.values(tenantRoleKeys));
+/*export type TenantRoleName = (typeof tenantRoleKeys)[keyof typeof tenantRoleKeys];*/
+export type TenantRoleName = z.infer<typeof tenantRoleName>;
 
 // Platform-level permissions (stored in main schema)
 export const platformPermissionKeys = {
