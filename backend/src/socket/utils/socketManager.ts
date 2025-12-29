@@ -66,10 +66,11 @@ export class SocketManager {
         socket.handshake.headers?.authorization?.split(" ")?.[1] ||
         socket.handshake.headers?.authorization;
 
-      const tenantId =
-        socket.handshake.auth?.token ||
+      // Get tenantId from socket handshake (not token!)
+      const tenantIdFromHandshake =
+        socket.handshake.auth?.tenantId ||
         (socket.handshake.query?.tenantId as string | undefined) ||
-        (socket.handshake.headers?.["tenantId"] as string | undefined);
+        (socket.handshake.headers?.["x-tenant"] as string | undefined);
 
       if (!token) {
         logger.warn("Socket.IO connection attempt without token", {
@@ -89,7 +90,10 @@ export class SocketManager {
 
       socket.user = decodedToken;
 
-      socket.tenantId = tenantId;
+      // Parse tenantId if provided, otherwise leave undefined
+      socket.tenantId = tenantIdFromHandshake
+        ? parseInt(tenantIdFromHandshake, 10)
+        : undefined;
 
       next();
     } catch (error) {
@@ -112,12 +116,25 @@ export class SocketManager {
       // Always get a pool for the main schema
       socket.db.mainPool = await db.getSchemaPool(schemaNames.main);
 
-      // Get tenant-specific schema pool if tenantId is available
-      if (socket.tenantId) {
-        const tenantSchemaName = schemaNames.tenantSchemaName(
-          socket.tenantId.toString()
-        );
-        socket.db.tenantPool = await db.getSchemaPool(tenantSchemaName);
+      // Get tenant-specific schema pool if tenantId is available and is a valid number
+      if (
+        socket.tenantId &&
+        typeof socket.tenantId === "number" &&
+        !isNaN(socket.tenantId)
+      ) {
+        try {
+          const tenantSchemaName = schemaNames.tenantSchemaName(
+            socket.tenantId.toString()
+          );
+          socket.db.tenantPool = await db.getSchemaPool(tenantSchemaName);
+        } catch (error) {
+          logger.warn("Failed to set up tenant pool for socket (non-fatal)", {
+            socketId: socket.id,
+            tenantId: socket.tenantId,
+            error: error instanceof Error ? error.message : String(error),
+          });
+          // Continue without tenant pool - connection is still valid
+        }
       }
 
       // Set up cleanup on disconnect

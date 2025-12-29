@@ -59,6 +59,28 @@ async function main() {
   });
 }
 
+// Handle unhandled promise rejections gracefully
+process.on("unhandledRejection", (reason: any, promise: Promise<any>) => {
+  logger.error("Unhandled Promise Rejection:", {
+    reason: reason instanceof Error ? reason.message : String(reason),
+    stack: reason instanceof Error ? reason.stack : undefined,
+    promise: promise,
+  });
+  // Don't exit - let the server continue running
+  // Individual request errors should be handled by middleware
+});
+
+// Handle uncaught exceptions gracefully
+process.on("uncaughtException", (error: Error) => {
+  logger.error("Uncaught Exception:", {
+    message: error.message,
+    stack: error.stack,
+  });
+  // For uncaught exceptions, we might want to exit after logging
+  // But for now, let's just log and continue (you can change this if needed)
+  // process.exit(1);
+});
+
 main().catch(error => {
   logger.error("Error in main function:", error);
   process.exit(1);

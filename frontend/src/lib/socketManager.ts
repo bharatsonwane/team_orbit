@@ -31,11 +31,23 @@ export class SocketManager {
 
       const jwtToken = Cookies.get(envVariable.JWT_STORAGE_KEY);
 
-      if (!jwtToken || !tenantId) {
-        throw new Error("Invalid token or tenantId");
+      if (!jwtToken) {
+        throw new Error("JWT token is required");
       }
 
-      const auth: AuthPayload = { token: jwtToken, tenantId };
+      if (!tenantId) {
+        throw new Error("Tenant ID is required");
+      }
+
+      // Ensure tenantId is a number (backend expects a number)
+      const numericTenantId =
+        typeof tenantId === "string" ? parseInt(tenantId, 10) : tenantId;
+
+      if (isNaN(numericTenantId)) {
+        throw new Error("Invalid tenant ID format");
+      }
+
+      const auth: AuthPayload = { token: jwtToken, tenantId: numericTenantId };
 
       SocketManager.socketIo.auth = auth;
 
@@ -73,6 +85,7 @@ export class SocketManager {
       return SocketManager.socketIo;
     } catch (error) {
       SocketManager.isConnecting = false;
+      console.error("Socket connection error:", error);
       return SocketManager.socketIo;
     }
   };

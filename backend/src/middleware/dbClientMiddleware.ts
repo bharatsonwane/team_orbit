@@ -39,9 +39,24 @@ export async function dbClientMiddleware(
 
     // Get tenant-specific schema pool if provided
     if (xTenantId) {
-      req.xTenantId = parseInt(xTenantId);
-      const tenantSchemaName = schemaNames.tenantSchemaName(xTenantId);
-      req.db.tenantPool = await db.getSchemaPool(tenantSchemaName);
+      const parsedTenantId = parseInt(xTenantId, 10);
+      if (!isNaN(parsedTenantId)) {
+        req.xTenantId = parsedTenantId;
+        try {
+          const tenantSchemaName = schemaNames.tenantSchemaName(xTenantId);
+          req.db.tenantPool = await db.getSchemaPool(tenantSchemaName);
+        } catch (error) {
+          logger.warn("Failed to set up tenant pool (non-fatal)", {
+            tenantId: xTenantId,
+            error: error instanceof Error ? error.message : String(error),
+          });
+          // Continue without tenant pool - request can still proceed
+        }
+      } else {
+        logger.warn("Invalid tenantId in x-tenant header", {
+          tenantId: xTenantId,
+        });
+      }
     }
 
     let isReleased = false;
