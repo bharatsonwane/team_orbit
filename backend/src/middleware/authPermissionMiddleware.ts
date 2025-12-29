@@ -7,6 +7,7 @@ import {
   PermissionWithIdSchema,
   RolesAndPermissionsSchema,
 } from "@src/schemaTypes/roleAndPermission.schemaTypes";
+import logger from "@src/utils/logger";
 
 export interface AuthenticatedRequest extends Request {
   user: JwtTokenPayload & { tenantId: number | 0 };
@@ -82,61 +83,71 @@ export const authPermissionMiddleware = ({
       };
 
       const checkUserHasRequiredPermissions = async (): Promise<boolean> => {
-        // If no specific permissions are required, proceed to the next middleware
-        if (!allowedPlatformPermissions && !allowedTenantPermissions) {
+        try {
+          // If no specific permissions are required, proceed to the next middleware
+          if (!allowedPlatformPermissions && !allowedTenantPermissions) {
+            return true;
+          }
+
+          /* Check main i.e platform permissions if required */
+          if (
+            allowedPlatformPermissions &&
+            allowedPlatformPermissions.length > 0
+          ) {
+            let platformPermissions: PermissionWithIdSchema[] = [];
+            if (userAuth.isPlatformUser) {
+              const platformData =
+                await RoleAndPermission.getPlatformUserRolesAndPermissions(
+                  req.db,
+                  decodedJwt.userId
+                );
+              platformPermissions = platformData.permissions;
+            }
+            const platformPermissionNames = platformPermissions.map(
+              p => p.name
+            );
+            const hasAllMainPermissions = allowedPlatformPermissions.every(
+              permission => platformPermissionNames.includes(permission)
+            );
+            if (!hasAllMainPermissions) {
+              return false;
+            }
+          }
+
+          /* Check tenant permissions if required */
+          if (allowedTenantPermissions && allowedTenantPermissions.length > 0) {
+            let tenantPermissions: PermissionWithIdSchema[] = [];
+            if (tenantIdFromHeader) {
+              const tenantData =
+                await RoleAndPermission.getTenantUserRolesAndPermissions(
+                  req.db,
+                  decodedJwt.userId
+                );
+
+              tenantPermissions = tenantData.permissions;
+            }
+            const tenantPermissionNames = tenantPermissions.map(p => p.name);
+            const hasAllTenantPermissions = allowedTenantPermissions.every(
+              permission => tenantPermissionNames.includes(permission)
+            );
+            if (!hasAllTenantPermissions) {
+              return false;
+            }
+          }
+
           return true;
+        } catch (error) {
+          logger.error("Error checking user permissions", {
+            userId: decodedJwt.userId,
+            error: error instanceof Error ? error.message : String(error),
+          });
+          return false;
         }
-
-        /* Check main i.e platform permissions if required */
-        if (
-          allowedPlatformPermissions &&
-          allowedPlatformPermissions.length > 0
-        ) {
-          let platformPermissions: PermissionWithIdSchema[] = [];
-          if (userAuth.isPlatformUser) {
-            const platformData =
-              await RoleAndPermission.getPlatformUserRolesAndPermissions(
-                req.db,
-                decodedJwt.userId
-              );
-            platformPermissions = platformData.permissions;
-          }
-          const platformPermissionNames = platformPermissions.map(p => p.name);
-          const hasAllMainPermissions = allowedPlatformPermissions.every(
-            permission => platformPermissionNames.includes(permission)
-          );
-          if (!hasAllMainPermissions) {
-            return false;
-          }
-        }
-
-        /* Check tenant permissions if required */
-        if (allowedTenantPermissions && allowedTenantPermissions.length > 0) {
-          let tenantPermissions: PermissionWithIdSchema[] = [];
-          if (tenantIdFromHeader) {
-            const tenantData =
-              await RoleAndPermission.getTenantUserRolesAndPermissions(
-                req.db,
-                decodedJwt.userId
-              );
-
-            tenantPermissions = tenantData.permissions;
-          }
-          const tenantPermissionNames = tenantPermissions.map(p => p.name);
-          const hasAllTenantPermissions = allowedTenantPermissions.every(
-            permission => tenantPermissionNames.includes(permission)
-          );
-          if (!hasAllTenantPermissions) {
-            return false;
-          }
-        }
-
-        return true;
       };
 
       // Check if the user has a valid tenant and required permissions
       const isValidTenant = checkUserHasValidTenant();
-      const hasRequiredPermissions = checkUserHasRequiredPermissions();
+      const hasRequiredPermissions = await checkUserHasRequiredPermissions();
 
       if (!isValidTenant || !hasRequiredPermissions) {
         res
