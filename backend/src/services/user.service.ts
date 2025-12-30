@@ -753,7 +753,7 @@ export default class User {
         FROM users up
         INNER JOIN user_tenants_xref utx ON up.id = utx."userId" AND utx."isArchived" = FALSE
         LEFT JOIN user_auths ua ON up.id = ua."userId"
-        WHERE utx."tenantId" = ${tenantId}
+        WHERE utx."tenantId" = ${tenantId} AND
         ${searchConditions}
         `;
 
@@ -836,7 +836,7 @@ export default class User {
         INNER JOIN user_tenants_xref utx ON up.id = utx."userId" AND utx."isArchived" = FALSE
         LEFT JOIN user_auths ua ON up.id = ua."userId"
         LEFT JOIN lookups ls ON up."statusId" = ls.id
-        WHERE utx."tenantId" = ${tenantId}
+        WHERE utx."tenantId" = ${tenantId} AND
         ${searchConditions}
         `;
 
