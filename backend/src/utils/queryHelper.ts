@@ -1,8 +1,8 @@
 /**
- * Helper function to build SQL update fields from accepted keys and object values
+ * Helper function to build SQL SET clause from accepted keys and object values
  * @param acceptedKeys - Array of keys that are allowed to be updated
  * @param values - Object containing the values to update
- * @returns Object with column names as keys and properly formatted SQL values as values
+ * @returns SQL SET clause string
  */
 export function buildUpdateSetFields({
   acceptedKeys = [],
