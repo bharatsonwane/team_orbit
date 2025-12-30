@@ -5,7 +5,7 @@ import type {
   TenantWithIdSchema,
 } from "@src/schemaTypes/tenant.schemaTypes";
 import type { dbClientPool } from "@src/middleware/dbClientMiddleware";
-import { buildUpdateFields } from "@src/utils/queryHelper";
+import { buildUpdateSetFields } from "@src/utils/queryHelper";
 import User from "@src/services/user.service";
 import { dbTransactionKeys } from "@src/utils/constants";
 import { DbMigrationManager } from "@src/database/dbMigrationManager";
@@ -112,30 +112,37 @@ export default class Tenant {
       updateData,
     }: { tenantId: number; updateData: UpdateTenantSchema }
   ): Promise<TenantWithIdSchema> {
-    const acceptedKeys = ["label", "description", "isArchived"];
+    const acceptedKeys = ["label", "description", "isArchived", "archivedAt"];
 
-    const updateFields = buildUpdateFields(acceptedKeys, updateData);
-
-    if (Object.keys(updateFields).length === 0) {
-      throw new Error("No valid fields to update");
-    }
+    const values = {
+      ...updateData,
+      updatedAt: "NOW()",
+    };
 
     // Handle archivedAt field based on isArchived
     if (updateData.isArchived !== undefined) {
       if (updateData.isArchived) {
-        updateFields["archivedAt"] = "NOW()";
+        (values as any)["archivedAt"] = "NOW()";
       } else {
-        updateFields["archivedAt"] = "NULL";
+        (values as any)["archivedAt"] = "NULL";
       }
     }
 
-    const setQueryString = Object.entries(updateFields)
-      .map(([key, value]) => `"${key}" = ${value}`)
-      .join(", ");
+    const setQueryString = buildUpdateSetFields({
+      acceptedKeys,
+      values: {
+        ...values,
+        updatedAt: "NOW()",
+      },
+    });
+
+    if (setQueryString.length === 0) {
+      throw new Error("No valid fields to update");
+    }
 
     const queryString = `
       UPDATE tenants
-      SET ${setQueryString}, "updatedAt" = NOW()
+      SET ${setQueryString}
       WHERE id = ${tenantId}
       RETURNING id, name, label, description, "statusId", "isArchived", "createdAt", "updatedAt", "archivedAt"
     `;

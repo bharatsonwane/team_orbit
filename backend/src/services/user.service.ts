@@ -8,7 +8,10 @@ import {
   SaveUserContactsSchema,
   SaveUserJobDetailsSchema,
 } from "@src/schemaTypes/user.schemaTypes";
-import { buildUpdateFields } from "@src/utils/queryHelper";
+import {
+  buildUpdateSetFields,
+  buildSearchConditions,
+} from "@src/utils/queryHelper";
 import { getHashPassword } from "@src/utils/authHelper";
 import { dbTransactionKeys } from "@src/utils/constants";
 import db, { schemaNames } from "@src/database/db";
@@ -175,19 +178,21 @@ export default class User {
       "bio",
     ];
 
-    const updateFields = buildUpdateFields(acceptedKeys, updateData);
+    const setQueryString = buildUpdateSetFields({
+      acceptedKeys,
+      values: {
+        ...updateData,
+        updatedAt: "NOW()",
+      },
+    });
 
-    if (Object.keys(updateFields).length === 0) {
+    if (setQueryString.length === 0) {
       throw new Error("No valid fields to update");
     }
 
-    const setQueryString = Object.entries(updateFields)
-      .map(([key, value]) => `"${key}" = ${value}`)
-      .join(", ");
-
     const queryString = `
       UPDATE users
-      SET ${setQueryString}, "updatedAt" = NOW()
+      SET ${setQueryString}
       WHERE id = ${userId} RETURNING *;`;
     const results = await dbClient.mainPool.query(queryString);
 
@@ -633,22 +638,28 @@ export default class User {
           "designation",
           "department",
           "ctc",
+          "updatedBy",
+          "updatedAt",
+          "archivedAt",
+          "archivedBy",
         ];
 
-        const updateFields = buildUpdateFields(acceptedKeys, jobData);
+        const setQueryString = buildUpdateSetFields({
+          acceptedKeys,
+          values: {
+            ...jobData,
+            updatedAt: "NOW()",
+          },
+        });
 
-        if (Object.keys(updateFields).length > 0) {
-          updateFields["updatedAt"] = "NOW()";
-
-          const setClause = Object.entries(updateFields)
-            .map(([key, value]) => `"${key}" = ${value}`)
-            .join(", ");
-
-          await dbClient.tenantPool!.query(
-            `UPDATE user_job_details SET ${setClause} WHERE "userId" = $1`,
-            [userId]
-          );
+        if (setQueryString.length === 0) {
+          throw new Error("No valid fields to update");
         }
+
+        await dbClient.tenantPool!.query(
+          `UPDATE user_job_details SET ${setQueryString} WHERE "userId" = $1`,
+          [userId]
+        );
       } else {
         // Insert new job details
         await dbClient.tenantPool!.query(
@@ -714,35 +725,37 @@ export default class User {
     {
       tenantId,
       searchText,
+      columnFilterValues,
     }: {
       tenantId: number;
       searchText?: string;
+      columnFilterValues?: Record<string, string>;
     }
   ): Promise<number> {
     try {
-      const hasSearch = !!searchText && searchText.trim().length > 0;
+      // Define searchable columns for general searchText (same as getUsers)
+      const searchableColumns = [
+        { column: "firstName", alias: "up" },
+        { column: "lastName", alias: "up" },
+        'up."firstName" || \' \' || up."lastName"', // Full name concatenation
+        { column: "authEmail", alias: "ua" },
+      ];
+
+      // Build search conditions using helper function
+      const searchConditions = buildSearchConditions({
+        searchText: searchText || "",
+        columnFilterValues: columnFilterValues || {},
+        searchableColumns,
+      });
 
       let query = `
         SELECT COUNT(*) as total
         FROM users up
+        INNER JOIN user_tenants_xref utx ON up.id = utx."userId" AND utx."isArchived" = FALSE
         LEFT JOIN user_auths ua ON up.id = ua."userId"
-        WHERE up."tenantId" = ${tenantId}
-      `;
-
-      if (hasSearch) {
-        const pattern = `%${searchText!.trim().toLowerCase()}%`;
-        /* Safe SQL literal escaping for LIKE pattern to avoid injection when interpolating */
-        /*escape single quotes and wrap in quotes*/
-        const patternLiteral = `'${pattern.replace(/'/g, "''")}'`;
-        query += `
-          AND (
-            LOWER(up."firstName") LIKE ${patternLiteral} OR
-            LOWER(up."lastName") LIKE ${patternLiteral} OR
-            LOWER(up."firstName" || ' ' || up."lastName") LIKE ${patternLiteral} OR
-            LOWER(ua."authEmail") LIKE ${patternLiteral}
-          )
+        WHERE utx."tenantId" = ${tenantId}
+        ${searchConditions}
         `;
-      }
 
       const result = await dbClient.mainPool.query(query);
       return parseInt(result.rows[0].total, 10);
@@ -756,17 +769,33 @@ export default class User {
     {
       tenantId,
       searchText,
+      columnFilterValues = {},
       page,
       limit,
     }: {
       tenantId: number;
       searchText?: string;
+      columnFilterValues?: Record<string, string>;
       page?: number;
       limit?: number;
     }
   ): Promise<UserWithIdSchema[]> {
     try {
-      const hasSearch = !!searchText && searchText.trim().length > 0;
+      // Define searchable columns for general searchText
+      // Include concatenated firstName + lastName for full name search
+      const searchableColumns = [
+        { column: "firstName", alias: "up" },
+        { column: "lastName", alias: "up" },
+        'up."firstName" || \' \' || up."lastName"', // Full name concatenation
+        { column: "authEmail", alias: "ua" },
+      ];
+
+      // Build search conditions using helper function
+      const searchConditions = buildSearchConditions({
+        searchText: searchText || "",
+        columnFilterValues,
+        searchableColumns,
+      });
 
       let query = `
         SELECT
@@ -786,7 +815,6 @@ export default class User {
           up."statusId",
           ls.name AS "statusName",
           ls.label AS "statusLabel",
-          up."tenantId",
           up."createdAt",
           up."updatedAt",
           COALESCE(
@@ -805,25 +833,12 @@ export default class User {
             ), '[]'::json
           ) AS roles
         FROM users up
+        INNER JOIN user_tenants_xref utx ON up.id = utx."userId" AND utx."isArchived" = FALSE
         LEFT JOIN user_auths ua ON up.id = ua."userId"
         LEFT JOIN lookups ls ON up."statusId" = ls.id
-        WHERE up."tenantId" = ${tenantId}
-      `;
-
-      if (hasSearch) {
-        const pattern = `%${searchText!.trim().toLowerCase()}%`;
-        /* Safe SQL literal escaping for LIKE pattern to avoid injection when interpolating */
-        /*escape single quotes and wrap in quotes*/
-        const patternLiteral = `'${pattern.replace(/'/g, "''")}'`;
-        query += `
-          AND (
-            LOWER(up."firstName") LIKE ${patternLiteral} OR
-            LOWER(up."lastName") LIKE ${patternLiteral} OR
-            LOWER(up."firstName" || ' ' || up."lastName") LIKE ${patternLiteral} OR
-            LOWER(ua."authEmail") LIKE ${patternLiteral}
-          )
+        WHERE utx."tenantId" = ${tenantId}
+        ${searchConditions}
         `;
-      }
 
       query += ` ORDER BY up."createdAt" DESC`;
 

@@ -10,7 +10,7 @@ import type {
   PermissionListSchema,
   RolesAndPermissionsSchema,
 } from "@src/schemaTypes/roleAndPermission.schemaTypes";
-import { buildUpdateFields } from "@src/utils/queryHelper";
+import { buildUpdateSetFields } from "@src/utils/queryHelper";
 import { dbTransactionKeys } from "@src/utils/constants";
 
 export default class RoleAndPermission {
@@ -232,26 +232,31 @@ export default class RoleAndPermission {
         "description",
         "sortOrder",
         "isSystem",
+        "updatedBy",
+        "updatedAt",
+        "archivedAt",
+        "archivedBy",
       ];
-      const updateFields = buildUpdateFields(acceptedKeys, roleData);
+      const setQueryString = buildUpdateSetFields({
+        acceptedKeys,
+        values: {
+          ...roleData,
+          updatedBy: userId ? `${userId}` : "NULL",
+          updatedAt: "NOW()",
+        },
+      });
 
-      if (Object.keys(updateFields).length > 0) {
-        // Add updatedBy and updatedAt
-        updateFields["updatedBy"] = userId ? `${userId}` : "NULL";
-        updateFields["updatedAt"] = "NOW()";
-
-        const setQueryString = Object.entries(updateFields)
-          .map(([key, value]) => `"${key}" = ${value}`)
-          .join(", ");
-
-        const updateQuery = `
-          UPDATE roles
-          SET ${setQueryString}
-          WHERE id = $1 AND "isArchived" = FALSE
-        `;
-
-        await dbClient.mainPool.query(updateQuery, [roleId]);
+      if (setQueryString.length === 0) {
+        throw new Error("No valid fields to update");
       }
+
+      const updateQuery = `
+        UPDATE roles
+        SET ${setQueryString}
+        WHERE id = $1 AND "isArchived" = FALSE
+      `;
+
+      await dbClient.mainPool.query(updateQuery, [roleId]);
 
       // Update permissions if provided
       if (roleData.permissionIds !== undefined) {
@@ -534,25 +539,26 @@ export default class RoleAndPermission {
       "sortOrder",
       "isSystem",
     ];
-    const updateFields = buildUpdateFields(acceptedKeys, permissionData);
+    const setQueryString = buildUpdateSetFields({
+      acceptedKeys,
+      values: {
+        ...permissionData,
+        updatedBy: userId ? `${userId}` : "NULL",
+        updatedAt: "NOW()",
+      },
+    });
 
-    if (Object.keys(updateFields).length > 0) {
-      // Add updatedBy and updatedAt
-      updateFields["updatedBy"] = userId ? `${userId}` : "NULL";
-      updateFields["updatedAt"] = "NOW()";
-
-      const setQueryString = Object.entries(updateFields)
-        .map(([key, value]) => `"${key}" = ${value}`)
-        .join(", ");
-
-      const updateQuery = `
-        UPDATE permissions
-        SET ${setQueryString}
-        WHERE id = $1 AND "isArchived" = FALSE
-      `;
-
-      await dbClient.mainPool.query(updateQuery, [permissionId]);
+    if (setQueryString.length === 0) {
+      throw new Error("No valid fields to update");
     }
+
+    const updateQuery = `
+      UPDATE permissions
+      SET ${setQueryString}
+      WHERE id = $1 AND "isArchived" = FALSE
+    `;
+
+    await dbClient.mainPool.query(updateQuery, [permissionId]);
   }
 
   /**

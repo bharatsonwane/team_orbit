@@ -30,7 +30,7 @@ This document tracks all significant changes made to the TeamOrbit backend.
 - **File**: `src/services/user.service.ts`
 - **Changes**:
   - **Added**: `getUserJobDetails()` method for retrieving user job details
-  - **Enhanced**: `saveUserJobDetails()` with userId validation and `buildUpdateFields` integration
+  - **Enhanced**: `saveUserJobDetails()` with userId validation and `buildUpdateSetFields` integration
   - **Updated**: `getUserById()` to include tenant name and label via LEFT JOIN
   - **Improved**: Consistent `dbClient.tenantPool` usage across all tenant-specific methods
 
@@ -44,7 +44,7 @@ This document tracks all significant changes made to the TeamOrbit backend.
 
 #### 5. Query Helper Integration
 - **File**: `src/utils/queryHelper.ts`
-- **Usage**: Integrated `buildUpdateFields()` helper in user service
+- **Usage**: Integrated `buildUpdateSetFields()` helper in user service
 - **Impact**: Cleaner, more maintainable update logic
 
 ### 🎮 Controller Layer Updates

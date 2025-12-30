@@ -256,7 +256,7 @@ await UserService.saveUserContacts(req.dbClient, {
 - Handles upsert logic for job details
 - Uses transactions for data integrity
 - Validates required userId parameter
-- Uses `buildUpdateFields` helper for efficient updates
+- Uses `buildUpdateSetFields` helper for efficient updates
 
 ```typescript
 await UserService.saveUserJobDetails(req.dbClient, {
