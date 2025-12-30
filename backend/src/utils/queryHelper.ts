@@ -120,5 +120,5 @@ export function buildSearchConditions({
     return "";
   }
 
-  return ` AND ${conditions.join(" AND ")}`;
+  return `${conditions.join(" AND ")}`;
 }
