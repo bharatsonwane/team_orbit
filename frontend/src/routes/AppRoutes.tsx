@@ -25,17 +25,17 @@ import {
 } from "@/utils/constants";
 
 // Import pages
-import TenantHome from "../../pages/tenant/TenantHome";
-import Login from "../../pages/auth/Login";
-import Signup from "../../pages/auth/Signup";
-import PlatformDashboard from "../../pages/platform/PlatformDashboard";
-import Profile from "../../pages/profile/Profile";
+import TenantHome from "../pages/tenant/TenantHome";
+import Login from "../pages/auth/Login";
+import Signup from "../pages/auth/Signup";
+import PlatformDashboard from "../pages/platform/PlatformDashboard";
+import Profile from "../pages/profile/Profile";
 import Tenants from "@/pages/platform/tenant/Tenants";
 import TenantDetail from "@/pages/platform/tenant/TenantDetail";
 import TenantUsers from "@/pages/platform/tenant/TenantUsers";
-import PlatformNotifications from "../../pages/platform/notification/PlatformNotifications";
-import TenantNotifications from "../../pages/tenant/TenantNotifications";
-import { ComingSoon } from "../ComingSoon";
+import PlatformNotifications from "../pages/platform/notification/PlatformNotifications";
+import TenantNotifications from "../pages/tenant/TenantNotifications";
+import { ComingSoon } from "../components/ComingSoon";
 import { AppLayout } from "@/components/AppLayout";
 import type { BreadcrumbLayoutProps } from "@/components/AppLayout";
 import TenantDepartments from "@/pages/platform/tenant/TenantDepartments";

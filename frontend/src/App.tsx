@@ -1,6 +1,6 @@
 import { Routes, Route, Navigate } from "react-router-dom";
-import { mainRouteList } from "./components/routing/AppRoutes";
-import { RouteGuardRenderer } from "./components/routing/RouteGuardRenderer";
+import { mainRouteList } from "./routes/AppRoutes";
+import { RouteGuardRenderer } from "./routes/RouteGuardRenderer";
 import {
   platformPermissionKeys,
   tenantPermissionKeys,

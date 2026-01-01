@@ -47,7 +47,7 @@ import {
   platformSidebarNavigationItems,
   tenantSidebarNavigationItems,
   type SidebarRouteWithChildren,
-} from "./routing/AppRoutes";
+} from "../routes/AppRoutes";
 import { filterNavigationItems } from "@/utils/sidebarHelper";
 
 export function AppSidebar() {

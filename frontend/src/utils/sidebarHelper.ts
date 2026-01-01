@@ -1,4 +1,4 @@
-import type { SidebarRouteWithChildren } from "@/components/routing/AppRoutes";
+import type { SidebarRouteWithChildren } from "@/routes/AppRoutes";
 import { hasPermissionAccess } from "./authHelper";
 import type { User } from "@/schemaTypes/userSchemaTypes";
 

@@ -15,7 +15,7 @@ import type {
   AuthResponse,
 } from "../schemaTypes/userSchemaTypes";
 import { envVariable } from "../config/envVariable";
-import { publicRouteList } from "../components/routing/AppRoutes";
+import { publicRouteList } from "../routes/AppRoutes";
 import getAxios from "../utils/axiosApi";
 import {
   getUserProfileAction,
