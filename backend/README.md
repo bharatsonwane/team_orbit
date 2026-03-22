@@ -84,9 +84,8 @@ npm run dev
 **Server endpoints:**
 
 - API Server: `http://localhost:5100/api`
-- Health Check: `http://localhost:5100/health`
-- API Documentation: `http://localhost:5100/docs`
-- Test Endpoint: `http://localhost:5100/test`
+- Health Check: `http://localhost:5100/api/health`
+- API Documentation: `http://localhost:5100/api/docs`
 
 ## 📚 API Documentation
 
@@ -94,7 +93,7 @@ The TeamOrbit backend provides a comprehensive RESTful API with interactive docu
 
 ### Interactive Documentation
 
-- **Swagger UI:** `http://localhost:5100/docs` - Interactive API testing interface
+- **Swagger UI:** `http://localhost:5100/api/docs` - Interactive API testing interface
 - **OpenAPI Spec:** Auto-generated from Zod schemaAndTypes
 
 ### Complete API Reference

@@ -101,10 +101,9 @@ export default class User {
           bio,
           "isPlatformUser",
           "statusId",
-          "tenantId",
           "createdAt",
           "updatedAt"
-        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, NOW(), NOW())
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, NOW(), NOW())
         RETURNING id
       `;
 
@@ -121,10 +120,21 @@ export default class User {
         userData.bio || null,
         isPlatformUser,
         statusId,
-        tenantId,
       ]);
 
       const user = userResult.rows[0];
+
+      // Insert user-tenant relationship into user_tenants_xref
+      if (tenantId) {
+        await dbClient.mainPool.query(
+          `
+            INSERT INTO user_tenants_xref ("userId", "tenantId", "createdAt", "updatedAt")
+            VALUES ($1, $2, NOW(), NOW())
+            ON CONFLICT ("userId", "tenantId") DO NOTHING
+          `,
+          [user.id, tenantId]
+        );
+      }
 
       // Insert authentication data only if authEmail is provided
       if (userData.authEmail) {
@@ -411,7 +421,6 @@ export default class User {
         us."statusId",
         ls.name as "statusName",
         ls.label as "statusLabel",
-        us."tenantId",
         us."createdAt",
         us."updatedAt"
       FROM 

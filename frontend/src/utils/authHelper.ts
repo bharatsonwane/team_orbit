@@ -1,4 +1,3 @@
-import type { LookupItem } from "@/schemaTypes/lookupSchemaTypes";
 import {
   platformPermissionKeys,
   tenantPermissionKeys,

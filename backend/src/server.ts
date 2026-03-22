@@ -14,7 +14,7 @@ import {
   routeNotFoundMiddleware,
 } from "./middleware/errorMiddleware";
 import { dbClientMiddleware } from "./middleware/dbClientMiddleware";
-import { initializeSocket } from "./socket/socket";
+import { initializeSocket } from "./realtime/socket";
 
 async function main() {
   const app = express();
@@ -31,10 +31,10 @@ async function main() {
 
   /** Routes */
   app.use("/api", dbClientMiddleware, apiRoutes);
-  app.use("/docs", openApiRoutes);
+  app.use("/api/docs", openApiRoutes);
 
   /** Health check endpoint */
-  app.get("/health", (req, res) => {
+  app.get("/api/health", (req, res) => {
     res.status(200).json({
       status: "OK",
       message: "Server is running",
@@ -54,7 +54,7 @@ async function main() {
       port: envVariable.API_PORT,
       host: envVariable.API_HOST,
       appName: "📚 Team Orbit Backend",
-      docsPath: "/docs",
+      docsPath: "/api/docs",
     });
   });
 }

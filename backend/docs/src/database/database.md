@@ -455,7 +455,7 @@ CHECK (attachment_size IS NULL OR attachment_size > 0);
 
    ```bash
    # Check application health
-   curl http://localhost:5100/health
+   curl http://localhost:5100/api/health
 
    # Verify schema changes
    psql -h localhost -U teamorbit -d teamorbit -c "\d user"

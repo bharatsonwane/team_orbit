@@ -77,7 +77,7 @@ npm run seed
 npm run dev
 ```
 
-The server will start on `http://localhost:5100` and you can access the API documentation at `http://localhost:5100/docs`.
+The server will start on `http://localhost:5100` and you can access the API documentation at `http://localhost:5100/api/docs`.
 
 ## 🔧 Detailed Setup Instructions
 
@@ -203,7 +203,7 @@ This will populate:
 ### 1. Health Check
 
 ```bash
-curl http://localhost:5100/health
+curl http://localhost:5100/api/health
 ```
 
 Expected response:
@@ -218,7 +218,7 @@ Expected response:
 
 ### 2. API Documentation
 
-Visit `http://localhost:5100/docs` in your browser to access the Swagger UI.
+Visit `http://localhost:5100/api/docs` in your browser to access the Swagger UI.
 
 ### 3. Database Connection
 
@@ -819,7 +819,7 @@ EXPOSE 5100
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
-  CMD node -e "require('http').get('http://localhost:5100/health', (res) => { process.exit(res.statusCode === 200 ? 0 : 1) })"
+  CMD node -e "require('http').get('http://localhost:5100/api/health', (res) => { process.exit(res.statusCode === 200 ? 0 : 1) })"
 
 # Start application
 CMD ["npm", "start"]

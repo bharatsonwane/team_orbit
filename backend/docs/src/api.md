@@ -32,7 +32,7 @@ curl -X POST http://localhost:5100/api/user/login \
 Visit the Swagger UI for interactive API exploration:
 
 ```
-http://localhost:5100/docs
+http://localhost:5100/api/docs
 ```
 
 ## 🔑 API Endpoints
@@ -287,8 +287,8 @@ _Create a new tenant organization._ <br>
 
 ### System
 
-- **GET** `/health` - Health check (public)
-- **GET** `/docs` - API documentation (public)
+- **GET** `/api/health` - Health check (public)
+- **GET** `/api/docs` - API documentation (public)
 
 ## 🔒 Role-Based Access Control
 
@@ -344,7 +344,7 @@ For detailed and up-to-date schemaAndTypes, refer to the OpenAPI specification a
 
 ```bash
 # Health check
-curl http://localhost:5100/health
+curl http://localhost:5100/api/health
 
 # User login
 curl -X POST http://localhost:5100/api/user/login \
